@@ -1,0 +1,74 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <AssemblyName>Dread</AssemblyName>
+    <RootNamespace>Dread</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Configurations>Debug;Release</Configurations>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- BepInEx core (HarmonyX) -->
+    <Reference Include="BepInEx">
+      <HintPath>$(AppData)\r2modmanPlus-local\REPO\profiles\REALMULTIPLAYER\BepInEx\core\BepInEx.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(AppData)\r2modmanPlus-local\REPO\profiles\REALMULTIPLAYER\BepInEx\core\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <!-- Game assembly -->
+    <Reference Include="Assembly-CSharp">
+      <HintPath>C:\steam\steamapps\common\REPO\REPO_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <!-- Unity modules -->
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>C:\steam\steamapps\common\REPO\REPO_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.AudioModule">
+      <HintPath>C:\steam\steamapps\common\REPO\REPO_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>C:\steam\steamapps\common\REPO\REPO_Data\Managed\UnityEngine.UI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath>C:\steam\steamapps\common\REPO\REPO_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.ImageConversionModule">
+      <HintPath>C:\steam\steamapps\common\REPO\REPO_Data\Managed\UnityEngine.ImageConversionModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.AnimationModule">
+      <HintPath>C:\steam\steamapps\common\REPO\REPO_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.AIModule">
+      <HintPath>C:\steam\steamapps\common\REPO\REPO_Data\Managed\UnityEngine.AIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UnityWebRequestModule">
+      <HintPath>C:\steam\steamapps\common\REPO\REPO_Data\Managed\UnityEngine.UnityWebRequestModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UnityWebRequestMultimediaModule">
+      <HintPath>C:\steam\steamapps\common\REPO\REPO_Data\Managed\UnityEngine.UnityWebRequestMultimediaModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Copy audio folder to output alongside DLL -->
+  <ItemGroup>
+    <None Include="audio\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

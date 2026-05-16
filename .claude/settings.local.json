@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(superpowers:writing-plans)",
+      "Skill(superpowers:subagent-driven-development)",
+      "Bash(git config *)",
+      "Bash(git commit *)",
+      "Bash(dotnet *)",
+      "PowerShell(dotnet --version)",
+      "PowerShell(New-Item *)"
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "Dread",
+  "version_number": "1.0.0",
+  "website_url": "",
+  "description": "Atmospheric horror overhaul for R.E.P.O. Ambient dread, visual corruption, environmental wrongness, and scarier monsters.",
+  "dependencies": [
+    "BepInEx-BepInExPack-5.4.2100"
+  ]
+}
