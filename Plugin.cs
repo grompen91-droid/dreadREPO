@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Dread
 {
     [BepInPlugin(Plugin.GUID, Plugin.NAME, Plugin.VERSION)]
-    [BepInDependency("com.github.zehsteam.REPOLib")]
+    [BepInDependency("REPOLib")]
     public class Plugin : BaseUnityPlugin
     {
         public const string GUID = "elytraking.dread";
