@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using Dread.Config;
+using HarmonyLib;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
