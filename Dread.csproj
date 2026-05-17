@@ -87,6 +87,10 @@
       <HintPath>$(GameDir)\Photon3Unity3D.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="PhotonRealtime">
+      <HintPath>$(GameDir)\PhotonRealtime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
 
   <!-- Copy audio folder to output alongside DLL -->

@@ -158,15 +158,16 @@ namespace Dread.Systems
                     _panicCooldown = 20f;
                     if (_originalSprintMultiplier >= 0f)
                     {
-                        pc.SprintSpeedMultiplier = _originalSprintMultiplier;
+                        Traverse.Create(pc).Field<float>("SprintSpeedMultiplier").Value = _originalSprintMultiplier;
                         _originalSprintMultiplier = -1f;
                     }
                 }
             }
             else if (!_wasSprinting && currentlySprinting && _nearestDist < ProximityRange && _panicCooldown <= 0f)
             {
-                _originalSprintMultiplier = pc.SprintSpeedMultiplier;
-                pc.SprintSpeedMultiplier *= 1.25f;
+                var tpc = Traverse.Create(pc);
+                _originalSprintMultiplier = tpc.Field<float>("SprintSpeedMultiplier").Value;
+                tpc.Field<float>("SprintSpeedMultiplier").Value = _originalSprintMultiplier * 1.25f;
                 _panicActive = true;
                 _panicTimer = 2f;
             }
