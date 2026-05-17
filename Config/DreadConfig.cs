@@ -9,21 +9,18 @@ namespace Dread.Config
         public static ConfigEntry<float> AudioFrequency = null!;
         public static ConfigEntry<float> AudioVolume = null!;
 
-        // Visual Corruption
-        public static ConfigEntry<bool> LightFlickerEnabled = null!;
-        public static ConfigEntry<bool> VignetteEnabled = null!;
-        public static ConfigEntry<bool> ShadowGlitchEnabled = null!;
-
-        // Environmental
-        public static ConfigEntry<bool> EnvironmentalEnabled = null!;
-        public static ConfigEntry<float> RareEventChance = null!;
-
         // Monster Overhaul
-        public static ConfigEntry<bool> MonsterHPEnabled = null!;
-        public static ConfigEntry<float> MonsterHPMultiplier = null!;
         public static ConfigEntry<bool> MonsterAggressionEnabled = null!;
         public static ConfigEntry<bool> MonsterAudioEnabled = null!;
-        public static ConfigEntry<bool> MonsterVisualEnabled = null!;
+
+        // QOL
+        public static ConfigEntry<bool> CrouchSpeedBoostEnabled = null!;
+
+        // Tension
+        public static ConfigEntry<bool> FakeFootstepsEnabled = null!;
+        public static ConfigEntry<bool> AdrenalineEnabled = null!;
+        public static ConfigEntry<bool> LowStaminaSoundEnabled = null!;
+        public static ConfigEntry<bool> PanicSprintEnabled = null!;
 
         public static void Initialize(ConfigFile cfg)
         {
@@ -34,28 +31,22 @@ namespace Dread.Config
             AudioVolume = cfg.Bind("1. Audio Dread", "Volume", 0.4f,
                 "Ambient sound volume (0.0 - 1.0).");
 
-            LightFlickerEnabled = cfg.Bind("2. Visual Corruption", "LightFlicker", true,
-                "Random lights briefly flicker.");
-            VignetteEnabled = cfg.Bind("2. Visual Corruption", "Vignette", true,
-                "Screen edges pulse dark occasionally.");
-            ShadowGlitchEnabled = cfg.Bind("2. Visual Corruption", "ShadowGlitch", true,
-                "A shadow briefly appears at the edge of view.");
-
-            EnvironmentalEnabled = cfg.Bind("3. Environmental", "Enabled", true,
-                "Small objects and lights subtly shift between visits.");
-            RareEventChance = cfg.Bind("3. Environmental", "RareEventChance", 0.15f,
-                "Probability a rare event fires on room revisit (0.0 - 1.0).");
-
-            MonsterHPEnabled = cfg.Bind("4. Monster Overhaul", "HPEnabled", true,
-                "Multiply monster HP. HOST ONLY.");
-            MonsterHPMultiplier = cfg.Bind("4. Monster Overhaul", "HPMultiplier", 2.0f,
-                "Monster HP multiplier. Default 2x.");
-            MonsterAggressionEnabled = cfg.Bind("4. Monster Overhaul", "AggressionEnabled", true,
+            MonsterAggressionEnabled = cfg.Bind("2. Monster Overhaul", "AggressionEnabled", true,
                 "Increase monster speed. HOST ONLY.");
-            MonsterAudioEnabled = cfg.Bind("4. Monster Overhaul", "AudioEnabled", true,
+            MonsterAudioEnabled = cfg.Bind("2. Monster Overhaul", "AudioEnabled", true,
                 "Lower monster pitch for deeper, scarier sounds.");
-            MonsterVisualEnabled = cfg.Bind("4. Monster Overhaul", "VisualEnabled", true,
-                "Screen distortion effect when a monster is nearby.");
+
+            FakeFootstepsEnabled = cfg.Bind("3. Tension", "FakeFootstepsEnabled", true,
+                "Occasionally plays footstep sounds behind you with no source.");
+            AdrenalineEnabled = cfg.Bind("3. Tension", "AdrenalineEnabled", true,
+                "Sprint drains up to 70% slower when an enemy is nearby (within 15m).");
+            LowStaminaSoundEnabled = cfg.Bind("3. Tension", "LowStaminaSoundEnabled", true,
+                "Plays a gasp sound when sprint energy drops below 10%.");
+            PanicSprintEnabled = cfg.Bind("3. Tension", "PanicSprintEnabled", true,
+                "Brief 1.25x speed burst when sprinting near an enemy (within 15m). 20s cooldown.");
+
+            CrouchSpeedBoostEnabled = cfg.Bind("4. QOL", "CrouchSpeedBoost", true,
+                "Crouch movement is 30% faster.");
         }
     }
 }
