@@ -4,6 +4,10 @@ namespace Dread.Config
 {
     public static class DreadConfig
     {
+        // Host Options
+        public static ConfigEntry<bool> GammaForceEnabled = null!;
+        public static ConfigEntry<int> GammaValue = null!;
+
         // Audio Dread
         public static ConfigEntry<bool> AudioEnabled = null!;
         public static ConfigEntry<float> AudioFrequency = null!;
@@ -24,6 +28,11 @@ namespace Dread.Config
 
         public static void Initialize(ConfigFile cfg)
         {
+            GammaForceEnabled = cfg.Bind("0. Host Options", "GammaForceEnabled", false,
+                "HOST ONLY. Force all clients to use a specific gamma value on level load.");
+            GammaValue = cfg.Bind("0. Host Options", "GammaValue", 40,
+                "Gamma value to push to all clients (0-100). Default 40 matches game default.");
+
             AudioEnabled = cfg.Bind("1. Audio Dread", "Enabled", true,
                 "Ambient horror sounds during runs.");
             AudioFrequency = cfg.Bind("1. Audio Dread", "Frequency", 1.0f,

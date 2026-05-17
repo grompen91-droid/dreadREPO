@@ -8,11 +8,12 @@ using UnityEngine;
 namespace Dread
 {
     [BepInPlugin(Plugin.GUID, Plugin.NAME, Plugin.VERSION)]
+    [BepInDependency("zehs.REPOLib")]
     public class Plugin : BaseUnityPlugin
     {
         public const string GUID = "elytraking.dread";
         public const string NAME = "Dread";
-        public const string VERSION = "1.0.0";
+        public const string VERSION = "1.1.0";
 
         internal static new ManualLogSource Logger = null!;
 
@@ -31,9 +32,9 @@ namespace Dread
             var host = new GameObject("DreadHost");
             DontDestroyOnLoad(host);
             host.AddComponent<AudioDreadSystem>();
-            host.AddComponent<VisualCorruptionSystem>();
-            host.AddComponent<EnvironmentalSystem>();
             host.AddComponent<MonsterOverhaulSystem>();
+            host.AddComponent<TensionSystem>();
+            host.AddComponent<HostOptionsSystem>();
         }
     }
 }

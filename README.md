@@ -1,43 +1,42 @@
 # Dread
 
-Atmospheric horror overhaul for R.E.P.O.
+Atmospheric horror overhaul for R.E.P.O. Makes the game feel genuinely unsettling without breaking the vanilla experience.
 
 ## Features
 
-- **Ambient Audio**: Rare positional horror sounds (scraping, footsteps, breathing, door creaks, whispers)
-- **Visual Corruption**: Random light flickering, vignette pulses, shadow glitches at the edge of view
-- **Environmental Wrongness**: Small objects and lights subtly shift between visits
-- **Monster Overhaul**: 2x HP, increased aggression, deeper audio, screen distortion when close
+### Host Options
+- **Force gamma** — host can push a specific gamma value (0–100) to all clients on level load. Disabled by default. Default value 40 (matches game default).
+
+### Ambient Audio
+Rare positional horror sounds (scraping, footsteps, breathing, door creaks, whispers) placed around the level during runs.
+
+### Monster Overhaul
+- **1.2x speed and acceleration** — noticeably more aggressive (host only)
+- **Deeper audio** — pitch lowered, reverb increased on all enemy sounds
+- **Wider detection radius** — voice and noise alerts enemies across the room, not just in melee range
+
+### Tension System
+- **Adrenaline** — sprint energy drains up to 70% slower when an enemy is nearby (within 15m)
+- **Out of breath** — plays a gasp sound when stamina drops below 10%, 60 second cooldown per trigger
+- **Fake footsteps** — rarely plays footstep sounds positioned behind you with no source
+- **Panic sprint** — brief 1.25x speed burst when sprinting near an enemy (within 15m), 20 second cooldown
+
+### QOL
+- **Crouch speed** — 30% faster, making crouching a viable movement option
 
 ## Netcode
 
 | Feature | Who needs mod |
 |---|---|
-| Monster HP & aggression | Host only |
-| All audio/visual effects | All players |
+| Monster speed | Host only |
+| Detection radius | Host only |
+| All audio/visual effects | Per client |
+| Adrenaline & stamina sounds | Per client |
+| Force gamma | All clients (requires REPOLib) |
 
-Players without the mod can join host-modded lobbies. Monster HP/aggression changes apply to everyone (host-authoritative), but atmospheric effects only appear for players who have the mod installed.
-
-## Audio Files
-
-Place OGG sound files in `BepInEx/plugins/elytraking-Dread/audio/`:
-
-- `scraping.ogg`
-- `footsteps.ogg`
-- `breathing.ogg`
-- `door_creak.ogg`
-- `whisper.ogg`
-
-Free horror sounds available at [freesound.org](https://freesound.org). Without audio files, the audio system logs a warning and skips silently.
+Players without the mod can join modded lobbies. Monster changes are host-authoritative and apply to everyone. Atmospheric effects only appear for players with the mod installed.
 
 ## Config
 
-All systems independently configurable via `BepInEx/config/elytraking.dread.cfg` (generated on first run).
+All features independently toggleable via `BepInEx/config/elytraking.dread.cfg` (generated on first run). Compatible with REPOConfig for in-game editing.
 
-## Compatible With
-
-- Mimic / Mimic Patcher
-- Wesley's Enemies
-- REPOLib, REPOConfig, MenuLib
-- MoreUpgrades, KeybindLib, UnlimitedOrbs
-- Empress LateJoin, DeathMinimap
