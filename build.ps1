@@ -1,5 +1,5 @@
 param(
-    [string]$Version = "1.0.0"
+    [string]$Version = "1.2.0"
 )
 
 $name = "elytraking-Dread"
@@ -15,7 +15,7 @@ dotnet build Dread.csproj -c Release --nologo -v quiet
 if ($LASTEXITCODE -ne 0) { Write-Error "Build failed"; exit 1 }
 
 # Copy mod files into Thunderstore package layout
-Copy-Item "bin\Release\net472\Dread.dll" "$outDir\BepInEx\plugins\$name\"
+Copy-Item "bin\Release\net48\Dread.dll" "$outDir\BepInEx\plugins\$name\"
 
 if (Test-Path "audio") {
     Copy-Item -Recurse "audio" "$outDir\BepInEx\plugins\$name\"

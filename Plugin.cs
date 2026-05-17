@@ -13,7 +13,7 @@ namespace Dread
     {
         public const string GUID = "elytraking.dread";
         public const string NAME = "Dread";
-        public const string VERSION = "1.1.0";
+        public const string VERSION = "1.2.0";
 
         internal static new ManualLogSource Logger = null!;
 
