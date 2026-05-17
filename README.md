@@ -6,6 +6,7 @@ Atmospheric horror overhaul for R.E.P.O. Makes the game feel genuinely unsettlin
 
 ### Host Options
 - **Force gamma** — host can push a specific gamma value (0–100) to all clients on level load. Disabled by default. Default value 40 (matches game default).
+- **Force pixelation** — host can push a specific render size (1–100%) to all clients on level load. Disabled by default. Default 100 = no pixelation.
 
 ### Ambient Audio
 Rare positional horror sounds (scraping, footsteps, breathing, door creaks, whispers) placed around the level during runs.

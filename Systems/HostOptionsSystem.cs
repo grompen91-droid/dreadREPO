@@ -12,10 +12,12 @@ namespace Dread.Systems
     public class HostOptionsSystem : MonoBehaviour
     {
         private static NetworkedEvent? _gammaEvent;
+        private static NetworkedEvent? _pixelationEvent;
 
         private void Start()
         {
             _gammaEvent = new NetworkedEvent("Dread.GammaForce", OnGammaReceived);
+            _pixelationEvent = new NetworkedEvent("Dread.PixelationForce", OnPixelationReceived);
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
@@ -28,13 +30,19 @@ namespace Dread.Systems
         {
             bool isMenu = scene.name.Contains("Menu") || scene.name.Contains("Main");
             if (isMenu) return;
-            if (!DreadConfig.GammaForceEnabled.Value) return;
             if (!IsHost()) return;
 
-            _gammaEvent?.RaiseEvent(
-                DreadConfig.GammaValue.Value,
-                NetworkingEvents.RaiseAll,
-                SendOptions.SendReliable);
+            if (DreadConfig.GammaForceEnabled.Value)
+                _gammaEvent?.RaiseEvent(
+                    DreadConfig.GammaValue.Value,
+                    NetworkingEvents.RaiseAll,
+                    SendOptions.SendReliable);
+
+            if (DreadConfig.PixelationForceEnabled.Value)
+                _pixelationEvent?.RaiseEvent(
+                    DreadConfig.PixelationValue.Value,
+                    NetworkingEvents.RaiseAll,
+                    SendOptions.SendReliable);
         }
 
         private static void OnGammaReceived(EventData data)
@@ -67,6 +75,39 @@ namespace Dread.Systems
                 method.Invoke(gm, null);
             else
                 Plugin.Logger.LogWarning("[Dread] GraphicsManager.UpdateGamma not found.");
+        }
+
+        private static void OnPixelationReceived(EventData data)
+        {
+            int value = (int)data.CustomData;
+            ApplyPixelation(value);
+        }
+
+        private static void ApplyPixelation(int percent)
+        {
+            percent = Mathf.Clamp(percent, 1, 100);
+            float multiplier = percent / 100f;
+
+            var gm = FindObjectOfType<GraphicsManager>();
+            if (gm == null)
+            {
+                Plugin.Logger.LogWarning("[Dread] GraphicsManager not found — storing render size for later.");
+                PlayerPrefs.SetFloat("RenderSize", multiplier);
+                PlayerPrefs.Save();
+                return;
+            }
+
+            var t = Traverse.Create(gm);
+            t.Field<float>("_resolutionMultiplier").Value = multiplier;
+
+            var method = typeof(GraphicsManager).GetMethod(
+                "UpdateRenderSize",
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+            if (method != null)
+                method.Invoke(gm, null);
+            else
+                Plugin.Logger.LogWarning("[Dread] GraphicsManager.UpdateRenderSize not found.");
         }
 
         private static bool IsHost()
