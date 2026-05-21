@@ -12,13 +12,11 @@ namespace Dread.Systems
 {
     public class TensionSystem : MonoBehaviour
     {
-        private bool _inLevel;
-        private Camera? _mainCam;
         private AudioSource? _breathSource;
-        private AudioClip? _footstepClip;
         private readonly List<AudioClip> _breathClips = new();
+        private AudioClip? _footstepClip;
 
-        // Proximity scan shared by adrenaline
+        // Proximity scan shared by adrenaline and panic sprint
         private float _nextScan;
         private float _nearestDist = float.MaxValue;
 
@@ -26,7 +24,7 @@ namespace Dread.Systems
         private float _originalDrain = -1f;
 
         // Low stamina state
-        private bool _lowStaminaTriggered;
+        private bool _wasSprintingForBreath;
         private float _breathCooldown;
 
         // Panic sprint state
@@ -47,8 +45,8 @@ namespace Dread.Systems
             _breathSource.loop = false;
             _breathSource.playOnAwake = false;
 
-            StartCoroutine(LoadFootstepClip());
             StartCoroutine(LoadBreathClips());
+            StartCoroutine(LoadFootstepClip());
             StartCoroutine(FakeFootstepLoop());
         }
 
@@ -60,14 +58,14 @@ namespace Dread.Systems
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            _inLevel = !scene.name.Contains("Menu") && !scene.name.Contains("Main");
-            _mainCam = null;
             _originalDrain = -1f;
             _panicActive = false;
             _panicTimer = 0f;
             _panicCooldown = 0f;
             _originalSprintMultiplier = -1f;
             _wasSprinting = false;
+            _wasSprintingForBreath = false;
+            _breathCooldown = 0f;
         }
 
         private void Update()
@@ -75,10 +73,9 @@ namespace Dread.Systems
             if (Time.time >= _nextScan)
             {
                 _nextScan = Time.time + 0.5f;
-                _nearestDist = _inLevel ? FindNearestEnemyDist() : float.MaxValue;
+                _nearestDist = SemiFunc.MenuLevel() ? float.MaxValue : FindNearestEnemyDist();
             }
 
-            _breathCooldown -= Time.deltaTime;
             UpdateAdrenaline();
             UpdateLowStamina();
             UpdatePanicSprint();
@@ -88,10 +85,10 @@ namespace Dread.Systems
 
         private void UpdateAdrenaline()
         {
-            if (!DreadConfig.AdrenalineEnabled.Value) return;
+            if (!DreadConfig.AdrenalineEnabled.Value || SemiFunc.MenuLevel()) return;
 
             var pc = PlayerController.instance;
-            if (pc == null) return;
+            if ((object)pc == null) return;
 
             if (_originalDrain < 0f)
                 _originalDrain = pc.EnergySprintDrain;
@@ -105,7 +102,7 @@ namespace Dread.Systems
 
         private void RestoreDrain()
         {
-            if (_originalDrain >= 0f && PlayerController.instance != null)
+            if (_originalDrain >= 0f && (object)PlayerController.instance != null)
                 PlayerController.instance.EnergySprintDrain = _originalDrain;
         }
 
@@ -113,38 +110,38 @@ namespace Dread.Systems
 
         private void UpdateLowStamina()
         {
-            if (!DreadConfig.LowStaminaSoundEnabled.Value || !_inLevel || _breathSource == null || _breathClips.Count == 0) return;
+            _breathCooldown -= Time.deltaTime;
+
+            if (!DreadConfig.LowStaminaSoundEnabled.Value || SemiFunc.MenuLevel() || _breathSource == null || _breathClips.Count == 0) return;
 
             var pc = PlayerController.instance;
-            if (pc == null || pc.EnergyStart <= 0f) return;
+            if ((object)pc == null || pc.EnergyStart <= 0f) return;
 
-            float pct = pc.EnergyCurrent / pc.EnergyStart;
+            bool currentlySprinting = pc.sprinting;
 
-            if (!_lowStaminaTriggered && pct < 0.10f && _breathCooldown <= 0f)
+            // Trigger each time player stops sprinting because energy ran out
+            if (_wasSprintingForBreath && !currentlySprinting && pc.EnergyCurrent <= 5f && _breathCooldown <= 0f)
             {
-                _lowStaminaTriggered = true;
                 _breathCooldown = 60f;
 
                 var clip = _breathClips[Random.Range(0, _breathClips.Count)];
                 _breathSource.clip = clip;
                 _breathSource.pitch = Random.Range(0.88f, 1.15f);
-                _breathSource.volume = 0.6f;
+                _breathSource.volume = 1.0f;
                 _breathSource.Play();
             }
-            else if (_lowStaminaTriggered && pct > 0.25f)
-            {
-                _lowStaminaTriggered = false;
-            }
+
+            _wasSprintingForBreath = currentlySprinting;
         }
 
         // ── Panic Sprint ──────────────────────────────────────────────────────
 
         private void UpdatePanicSprint()
         {
-            if (!DreadConfig.PanicSprintEnabled.Value) return;
+            if (!DreadConfig.PanicSprintEnabled.Value || SemiFunc.MenuLevel()) return;
 
             var pc = PlayerController.instance;
-            if (pc == null) return;
+            if ((object)pc == null) return;
 
             _panicCooldown -= Time.deltaTime;
 
@@ -180,40 +177,52 @@ namespace Dread.Systems
 
         private float FindNearestEnemyDist()
         {
-            if (_mainCam == null) _mainCam = Camera.main;
-            if (_mainCam == null) return float.MaxValue;
+            var cam = Camera.main;
+            if (cam == null) return float.MaxValue;
 
             var enemies = FindObjectsOfType<EnemyHealth>();
             float nearest = float.MaxValue;
             foreach (var e in enemies)
             {
                 if (e == null) continue;
-                float d = Vector3.Distance(_mainCam.transform.position, e.transform.position);
+                float d = Vector3.Distance(cam.transform.position, e.transform.position);
                 if (d < nearest) nearest = d;
             }
             return nearest;
         }
 
-        // ── Fake Footsteps ────────────────────────────────────────────────────
+        // ── Breath Clips ──────────────────────────────────────────────────────
 
-        // Loads breathing.ogg, breath2.ogg, breath3.ogg — skips any that don't exist.
-        // Drop extra files into the audio/ folder to add more variety.
+        private static readonly string[] BreathCandidates = { "breathing.ogg", "breath2.ogg", "breath3.ogg" };
+
         private IEnumerator LoadBreathClips()
         {
             var audioDir = Path.Combine(
                 Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
                 "audio");
 
-            var path = Path.Combine(audioDir, "breathing.ogg");
-            if (!File.Exists(path)) yield break;
+            foreach (var name in BreathCandidates)
+            {
+                var path = Path.Combine(audioDir, name);
+                if (!File.Exists(path)) continue;
 
-            using var req = UnityWebRequestMultimedia.GetAudioClip(
-                "file:///" + path.Replace('\\', '/'), AudioType.OGGVORBIS);
-            yield return req.SendWebRequest();
+                using var req = UnityWebRequestMultimedia.GetAudioClip(
+                    "file:///" + path.Replace('\\', '/'), AudioType.OGGVORBIS);
+                yield return req.SendWebRequest();
 
-            if (req.result == UnityWebRequest.Result.Success)
-                _breathClips.Add(DownloadHandlerAudioClip.GetContent(req));
+                if (req.result == UnityWebRequest.Result.Success)
+                {
+                    _breathClips.Add(DownloadHandlerAudioClip.GetContent(req));
+                    Plugin.Logger.LogInfo($"[Dread] Breath clip loaded: {name}");
+                }
+                else
+                {
+                    Plugin.Logger.LogWarning($"[Dread] Breath clip failed {name}: {req.error}");
+                }
+            }
         }
+
+        // ── Fake Footsteps ────────────────────────────────────────────────────
 
         private IEnumerator LoadFootstepClip()
         {
@@ -237,21 +246,20 @@ namespace Dread.Systems
             {
                 yield return new WaitForSeconds(Random.Range(120f, 240f));
 
-                if (!DreadConfig.FakeFootstepsEnabled.Value || !_inLevel || _footstepClip == null)
+                if (!DreadConfig.FakeFootstepsEnabled.Value || SemiFunc.MenuLevel() || _footstepClip == null)
                     continue;
 
                 if (Random.value > 0.35f) continue;
 
-                if (_mainCam == null) _mainCam = Camera.main;
-                if (_mainCam == null) continue;
+                var cam = Camera.main;
+                if (cam == null) continue;
 
-                SpawnFakeFootstep();
+                SpawnFakeFootstep(cam);
             }
         }
 
-        private void SpawnFakeFootstep()
+        private void SpawnFakeFootstep(Camera cam)
         {
-            var cam = _mainCam!;
             var behind = -cam.transform.forward;
             var side = cam.transform.right * Random.Range(-0.8f, 0.8f);
             var pos = cam.transform.position + (behind + side).normalized * Random.Range(2.5f, 5f);

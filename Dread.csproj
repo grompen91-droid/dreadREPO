@@ -8,16 +8,11 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Configurations>Debug;Release</Configurations>
     <GameDir>C:\Program Files (x86)\Steam\steamapps\common\REPO\REPO_Data\Managed</GameDir>
-    <BepInExDir>$(AppData)\Thunderstore Mod Manager\DataFolder\REPO\profiles\REALMULTIPLAYER\BepInEx</BepInExDir>
+    <BepInExDir>$(AppData)\r2modmanPlus-local\REPO\profiles\REALMULTIPLAYER\BepInEx</BepInExDir>
+    <PluginDir>$(BepInExDir)\plugins\elytraking-Dread\elytraking-Dread</PluginDir>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- REPOLib -->
-    <Reference Include="REPOLib">
-      <HintPath>$(BepInExDir)\plugins\Zehs-REPOLib\REPOLib.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-
     <!-- BepInEx core -->
     <Reference Include="BepInEx">
       <HintPath>$(BepInExDir)\core\BepInEx.dll</HintPath>
@@ -87,10 +82,6 @@
       <HintPath>$(GameDir)\Photon3Unity3D.dll</HintPath>
       <Private>false</Private>
     </Reference>
-    <Reference Include="PhotonRealtime">
-      <HintPath>$(GameDir)\PhotonRealtime.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
   </ItemGroup>
 
   <!-- Copy audio folder to output alongside DLL -->
@@ -99,4 +90,24 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <Target Name="DeployToProfile" AfterTargets="Build" Condition="Exists('$(PluginDir)')">
+    <Copy SourceFiles="$(OutputPath)Dread.dll" DestinationFolder="$(PluginDir)" SkipUnchangedFiles="false" />
+    <ItemGroup>
+      <AudioFiles Include="audio\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(AudioFiles)" DestinationFolder="$(PluginDir)\audio\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Message Text="[Dread] Deployed to $(PluginDir)" Importance="high" />
+  </Target>
+
+  <PropertyGroup>
+    <DistPluginDir>$(MSBuildProjectDirectory)\dist\elytraking-Dread-1.4.0\BepInEx\plugins\elytraking-Dread</DistPluginDir>
+  </PropertyGroup>
+
+  <Target Name="DeployToDist" AfterTargets="Build" Condition="Exists('$(DistPluginDir)')">
+    <Copy SourceFiles="$(OutputPath)Dread.dll" DestinationFolder="$(DistPluginDir)" SkipUnchangedFiles="false" />
+    <Delete Files="$(MSBuildProjectDirectory)\dist\elytraking-Dread-1.4.0.zip" />
+    <ZipDirectory SourceDirectory="$(MSBuildProjectDirectory)\dist\elytraking-Dread-1.4.0" DestinationFile="$(MSBuildProjectDirectory)\dist\elytraking-Dread-1.4.0.zip" />
+    <Message Text="[Dread] Deployed to dist and re-zipped" Importance="high" />
+  </Target>
 </Project>

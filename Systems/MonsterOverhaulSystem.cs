@@ -1,11 +1,10 @@
 // Confirmed class names via Assembly-CSharp.dll binary analysis:
-//   EnemyHealth       — enemy health component (field: "health")
 //   EnemyNavMeshAgent — movement component (fields: "agentSpeed", "speedMultiplier")
 //   EnemyParent       — enemy root component (has Start() lifecycle method)
 
 using System.Collections;
-using System.Reflection;
 using Dread.Config;
+using UnityEngine.AI;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -66,76 +65,64 @@ namespace Dread.Systems
     // Marker so we don't apply audio tweaks twice per enemy
     internal class DreadAudioTweaked : MonoBehaviour { }
 
-    // ── HP Patch ──────────────────────────────────────────────────────────────
-    // Targets EnemyHealth.Awake (confirmed class name from binary analysis).
-    // Uses reflection for the "health" field to avoid a hard compile dependency
-    // in case field name differs. Runs on all clients; Photon sync from master
-    // client makes this effectively host-authoritative.
-
-    [HarmonyPatch(typeof(EnemyHealth), "Awake")]
-    internal static class EnemyHealthAwakePatch
-    {
-        private static FieldInfo? _healthField;
-
-        [HarmonyPostfix]
-        private static void Postfix(EnemyHealth __instance)
-        {
-            if (!DreadConfig.MonsterHPEnabled.Value) return;
-
-            _healthField ??= typeof(EnemyHealth).GetField(
-                "health",
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-            if (_healthField == null)
-            {
-                Plugin.Logger.LogWarning("[Dread] EnemyHealth.health field not found. HP patch inactive.");
-                return;
-            }
-
-            var current = System.Convert.ToSingle(_healthField.GetValue(__instance));
-            _healthField.SetValue(__instance, Mathf.RoundToInt(current * DreadConfig.MonsterHPMultiplier.Value));
-        }
-    }
-
     // ── Aggression Patch ──────────────────────────────────────────────────────
-    // Targets EnemyNavMeshAgent.Awake (confirmed class + agentSpeed/speedMultiplier fields).
-    // NavMeshAgent is driven by the master client in Photon PUN — inherently host-authoritative.
+    // Decompiled fields (via ILSpy):
+    //   Agent          = NavMeshAgent component
+    //   DefaultSpeed   = Agent.speed cached at Awake (used by speed-reset logic)
+    //   DefaultAcceleration = Agent.acceleration cached at Awake
+    // We multiply both the live agent value and the cached default so resets stay fast.
 
     [HarmonyPatch(typeof(EnemyNavMeshAgent), "Awake")]
     internal static class EnemyNavMeshAgentAwakePatch
     {
-        private static FieldInfo? _agentSpeedField;
-        private static FieldInfo? _speedMultField;
-
         [HarmonyPostfix]
         private static void Postfix(EnemyNavMeshAgent __instance)
         {
             if (!DreadConfig.MonsterAggressionEnabled.Value) return;
 
-            _agentSpeedField ??= typeof(EnemyNavMeshAgent).GetField(
-                "agentSpeed",
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            var t = Traverse.Create(__instance);
+            var agent = t.Field<NavMeshAgent>("Agent").Value;
+            if (agent == null) return;
 
-            _speedMultField ??= typeof(EnemyNavMeshAgent).GetField(
-                "speedMultiplier",
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            agent.speed *= 1.2f;
+            agent.acceleration *= 1.2f;
+            t.Field<float>("DefaultSpeed").Value *= 1.2f;
+            t.Field<float>("DefaultAcceleration").Value *= 1.2f;
+        }
+    }
 
-            if (_agentSpeedField != null)
-            {
-                var speed = System.Convert.ToSingle(_agentSpeedField.GetValue(__instance));
-                _agentSpeedField.SetValue(__instance, speed * 1.35f);
-            }
+    // ── Crouch Speed Patch ────────────────────────────────────────────────────
+    // Boosts CrouchSpeed and the cached original so speed-resets also use the
+    // boosted value (e.g. after tumbling).
 
-            if (_speedMultField != null)
-            {
-                var mult = System.Convert.ToSingle(_speedMultField.GetValue(__instance));
-                _speedMultField.SetValue(__instance, mult * 1.35f);
-            }
+    [HarmonyPatch(typeof(PlayerController), "Awake")]
+    internal static class PlayerControllerAwakePatch
+    {
+        [HarmonyPostfix]
+        private static void Postfix(PlayerController __instance)
+        {
+            if (!DreadConfig.CrouchSpeedBoostEnabled.Value) return;
 
-            if (_agentSpeedField == null && _speedMultField == null)
-            {
-                Plugin.Logger.LogWarning("[Dread] EnemyNavMeshAgent speed fields not found. Aggression patch inactive.");
-            }
+            __instance.CrouchSpeed *= 1.3f;
+            var t = Traverse.Create(__instance);
+            float orig = t.Field<float>("playerOriginalCrouchSpeed").Value;
+            if (orig > 0f) t.Field<float>("playerOriginalCrouchSpeed").Value = orig * 1.3f;
+        }
+    }
+
+    // ── Voice / Noise Detection Radius Patch ──────────────────────────────────
+    // Increases EnemyDirector investigate radius so voice and physics noise alert
+    // enemies further away. Kept at 1.5× — 3× caused too many simultaneous
+    // investigate events which overwhelms Photon enemy-position sync on clients.
+
+    [HarmonyPatch(typeof(EnemyDirector), "SetInvestigate")]
+    internal static class EnemyDirectorSetInvestigatePatch
+    {
+        [HarmonyPrefix]
+        private static void Prefix(ref float radius)
+        {
+            if (radius < float.MaxValue)
+                radius *= 1.5f;
         }
     }
 }

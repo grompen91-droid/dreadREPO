@@ -5,36 +5,31 @@ using System.Reflection;
 using Dread.Config;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.SceneManagement;
 
 namespace Dread.Systems
 {
     public class AudioDreadSystem : MonoBehaviour
     {
         private readonly List<AudioClip> _clips = new();
-        private bool _inLevel;
         private Camera? _mainCam;
 
         private static readonly string[] ClipNames =
         {
-            "scraping.ogg", "footsteps.ogg", "breathing.ogg", "door_creak.ogg", "whisper.ogg"
+            "scraping.ogg", "footsteps.ogg", "breathing.ogg", "whisper.ogg"
+        };
+
+        // Weight per clip name — lower = rarer. Unlisted clips default to 1.0.
+        private static readonly Dictionary<string, float> ClipWeights = new()
+        {
+            { "scraping.ogg",   1.0f },
+            { "footsteps.ogg",  1.0f },
+            { "breathing.ogg",  0.6f },
+            { "whisper.ogg",    0.25f },
         };
 
         private void Start()
         {
-            SceneManager.sceneLoaded += OnSceneLoaded;
             StartCoroutine(LoadClips());
-        }
-
-        private void OnDestroy()
-        {
-            SceneManager.sceneLoaded -= OnSceneLoaded;
-        }
-
-        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-        {
-            _inLevel = !scene.name.Contains("Menu") && !scene.name.Contains("Main");
-            _mainCam = null;
         }
 
         private IEnumerator LoadClips()
@@ -79,7 +74,7 @@ namespace Dread.Systems
                 var baseDelay = Random.Range(30f, 90f) / DreadConfig.AudioFrequency.Value;
                 yield return new WaitForSeconds(baseDelay);
 
-                if (!DreadConfig.AudioEnabled.Value || !_inLevel || _clips.Count == 0)
+                if (!DreadConfig.AudioEnabled.Value || SemiFunc.MenuLevel() || _clips.Count == 0)
                     continue;
 
                 if (_mainCam == null)
@@ -91,9 +86,24 @@ namespace Dread.Systems
             }
         }
 
+        private AudioClip PickWeightedClip()
+        {
+            float total = 0f;
+            foreach (var c in _clips)
+                total += ClipWeights.TryGetValue(c.name, out var w) ? w : 1.0f;
+
+            float roll = Random.Range(0f, total);
+            foreach (var c in _clips)
+            {
+                roll -= ClipWeights.TryGetValue(c.name, out var w) ? w : 1.0f;
+                if (roll <= 0f) return c;
+            }
+            return _clips[_clips.Count - 1];
+        }
+
         private void PlayRandomSound()
         {
-            var clip = _clips[Random.Range(0, _clips.Count)];
+            var clip = PickWeightedClip();
             var cam = _mainCam!;
 
             var offset = new Vector3(
