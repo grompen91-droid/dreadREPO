@@ -27,7 +27,9 @@ namespace Dread.Config
             AudioEnabled = cfg.Bind("1. Audio Dread", "Enabled", true,
                 "Ambient horror sounds during runs.");
             AudioFrequency = cfg.Bind("1. Audio Dread", "Frequency", 1.0f,
-                "Sound frequency multiplier. 1 = default, 2 = twice as often.");
+                new ConfigDescription(
+                    "Sound frequency multiplier. 1 = default, 2 = twice as often.",
+                    new AcceptableValueRange<float>(0.1f, 10f)));
             AudioVolume = cfg.Bind("1. Audio Dread", "Volume", 0.4f,
                 new ConfigDescription(
                     "Ambient sound volume (0.0 - 1.0).",
