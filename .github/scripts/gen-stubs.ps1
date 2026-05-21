@@ -228,30 +228,26 @@ if (Test-Path "$bepinDir/BepInEx/core/BepInEx.dll") {
 
 $targets = @'
 <Project>
-  <Target Name="ReplaceGameRefsWithCIStubs" BeforeTargets="ResolveAssemblyReferences">
-    <ItemGroup>
-      <Reference Remove="@(Reference)" />
-      <!-- All Unity module references point to our single stub DLL compiled as assembly name "UnityEngine" -->
-      <Reference Include="UnityEngine">
-        <HintPath>$(MSBuildProjectDirectory)/.github/_ci/refs/UnityEngine.dll</HintPath>
-      </Reference>
-      <Reference Include="UnityEngine.CoreModule">
-        <HintPath>$(MSBuildProjectDirectory)/.github/_ci/refs/UnityEngine.dll</HintPath>
-      </Reference>
-      <Reference Include="UnityEngine.AudioModule">
-        <HintPath>$(MSBuildProjectDirectory)/.github/_ci/refs/UnityEngine.dll</HintPath>
-      </Reference>
-      <Reference Include="UnityEngine.AIModule">
-        <HintPath>$(MSBuildProjectDirectory)/.github/_ci/refs/UnityEngine.dll</HintPath>
-      </Reference>
-      <Reference Include="BepInEx">
-        <HintPath>$(MSBuildProjectDirectory)/.github/_ci/refs/core/BepInEx.dll</HintPath>
-      </Reference>
-      <Reference Include="0Harmony">
-        <HintPath>$(MSBuildProjectDirectory)/.github/_ci/refs/core/0Harmony.dll</HintPath>
-      </Reference>
-    </ItemGroup>
-  </Target>
+  <!--
+    Evaluated at project load time (not inside a Target), so this runs before
+    ResolveAssemblyReferences sees any items. Remove all game/Unity refs and
+    replace with CI stubs so the build never looks at non-existent local paths.
+  -->
+  <ItemGroup>
+    <Reference Remove="@(Reference)" />
+    <Reference Include="UnityEngine">
+      <HintPath>$(MSBuildProjectDirectory)\.github\_ci\refs\UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="BepInEx">
+      <HintPath>$(MSBuildProjectDirectory)\.github\_ci\refs\core\BepInEx.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(MSBuildProjectDirectory)\.github\_ci\refs\core\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
 </Project>
 '@
 
