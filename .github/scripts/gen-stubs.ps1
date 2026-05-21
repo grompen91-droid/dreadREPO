@@ -17,14 +17,14 @@ namespace UnityEngine
 {
     public abstract class MonoBehaviour : Behaviour
     {
-        public GameObject gameObject { get; }
-        public Transform transform { get; }
         public Coroutine StartCoroutine(IEnumerator routine) => null;
     }
     public class Behaviour : Component { }
     public class Component : Object
     {
         public T GetComponent<T>() where T : class => null;
+        public T[] GetComponentsInChildren<T>() where T : class => null;
+        public T[] GetComponentsInChildren<T>(bool includeInactive) where T : class => null;
         public GameObject gameObject { get; }
         public Transform transform { get; }
     }
