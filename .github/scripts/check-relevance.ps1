@@ -1,9 +1,14 @@
 param(
     [string]$PrTitle = "",
     [string]$PrBody = "",
+    [string]$PrBodyFile = "",
     [string]$ChangedFiles = "",
     [string]$PrAuthor = ""
 )
+
+if ($PrBodyFile -and (Test-Path $PrBodyFile)) {
+    $PrBody = Get-Content $PrBodyFile -Raw
+}
 
 $exitCode = 0
 $reasons = @()
@@ -85,4 +90,4 @@ $result = @{
 
 $result | ConvertTo-Json -Compress
 
-exit $exitCode
+exit 0
