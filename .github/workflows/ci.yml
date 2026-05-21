@@ -101,6 +101,19 @@ jobs:
           cd ..
           Remove-Item -Recurse -Force _getref 2>$null
 
+      - name: Apply CI Directory.Build.targets
+        shell: pwsh
+        run: |
+          $src = "${{ github.workspace }}\.github\_ci\Directory.Build.targets"
+          $dst = "${{ github.workspace }}\Directory.Build.targets"
+          if (Test-Path $src) {
+            Copy-Item $src $dst -Force
+            Write-Host "Applied Directory.Build.targets for CI"
+          } else {
+            Write-Error "Directory.Build.targets not found at $src"
+            exit 1
+          }
+
       - name: Build
         id: build
         shell: pwsh
@@ -139,6 +152,13 @@ jobs:
           name: build-log
           path: ${{ runner.temp }}\build-output.txt
           retention-days: 7
+
+      - name: Cleanup Directory.Build.targets
+        if: always()
+        shell: pwsh
+        run: |
+          $dst = "${{ github.workspace }}\Directory.Build.targets"
+          if (Test-Path $dst) { Remove-Item $dst -Force }
 
   analyze:
     name: Code Analysis
