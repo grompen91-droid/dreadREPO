@@ -1,5 +1,10 @@
 name: CI
 
+permissions:
+  contents: read
+  metadata: read
+  packages: read
+
 on:
   pull_request:
     types: [opened, synchronize, reopened, edited]
@@ -67,7 +72,7 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 15
     needs: [relevance]
-    if: ${{ always() && needs.relevance.result != 'cancelled' }}
+    if: ${{ needs.relevance.outputs.passed == 'True' }}
 
     steps:
       - name: Checkout
@@ -97,7 +102,7 @@ jobs:
           path: |
             ${{ env.DOTNET_ROOT }}\sdk-manifests
             ${{ env.DOTNET_ROOT }}\packs
-          key: maui-windows-${{ hashFiles('.github/workflows/ci.yml') }}-${{ runner.os }}
+          key: maui-windows-${{ hashFiles('.github/scripts/gen-stubs.ps1', 'Dread.csproj') }}-${{ runner.os }}
           restore-keys: |
             maui-windows-${{ runner.os }}
 
@@ -156,7 +161,7 @@ jobs:
     name: Code Analysis
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [build]
+    needs: [relevance]
 
     steps:
       - name: Checkout
@@ -225,7 +230,7 @@ jobs:
           Write-Host "| Build     | $bld |"
           Write-Host "| Analysis  | $anl |"
           Write-Host ""
-          if ($bld -eq "success") {
+          if ($bld -eq "success" -and $rel -ne "failure" -and $anl -eq "success") {
             Write-Host "::notice::All CI checks passed"
           } else {
             Write-Host "::error::Some CI checks failed"
