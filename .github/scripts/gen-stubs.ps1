@@ -32,6 +32,7 @@ namespace UnityEngine
         public GameObject() { }
         public GameObject(string name) { }
         public T AddComponent<T>() where T : Component => null;
+        public T[] GetComponentsInChildren<T>() where T : class => null;
         public Transform transform { get; }
     }
     public class Transform : Component
@@ -59,6 +60,7 @@ namespace UnityEngine
         public Vector3(float x, float y, float z) { this.x = x; this.y = y; this.z = z; }
         public static Vector3 operator *(Vector3 v, float s) => v;
         public static Vector3 operator +(Vector3 a, Vector3 b) => a;
+        public static Vector3 operator -(Vector3 a, Vector3 b) => a;
     }
     public class Camera : Behaviour
     {
