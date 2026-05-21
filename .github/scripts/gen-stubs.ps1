@@ -280,3 +280,4 @@ if (Test-Path "$bepinDir/BepInEx/core/BepInEx.dll") {
 }
 
 Write-Host "[gen-stubs] Done"
+# CI test trigger
