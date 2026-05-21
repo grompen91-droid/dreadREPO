@@ -9,13 +9,28 @@
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 ![Thunderstore](https://img.shields.io/badge/thunderstore-elytraking/Dread-243e58?style=flat-square)
 
+## Table of Contents
+
+- [Overview](#overview)
+- [How It Works](#how-it-works)
+- [Features](#features)
+- [Configuration](#configuration)
+- [Netcode Model](#netcode-model)
+- [Mod Compatibility](#mod-compatibility)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Version History](#version-history)
+- [Getting Started](#getting-started)
+- [Building from Source](#building-from-source)
+- [License](#license)
+
 ---
 
 ## Overview
 
 Dread is a BepInEx plugin that transforms R.E.P.O. into a genuinely unsettling experience at the IL level. It uses **Harmony 2 runtime patching** to intercept enemy spawn, movement, and detection methods, while three independent MonoBehaviour systems run on a persistent game object that survives scene transitions.
 
-Every feature is independently toggleable via `BepInEx/config/elytraking.dread.cfg`. Players without Dread can join modded lobbies -- monster changes are host-authoritative, while audio and tension effects are client-local.
+Every feature is independently toggleable via `BepInEx/config/elytraking.dread.cfg`. Players without Dread can join modded lobbies: monster changes are host-authoritative, while audio and tension effects are client-local.
 
 ---
 
@@ -33,7 +48,7 @@ Plugin.Start()
        +-- TensionSystem          # 0.5s proximity scan drives 4 features
 ```
 
-All three systems load their audio assets from a DLL-adjacent `audio/` folder via `UnityWebRequestMultimedia.GetAudioClip` with `AudioType.OGGVORBIS`. They are independent by design -- a failure in one system does not affect the others.
+All three systems load their audio assets from a DLL-adjacent `audio/` folder via `UnityWebRequestMultimedia.GetAudioClip` with `AudioType.OGGVORBIS`. They are independent by design: a failure in one system does not affect the others.
 
 ---
 
@@ -68,7 +83,7 @@ Three Harmony patches and a dynamic audio scan run independently, applied at dif
 
 #### EnemyDirector.SetInvestigate (Prefix)
 - **Effect:** Multiplies investigate radius by **1.5x**
-- **Cap:** Intentionally limited -- higher values desync enemy positions over Photon PUN on remote clients
+- **Cap:** Intentionally limited: higher values desync enemy positions over Photon PUN on remote clients
 
 #### Audio Overhaul (Scan loop, 4s interval)
 - Lowers enemy `AudioSource.pitch` to **0.72x** (darker, deeper)
@@ -162,6 +177,19 @@ Monster changes are **host-authoritative** because the Harmony patches run on th
 
 ---
 
+## Mod Compatibility
+
+Dread works alongside other mods without conflicts:
+
+- **Modded enemies** (Mimic, WesleysEnemies, etc.): fully supported. The 4s audio scan loop catches any `EnemyHealth` component regardless of origin, and Harmony patches apply to all `EnemyNavMeshAgent` derivatives.
+- **REPOConfig**: compatible for live config editing.
+- **Other audio mods**: no conflict. Dread only modifies its own spawned `AudioSource` objects and enemy child audio sources via the marker guard.
+- **REPOLib**: no longer required (removed in v1.4.0). Dread is dependency-free.
+
+The `audio/` folder includes `door_creak.ogg` which is shipped but not currently loaded by any system. It is available for future ambient variants or custom sound replacement.
+
+---
+
 ## Tech Stack
 
 | Component | Technology |
@@ -207,7 +235,7 @@ Dread/
 
 | Version | Highlights |
 |---------|------------|
-| **v1.0.0** | Initial release -- 6 systems designed via dnSpy binary analysis |
+| **v1.0.0** | Initial release: 6 systems designed via dnSpy binary analysis |
 | **v1.3.x** | Rapid fixes: REPOLib GUID, HarmonyLib imports, Photon paths |
 | **v1.4.0** | Major refactor: removed 3 broken systems, added weighted audio, marker components, shared proximity scan, first real assets |
 | **v1.4.1** | Thunderstore reupload, no functional changes |
@@ -253,6 +281,10 @@ BepInEx/
 
 Requires .NET SDK 4.8 targeting pack and a local R.E.P.O. installation (for `Assembly-CSharp.dll` and Photon references in `Dread.csproj`).
 
+### Testing
+
+This mod has no test suite. All testing is done manually in-game. The three-system architecture (independent MonoBehaviours on a `DontDestroyOnLoad` host) makes each system testable in isolation by disabling the others via config.
+
 ### Available Scripts
 
 | Command | Description |
@@ -266,8 +298,8 @@ Requires .NET SDK 4.8 targeting pack and a local R.E.P.O. installation (for `Ass
 ```
 
 Output in `dist/`:
-- `elytraking-Dread-1.4.1/` -- unpacked package folder
-- `elytraking-Dread-1.4.1.zip` -- ready for Thunderstore upload
+- `elytraking-Dread-1.4.1/`: unpacked package folder
+- `elytraking-Dread-1.4.1.zip`: ready for Thunderstore upload
 
 ---
 
