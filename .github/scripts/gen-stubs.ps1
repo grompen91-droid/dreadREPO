@@ -185,7 +185,7 @@ Add-Type -TypeDefinition $stubs -OutputAssembly "$stubsDir/CIStubs.dll" -Warning
 Write-Host "[gen-stubs] Created CIStubs.dll ($((Get-Item "$stubsDir/CIStubs.dll").Length / 1KB) KB)"
 
 $bepinVersion = "5.4.21"
-$bepinUrl = "https://github.com/BepInEx/BepInEx/releases/download/v$bepinVersion/BepInEx_win_x64_$bepinVersion.0.zip"
+$bepinUrl = "https://github.com/BepInEx/BepInEx/releases/download/v$bepinVersion/BepInEx_x64_$bepinVersion.0.zip"
 $bepinZip = "$OutDir/bepinex.zip"
 $bepinDir = "$OutDir/bepinex"
 
