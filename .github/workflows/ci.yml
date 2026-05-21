@@ -1,0 +1,240 @@
+name: CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  relevance:
+    name: PR Relevance Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      passed: ${{ steps.check.outputs.passed }}
+      reasons: ${{ steps.check.outputs.reasons }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gather PR context
+        id: context
+        shell: pwsh
+        run: |
+          $title = "${{ github.event.pull_request.title }}"
+          $body  = "${{ github.event.pull_request.body }}"
+          $author = "${{ github.event.pull_request.user.login }}"
+          $files = git diff --name-only origin/${{ github.base_ref }}...HEAD
+          $filesJson = $files -join "`n"
+          "title=$title" >> $env:GITHUB_OUTPUT
+          "body=$body" >> $env:GITHUB_OUTPUT
+          "author=$author" >> $env:GITHUB_OUTPUT
+          $filesJson | Out-File -FilePath "$env:RUNNER_TEMP/changed-files.txt" -Encoding utf8
+
+      - name: Check relevance
+        id: check
+        shell: pwsh
+        run: |
+          $files = Get-Content "$env:RUNNER_TEMP/changed-files.txt" -Raw
+          $result = & "$env:GITHUB_WORKSPACE/.github/scripts/check-relevance.ps1" `
+            -PrTitle "${{ steps.context.outputs.title }}" `
+            -PrBody "${{ steps.context.outputs.body }}" `
+            -ChangedFiles "$files" `
+            -PrAuthor "${{ steps.context.outputs.author }}"
+          $parsed = $result | ConvertFrom-Json
+          "passed=$($parsed.passed)" >> $env:GITHUB_OUTPUT
+          "reasons=$($parsed.reasons -join '; ')" >> $env:GITHUB_OUTPUT
+
+      - name: Post relevance result
+        if: always()
+        shell: pwsh
+        run: |
+          if ("${{ steps.check.outputs.passed }}" -eq "True") {
+            Write-Host "::notice::PR relevance check passed"
+          } else {
+            $reasons = "${{ steps.check.outputs.reasons }}"
+            Write-Host "::warning::PR relevance flagged: $reasons"
+          }
+
+  build:
+    name: Build (stubbed references)
+    runs-on: windows-latest
+    timeout-minutes: 15
+    needs: [relevance]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            6.0.x
+            8.0.x
+
+      - name: Generate stub assemblies
+        id: stubs
+        shell: pwsh
+        run: |
+          .\.github\scripts\gen-stubs.ps1
+        env:
+          OutDir: ${{ github.workspace }}\.github\_ci
+
+      - name: Install net48 targeting pack
+        shell: pwsh
+        run: |
+          dotnet workload install maui-windows 2>$null
+          cd $env:RUNNER_TEMP
+          dotnet new console -n _getref -o _getref --force 2>$null
+          cd _getref
+          dotnet add package Microsoft.NETFramework.ReferenceAssemblies --version 1.0.3 2>$null
+          cd ..
+          Remove-Item -Recurse -Force _getref 2>$null
+
+      - name: Apply CI Directory.Build.targets
+        shell: pwsh
+        run: |
+          $src = "${{ github.workspace }}\.github\_ci\Directory.Build.targets"
+          $dst = "${{ github.workspace }}\Directory.Build.targets"
+          if (Test-Path $src) {
+            Copy-Item $src $dst -Force
+            Write-Host "Applied Directory.Build.targets for CI"
+          } else {
+            Write-Error "Directory.Build.targets not found at $src"
+            exit 1
+          }
+
+      - name: Build
+        id: build
+        shell: pwsh
+        run: |
+          $refsDir = "${{ github.workspace }}\.github\_ci\refs"
+          Write-Host "Building with refs: $refsDir"
+          $output = dotnet build Dread.csproj `
+            -c Release `
+            --nologo `
+            -p:GameDir="$refsDir" `
+            -p:BepInExDir="$refsDir" `
+            -p:DeployToProfile=false `
+            -p:DeployToDist=false `
+            2>&1
+          $exitCode = $LASTEXITCODE
+          "$output" | Out-File -FilePath "$env:RUNNER_TEMP\build-output.txt" -Encoding utf8
+          "exitCode=$exitCode" >> $env:GITHUB_OUTPUT
+          if ($exitCode -eq 0) {
+            Write-Host "::notice::Build succeeded"
+          } else {
+            Write-Host "::error::Build failed (exit code $exitCode)"
+          }
+
+      - name: Upload build artifacts
+        if: steps.build.outputs.exitCode == 0
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dread-CI-DLL
+          path: bin\Release\net48\Dread.dll
+          retention-days: 3
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: ${{ runner.temp }}\build-output.txt
+          retention-days: 7
+
+      - name: Cleanup Directory.Build.targets
+        if: always()
+        shell: pwsh
+        run: |
+          $dst = "${{ github.workspace }}\Directory.Build.targets"
+          if (Test-Path $dst) { Remove-Item $dst -Force }
+
+  analyze:
+    name: Code Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [build]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Install dotnet-format
+        shell: pwsh
+        run: dotnet tool install -g dotnet-format 2>$null
+
+      - name: Check formatting
+        id: format
+        shell: pwsh
+        run: |
+          $result = dotnet format Dread.csproj --verify-no-changes --report 2>&1
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "::warning::Code formatting issues found"
+            "$result"
+          } else {
+            Write-Host "::notice::All files are formatted correctly"
+          }
+
+      - name: Check for common C# issues
+        shell: pwsh
+        run: |
+          $issues = 0
+          $nullForgiving = Select-String -Path "*.cs" -Pattern '\w+!' -Include "*.cs" -SimpleMatch
+          if ($nullForgiving) {
+            Write-Host "::warning::Null-forgiving operator (!) usage found"
+            $nullForgiving
+            $issues++
+          }
+          $hardcoded = Select-String -Path "*.cs" -Pattern '[A-Z]:\\' -Include "*.cs"
+          if ($hardcoded) {
+            Write-Host "::warning::Hardcoded Windows paths found"
+            $hardcoded
+            $issues++
+          }
+          if ($issues -eq 0) {
+            Write-Host "::notice::No common issues detected"
+          }
+
+  summary:
+    name: PR Status Summary
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    needs: [relevance, build, analyze]
+    if: always()
+
+    steps:
+      - name: Summarize checks
+        shell: pwsh
+        run: |
+          $rel = "${{ needs.relevance.result }}"
+          $bld = "${{ needs.build.result }}"
+          $anl = "${{ needs.analyze.result }}"
+          Write-Host "## CI Summary"
+          Write-Host ""
+          Write-Host "| Check | Status |"
+          Write-Host "|-------|--------|"
+          Write-Host "| Relevance | $rel |"
+          Write-Host "| Build     | $bld |"
+          Write-Host "| Analysis  | $anl |"
+          Write-Host ""
+          if ($rel -eq "success" -and $bld -eq "success") {
+            Write-Host "::notice::All CI checks passed"
+          } else {
+            Write-Host "::error::Some CI checks failed"
+            exit 1
+          }
