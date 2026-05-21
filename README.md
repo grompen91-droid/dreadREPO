@@ -3,7 +3,7 @@
 > **Atmospheric horror overhaul for R.E.P.O.**  
 > Three runtime systems that layer ambient dread, scarier monsters, and a tension system that reads your proximity to danger in real time.
 
-![Version](https://img.shields.io/badge/version-1.4.1-crimson?style=flat-square)
+![Version](https://img.shields.io/badge/version-1.5.0-crimson?style=flat-square)
 ![BepInEx](https://img.shields.io/badge/BepInEx-5.4.21-blueviolet?style=flat-square)
 ![Game](https://img.shields.io/badge/game-R.E.P.O.-orange?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
@@ -56,17 +56,18 @@ All three systems load their audio assets from a DLL-adjacent `audio/` folder vi
 
 ### Ambient Audio
 
-A coroutine loop places rare, positional sounds in the world during runs. Every 30 to 90 seconds (scaled by config multiplier), a sound is selected using weighted random distribution and spawned at a random 3D position 5 to 15 meters from the player's camera.
+A coroutine loop places rare, positional sounds in the world during runs. Every 60 to 180 seconds (scaled by config multiplier), a sound is selected using weighted random distribution and spawned at a random 3D position 5 to 15 meters from the player's camera. Pitch randomized per-play from 0.5x to 1.5x.
 
 | Sound | Weight | Rarity | Description |
 |-------|--------|--------|-------------|
-| `scraping.ogg` | 1.0 | Common | Something dragging across the floor |
-| `footsteps.ogg` | 1.0 | Common | Steps from a direction nobody is in |
-| `breathing.ogg` | 0.6 | Uncommon | Close, slow breathing nearby |
-| `whisper.ogg` | 0.25 | Rare | A voice at the edge of hearing |
+| `scraping.ogg` | 0.6 | Common | Something dragging across the floor |
+| `footsteps.ogg` | 0.6 | Common | Steps from a direction nobody is in |
+| `breathing.ogg` | 0.3 | Uncommon | Close, slow breathing nearby |
+| `whisper.ogg` | 0.1 | Rare | A voice at the edge of hearing |
 
 - Fully spatialized (`spatialBlend = 1.0`), linear rolloff, falloff from 1m to 25m
 - Each AudioSource self-destructs after `clip.length + 0.5s`
+- Pitch randomized `0.5x`-`1.5x` on every spawn for variety
 - Automatically disabled on menu screens via `SemiFunc.MenuLevel()`
 
 ---
@@ -86,8 +87,8 @@ Three Harmony patches and a dynamic audio scan run independently, applied at dif
 - **Cap:** Intentionally limited: higher values desync enemy positions over Photon PUN on remote clients
 
 #### Audio Overhaul (Scan loop, 4s interval)
-- Lowers enemy `AudioSource.pitch` to **0.72x** (darker, deeper)
-- Raises `reverbZoneMix` to **1.1** (more spatial presence)
+- Randomizes enemy `AudioSource.pitch` to **0.5x-1.5x** of base (clamped 0.3-1.5), applied once per enemy via marker
+- Sets `reverbZoneMix = 1.0` for spatial presence
 - Forces `spatialBlend = 1.0` on all child audio sources
 - A marker component (`DreadAudioTweaked`) prevents double-patching
 - Works retroactively on any newly-spawned or modded enemy
@@ -116,8 +117,9 @@ A single `Update()` loop scans for the nearest `EnemyHealth` every **0.5 seconds
 - Supports multiple variants (`breathing.ogg`, `breath2.ogg`, `breath3.ogg`)
 
 #### Fake Footsteps
-- Coroutine fires every 2 to 4 minutes with **35%** chance to play
+- Coroutine fires every 3 to 6 minutes with **20%** chance to play
 - Spawns a 3D footstep sound 2.5m to 5m behind the player, slightly off-center
+- Pitch randomized `0.5x`-`1.5x` per spawn
 - Low volume, short falloff (0.5m min, 8m max)
 
 ---
@@ -212,7 +214,7 @@ Dread/
   Config/
     DreadConfig.cs                   # Static ConfigEntry bindings, 4 config sections
   Systems/
-    AudioDreadSystem.cs              # Coroutine: weighted ambient at 30-90s intervals
+    AudioDreadSystem.cs              # Coroutine: weighted ambient at 60-180s intervals, pitch randomized
     MonsterOverhaulSystem.cs         # 3 Harmony patches + 4s audio scan loop
     TensionSystem.cs                 # 0.5s proximity scan + 4 subsystems
   audio/
@@ -239,6 +241,7 @@ Dread/
 | **v1.3.x** | Rapid fixes: REPOLib GUID, HarmonyLib imports, Photon paths |
 | **v1.4.0** | Major refactor: removed 3 broken systems, added weighted audio, marker components, shared proximity scan, first real assets |
 | **v1.4.1** | Thunderstore reupload, no functional changes |
+| **v1.5.0** | Pitch randomization across all audio systems, rarer ambient sounds (60-180s, reduced weights), rarer fake footsteps (3-6 min, 20%), state leak fixes, config bounds fixes |
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
@@ -294,12 +297,12 @@ This mod has no test suite. All testing is done manually in-game. The three-syst
 | `dotnet build -c Release` | Release build only |
 
 ```powershell
-.\build.ps1 -Version "1.4.1"
+.\build.ps1 -Version "1.5.0"
 ```
 
 Output in `dist/`:
-- `elytraking-Dread-1.4.1/`: unpacked package folder
-- `elytraking-Dread-1.4.1.zip`: ready for Thunderstore upload
+- `elytraking-Dread-1.5.0/`: unpacked package folder
+- `elytraking-Dread-1.5.0.zip`: ready for Thunderstore upload
 
 ---
 

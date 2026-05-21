@@ -7,6 +7,34 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.5.0] - 2026-05-21
+
+![Status](https://img.shields.io/badge/status-stable-brightgreen?style=flat-square)
+![Type](https://img.shields.io/badge/type-minor-yellow?style=flat-square)
+
+> **Highlight:** Pitch randomization across all three audio systems, significantly rarer ambient sounds, and a full sweep of state-leak and config-bounds fixes.
+
+### Added
+- Pitch randomization (`0.5x`-`1.5x`) on every ambient sound spawn in `AudioDreadSystem`
+- Pitch randomization (`0.5x`-`1.5x`) on every fake footstep spawn in `TensionSystem`
+- Monster audio pitch now randomized per-enemy at scan time: `Mathf.Clamp(pitch * Random.Range(0.5f, 1.5f), 0.3f, 1.5f)` instead of a fixed multiplier
+- `RestoreSprintMultiplier()` method in `TensionSystem` for clean panic sprint cleanup on destroy and scene transition
+- `AcceptableValueRange<float>(0.0f, 1.0f)` added to `AudioVolume` config entry
+- `AcceptableValueRange<float>(0.1f, 10f)` added to `AudioFrequency` config entry
+
+### Changed
+- Ambient audio interval: `30-90s` → `60-180s` (sounds are rarer, each hit harder)
+- Clip weights reduced: scraping `1.0` → `0.6`, footsteps `1.0` → `0.6`, breathing `0.6` → `0.3`, whisper `0.25` → `0.1`
+- Fake footstep interval: `120-240s` → `180-360s`
+- Fake footstep trigger chance: `35%` → `20%`
+- `reverbZoneMix` in `MonsterOverhaulSystem` corrected to `1.0` (was `1.1`, outside valid Unity range of `0-1`)
+- `TensionSystem.OnDestroy` now calls `RestoreDrain()` and `RestoreSprintMultiplier()` to clean up modified player state
+- `TensionSystem.OnSceneLoaded` restores state before resetting sentinel values, preventing multiplier leaks across scene transitions
+- `UpdateAdrenaline` and `UpdatePanicSprint` both restore state when their respective config toggles are disabled mid-session
+- `_mainCam` cached as a field in `TensionSystem` to avoid `Camera.main` per-frame overhead
+
+---
+
 ## [1.4.1] - 2026-05-21
 
 ![Status](https://img.shields.io/badge/status-stable-brightgreen?style=flat-square)
