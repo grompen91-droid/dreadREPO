@@ -217,12 +217,15 @@ $targets = @'
 <Project>
   <Target Name="ReplaceGameRefsWithCIStubs" BeforeTargets="ResolveAssemblyReferences">
     <ItemGroup>
-      <_CIRefs Include="@(Reference)" Condition="
-        '%(Identity)' != 'BepInEx' And
-        '%(Identity)' != '0Harmony'" />
-      <Reference Remove="@(_CIRefs)" />
+      <Reference Remove="@(Reference)" />
       <Reference Include="CIStubs">
         <HintPath>$(MSBuildProjectDirectory)/.github/_ci/refs/CIStubs.dll</HintPath>
+      </Reference>
+      <Reference Include="BepInEx">
+        <HintPath>$(MSBuildProjectDirectory)/.github/_ci/refs/core/BepInEx.dll</HintPath>
+      </Reference>
+      <Reference Include="0Harmony">
+        <HintPath>$(MSBuildProjectDirectory)/.github/_ci/refs/core/0Harmony.dll</HintPath>
       </Reference>
     </ItemGroup>
   </Target>
