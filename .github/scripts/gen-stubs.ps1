@@ -46,7 +46,7 @@ namespace UnityEngine
         public static T[] FindObjectsOfType<T>() where T : Object => null;
         public static void Destroy(Object obj, float t = 0f) { }
         public static void DontDestroyOnLoad(Object obj) { }
-        public static implicit operator bool(Object exists) => exists != null;
+        public static implicit operator bool(Object exists) { return exists != null; }
     }
     public struct Vector3
     {
@@ -56,7 +56,7 @@ namespace UnityEngine
         public static Vector3 right => new Vector3();
         public static Vector3 zero => new Vector3();
         public static float Distance(Vector3 a, Vector3 b) => 0f;
-        public Vector3(float x, float y, z) { this.x = x; this.y = y; this.z = z; }
+        public Vector3(float x, float y, float z) { this.x = x; this.y = y; this.z = z; }
         public static Vector3 operator *(Vector3 v, float s) => v;
         public static Vector3 operator +(Vector3 a, Vector3 b) => a;
     }
@@ -186,7 +186,7 @@ $unityStubCs = "$stubsDir/UnityEngine_stubs.cs"
 $stubCode | Out-File -FilePath $unityStubCs -Encoding utf8
 
 $emptyStubCs = "$stubsDir/_empty.cs"
-'// Empty stub assembly' | Out-File -FilePath $emptyStubCs -Encoding utf8
+'// empty stub' | Out-File -FilePath $emptyStubCs -Encoding utf8
 
 function Compile-StubAssembly {
     param([string]$Name, [string]$SourceFile)
