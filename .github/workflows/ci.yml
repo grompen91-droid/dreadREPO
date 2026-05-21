@@ -100,7 +100,7 @@ jobs:
         with:
           path: |
             ${{ env.DOTNET_ROOT }}\sdk-manifests
-            ${{ env.DOTNET_ROOT }}\packs
+            ${{ env.DOTNET_ROOT }}\packs\Microsoft.NETFramework.ReferenceAssemblies
           key: maui-windows-${{ hashFiles('.github/scripts/gen-stubs.ps1', 'Dread.csproj') }}-${{ runner.os }}
           restore-keys: |
             maui-windows-${{ runner.os }}
