@@ -55,7 +55,7 @@ namespace UnityEngine
         public static Vector3 right => new Vector3();
         public static Vector3 zero => new Vector3();
         public static float Distance(Vector3 a, Vector3 b) => 0f;
-        public Vector3(float x, float y, float z) { this.x = x; this.y = y; this.z = z; }
+        public Vector3(float x, float y, z) { this.x = x; this.y = y; this.z = z; }
         public static Vector3 operator *(Vector3 v, float s) => v;
         public static Vector3 operator +(Vector3 a, Vector3 b) => a;
     }
@@ -181,36 +181,72 @@ public static class SemiFunc
 }
 '@
 
-# Write stub source
-$stubCs = "$stubsDir/CIStubs.cs"
-$stubCode | Out-File -FilePath $stubCs -Encoding utf8
+$unityStubCs = "$stubsDir/UnityEngine_stubs.cs"
+$stubCode | Out-File -FilePath $unityStubCs -Encoding utf8
 
-# Create minimal project to compile stubs with proper assembly identity
-$stubProj = @'
+$emptyStubCs = "$stubsDir/_empty.cs"
+'// Empty stub assembly' | Out-File -FilePath $emptyStubCs -Encoding utf8
+
+function Compile-StubAssembly {
+    param([string]$Name, [string]$SourceFile)
+
+    $csprojPath = "$stubsDir/$Name.csproj"
+    $projContent = @"
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyName>CIStubs</AssemblyName>
-    <RootNamespace>CIStubs</RootNamespace>
+    <AssemblyName>$Name</AssemblyName>
+    <RootNamespace>$Name</RootNamespace>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <Configurations>Release</Configurations>
+    <OutDir>$stubsDir</OutDir>
+    <BaseIntermediateOutputPath>$stubsDir\obj\$Name\</BaseIntermediateOutputPath>
+    <IntermediateOutputPath>$stubsDir\obj\$Name\</IntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>$stubsDir\obj\$Name\</MSBuildProjectExtensionsPath>
   </PropertyGroup>
-  <PropertyGroup>
-    <OutDir>$(MSBuildProjectDirectory)</OutDir>
-  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$SourceFile" />
+  </ItemGroup>
 </Project>
-'@
-$stubProj | Out-File -FilePath "$stubsDir/CIStubs.csproj" -Encoding utf8
+"@
+    $projContent | Out-File -FilePath $csprojPath -Encoding utf8
 
-Write-Host "[gen-stubs] Compiling CIStubs..."
-$buildOutput = dotnet build "$stubsDir/CIStubs.csproj" -c Release --nologo 2>&1
-Write-Host $buildOutput
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "[gen-stubs] Compilation failed"
-    exit 1
+    Write-Host "[gen-stubs] Compiling $Name..."
+    $output = dotnet build $csprojPath -c Release --nologo 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "[gen-stubs] Failed to compile $Name"
+        Write-Host $output
+        exit 1
+    }
+    $dllPath = "$stubsDir/$Name.dll"
+    if (Test-Path $dllPath) {
+        $size = (Get-Item $dllPath).Length / 1KB
+        Write-Host "[gen-stubs] Created $Name.dll ($size KB)"
+    }
 }
-Write-Host "[gen-stubs] Created CIStubs.dll ($((Get-Item "$stubsDir/CIStubs.dll").Length / 1KB) KB)"
+
+Compile-StubAssembly -Name "UnityEngine" -SourceFile $unityStubCs
+
+$emptyAssemblies = @(
+    'UnityEngine.CoreModule',
+    'UnityEngine.AudioModule',
+    'UnityEngine.UI',
+    'UnityEngine.PhysicsModule',
+    'UnityEngine.ImageConversionModule',
+    'UnityEngine.AnimationModule',
+    'UnityEngine.AIModule',
+    'UnityEngine.UIModule',
+    'UnityEngine.UnityWebRequestModule',
+    'UnityEngine.UnityWebRequestAudioModule',
+    'Assembly-CSharp',
+    'PhotonUnityNetworking',
+    'Photon3Unity3D'
+)
+
+foreach ($name in $emptyAssemblies) {
+    Compile-StubAssembly -Name $name -SourceFile $emptyStubCs
+}
 
 $bepinVersion = "5.4.21"
 $bepinUrl = "https://github.com/BepInEx/BepInEx/releases/download/v$bepinVersion/BepInEx_x64_$bepinVersion.0.zip"
@@ -240,22 +276,4 @@ if (Test-Path "$bepinDir/BepInEx/core/BepInEx.dll") {
     Write-Warning "[gen-stubs] BepInEx not available -- stubs only, build will fail"
 }
 
-$targets = @'
-<Project>
-  <Target Name="ReplaceGameRefsWithCIStubs" BeforeTargets="ResolveAssemblyReferences">
-    <ItemGroup>
-      <_CIRefs Include="@(Reference)" Condition="
-        '%(Identity)' != 'BepInEx' And
-        '%(Identity)' != '0Harmony'" />
-      <Reference Remove="@(_CIRefs)" />
-      <Reference Include="CIStubs">
-        <HintPath>$(MSBuildProjectDirectory)/.github/_ci/refs/CIStubs.dll</HintPath>
-      </Reference>
-    </ItemGroup>
-  </Target>
-</Project>
-'@
-
-$targets | Out-File -FilePath "$OutDir/Directory.Build.targets" -Encoding utf8
-Write-Host "[gen-stubs] Created Directory.Build.targets"
 Write-Host "[gen-stubs] Done"
