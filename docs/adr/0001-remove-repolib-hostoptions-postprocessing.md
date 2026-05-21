@@ -34,7 +34,7 @@ Remove all three systems and make Dread dependency-free (BepInEx only).
 - Dread no longer requires REPOLib. Players without REPOLib can install Dread freely.
 - Host Options (force gamma, force render size) are gone. No replacement planned.
 - Visual corruption effects are gone. Atmospheric experience relies entirely on audio.
-- `PhotonUnityNetworking.dll` and `Photon3Unity3D.dll` references in `Dread.csproj` became orphaned and should be removed (see issue #7).
+- `PhotonUnityNetworking.dll` and `Photon3Unity3D.dll` references in `Dread.csproj` became orphaned. Both were removed in v1.4.2 (issue #7).
 
 ---
 
