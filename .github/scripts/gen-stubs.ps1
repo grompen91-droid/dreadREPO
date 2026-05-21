@@ -10,6 +10,8 @@ $stubs = @'
 using System;
 using System.Collections;
 using System.Reflection;
+using UnityEngine;
+using UnityEngine.AI;
 
 namespace UnityEngine
 {
