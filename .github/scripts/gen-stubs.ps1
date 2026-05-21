@@ -202,9 +202,7 @@ function Compile-StubAssembly {
     <Nullable>enable</Nullable>
     <Configurations>Release</Configurations>
     <OutDir>$stubsDir</OutDir>
-    <BaseIntermediateOutputPath>$stubsDir\obj\$Name\</BaseIntermediateOutputPath>
     <IntermediateOutputPath>$stubsDir\obj\$Name\</IntermediateOutputPath>
-    <MSBuildProjectExtensionsPath>$stubsDir\obj\$Name\</MSBuildProjectExtensionsPath>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$SourceFile" />
