@@ -203,6 +203,7 @@ function Compile-StubAssembly {
     <Configurations>Release</Configurations>
     <OutDir>$stubsDir</OutDir>
     <IntermediateOutputPath>$stubsDir\obj\$Name\</IntermediateOutputPath>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$SourceFile" />
