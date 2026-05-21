@@ -6,7 +6,7 @@ $ErrorActionPreference = "Stop"
 
 $stubsDir = New-Item -ItemType Directory -Force "$OutDir/refs" | Select-Object -ExpandProperty FullName
 
-$stubs = @'
+$stubCode = @'
 using System;
 using System.Collections;
 using System.Reflection;
@@ -181,7 +181,35 @@ public static class SemiFunc
 }
 '@
 
-Add-Type -TypeDefinition $stubs -OutputAssembly "$stubsDir/CIStubs.dll" -WarningAction SilentlyContinue
+# Write stub source
+$stubCs = "$stubsDir/CIStubs.cs"
+$stubCode | Out-File -FilePath $stubCs -Encoding utf8
+
+# Create minimal project to compile stubs with proper assembly identity
+$stubProj = @'
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>CIStubs</AssemblyName>
+    <RootNamespace>CIStubs</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <Configurations>Release</Configurations>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OutDir>$(MSBuildProjectDirectory)</OutDir>
+  </PropertyGroup>
+</Project>
+'@
+$stubProj | Out-File -FilePath "$stubsDir/CIStubs.csproj" -Encoding utf8
+
+Write-Host "[gen-stubs] Compiling CIStubs..."
+$buildOutput = dotnet build "$stubsDir/CIStubs.csproj" -c Release --nologo 2>&1
+Write-Host $buildOutput
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "[gen-stubs] Compilation failed"
+    exit 1
+}
 Write-Host "[gen-stubs] Created CIStubs.dll ($((Get-Item "$stubsDir/CIStubs.dll").Length / 1KB) KB)"
 
 $bepinVersion = "5.4.21"
