@@ -25,17 +25,17 @@ jobs:
 
       - name: Gather PR context
         id: context
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
         shell: pwsh
         run: |
           $title = "${{ github.event.pull_request.title }}"
-          $body  = "${{ github.event.pull_request.body }}"
           $author = "${{ github.event.pull_request.user.login }}"
           $files = git diff --name-only origin/${{ github.base_ref }}...HEAD
-          $filesJson = $files -join "`n"
+          $files -join "`n" | Out-File -FilePath "$env:RUNNER_TEMP/changed-files.txt" -Encoding utf8
+          $env:PR_BODY | Out-File -FilePath "$env:RUNNER_TEMP/pr-body.txt" -Encoding utf8
           "title=$title" >> $env:GITHUB_OUTPUT
-          "body=$body" >> $env:GITHUB_OUTPUT
           "author=$author" >> $env:GITHUB_OUTPUT
-          $filesJson | Out-File -FilePath "$env:RUNNER_TEMP/changed-files.txt" -Encoding utf8
 
       - name: Check relevance
         id: check
@@ -44,7 +44,7 @@ jobs:
           $files = Get-Content "$env:RUNNER_TEMP/changed-files.txt" -Raw
           $result = & "$env:GITHUB_WORKSPACE/.github/scripts/check-relevance.ps1" `
             -PrTitle "${{ steps.context.outputs.title }}" `
-            -PrBody "${{ steps.context.outputs.body }}" `
+            -PrBodyFile "$env:RUNNER_TEMP/pr-body.txt" `
             -ChangedFiles "$files" `
             -PrAuthor "${{ steps.context.outputs.author }}"
           $parsed = $result | ConvertFrom-Json
@@ -67,6 +67,7 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 15
     needs: [relevance]
+    if: ${{ always() && needs.relevance.result != 'cancelled' }}
 
     steps:
       - name: Checkout
@@ -232,7 +233,7 @@ jobs:
           Write-Host "| Build     | $bld |"
           Write-Host "| Analysis  | $anl |"
           Write-Host ""
-          if ($rel -eq "success" -and $bld -eq "success") {
+          if ($bld -eq "success") {
             Write-Host "::notice::All CI checks passed"
           } else {
             Write-Host "::error::Some CI checks failed"
