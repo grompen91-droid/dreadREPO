@@ -31,7 +31,9 @@ namespace Dread.Config
                     "Sound frequency multiplier. 1 = default, 2 = twice as often.",
                     new AcceptableValueRange<float>(0.1f, 10f)));
             AudioVolume = cfg.Bind("1. Audio Dread", "Volume", 0.4f,
-                "Ambient sound volume (0.0 - 1.0).");
+                new ConfigDescription(
+                    "Ambient sound volume (0.0 - 1.0).",
+                    new AcceptableValueRange<float>(0.0f, 1.0f)));
 
             MonsterAggressionEnabled = cfg.Bind("2. Monster Overhaul", "AggressionEnabled", true,
                 "Increase monster speed. HOST ONLY.");

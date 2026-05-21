@@ -61,6 +61,7 @@ namespace Dread.Systems
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
+            RestoreDrain();
             RestoreSprintMultiplier();
             _mainCam = Camera.main;
             _originalDrain = -1f;
@@ -90,7 +91,11 @@ namespace Dread.Systems
 
         private void UpdateAdrenaline()
         {
-            if (!DreadConfig.AdrenalineEnabled.Value || SemiFunc.MenuLevel()) return;
+            if (!DreadConfig.AdrenalineEnabled.Value || SemiFunc.MenuLevel())
+            {
+                RestoreDrain();
+                return;
+            }
 
             var pc = PlayerController.instance;
             if ((object)pc == null) return;
@@ -117,6 +122,7 @@ namespace Dread.Systems
             {
                 Traverse.Create(PlayerController.instance).Field<float>("SprintSpeedMultiplier").Value = _originalSprintMultiplier;
                 _originalSprintMultiplier = -1f;
+                _panicActive = false;
             }
         }
 
@@ -152,7 +158,12 @@ namespace Dread.Systems
 
         private void UpdatePanicSprint()
         {
-            if (!DreadConfig.PanicSprintEnabled.Value || SemiFunc.MenuLevel()) return;
+            if (!DreadConfig.PanicSprintEnabled.Value || SemiFunc.MenuLevel())
+            {
+                if (_panicActive)
+                    RestoreSprintMultiplier();
+                return;
+            }
 
             var pc = PlayerController.instance;
             if ((object)pc == null) return;
