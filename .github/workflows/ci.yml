@@ -90,7 +90,19 @@ jobs:
         env:
           OutDir: ${{ github.workspace }}\.github\_ci
 
+      - name: Cache MAUI workload (net48 targeting pack)
+        id: cache-maui
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.DOTNET_ROOT }}\sdk-manifests
+            ${{ env.DOTNET_ROOT }}\packs
+          key: maui-windows-${{ hashFiles('.github/workflows/ci.yml') }}-${{ runner.os }}
+          restore-keys: |
+            maui-windows-${{ runner.os }}
+
       - name: Install net48 targeting pack
+        if: steps.cache-maui.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
           dotnet workload install maui-windows 2>$null
