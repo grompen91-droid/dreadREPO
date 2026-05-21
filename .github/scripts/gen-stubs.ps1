@@ -185,20 +185,33 @@ public static class SemiFunc
 Add-Type -TypeDefinition $stubs -OutputAssembly "$stubsDir/CIStubs.dll" -WarningAction SilentlyContinue
 Write-Host "[gen-stubs] Created CIStubs.dll ($((Get-Item "$stubsDir/CIStubs.dll").Length / 1KB) KB)"
 
-$bepinVersion = "5.4.21"
-$bepinUrl = "https://github.com/BepInEx/BepInEx/releases/download/v$bepinVersion/BepInEx_win_x64_$bepinVersion.0.zip"
 $bepinZip = "$OutDir/bepinex.zip"
 $bepinDir = "$OutDir/bepinex"
 
 if (!(Test-Path "$bepinDir/BepInEx/core/BepInEx.dll")) {
-    Write-Host "[gen-stubs] Downloading BepInEx $bepinVersion..."
+    # Resolve latest BepInEx 5.x release from GitHub API
+    $bepinUrl = $null
     try {
-        Invoke-WebRequest -Uri $bepinUrl -OutFile $bepinZip -UseBasicParsing -ErrorAction Stop
-        Expand-Archive -Path $bepinZip -DestinationPath $bepinDir -Force
-        Remove-Item $bepinZip -Force
+        $headers = @{ "User-Agent" = "gen-stubs/1.0" }
+        if ($env:GITHUB_TOKEN) { $headers["Authorization"] = "Bearer $env:GITHUB_TOKEN" }
+        $releases = Invoke-RestMethod "https://api.github.com/repos/BepInEx/BepInEx/releases" -Headers $headers -UseBasicParsing
+        $release = $releases | Where-Object { $_.tag_name -match '^v5\.' } | Select-Object -First 1
+        $asset = $release.assets | Where-Object { $_.name -match 'win_x64.*\.zip$' -or ($_.name -match '^BepInEx_x64_.*\.zip$') } | Select-Object -First 1
+        $bepinUrl = $asset.browser_download_url
+        Write-Host "[gen-stubs] Resolved BepInEx $($release.tag_name) -> $($asset.name)"
     } catch {
-        Write-Warning "[gen-stubs] BepInEx download failed: $_"
+        Write-Warning "[gen-stubs] GitHub API lookup failed: $_"
     }
+
+    if (-not $bepinUrl) {
+        $bepinUrl = "https://github.com/BepInEx/BepInEx/releases/download/v5.4.23.2/BepInEx_win_x64_5.4.23.2.zip"
+        Write-Host "[gen-stubs] Using fallback URL: $bepinUrl"
+    }
+
+    Write-Host "[gen-stubs] Downloading BepInEx..."
+    Invoke-WebRequest -Uri $bepinUrl -OutFile $bepinZip -UseBasicParsing -ErrorAction Stop
+    Expand-Archive -Path $bepinZip -DestinationPath $bepinDir -Force
+    Remove-Item $bepinZip -Force
 }
 
 $coreDir = "$stubsDir/core"
@@ -210,7 +223,7 @@ if (Test-Path "$bepinDir/BepInEx/core/BepInEx.dll") {
     Write-Host "[gen-stubs] Copied BepInEx.dll ($((Get-Item "$coreDir/BepInEx.dll").Length / 1KB) KB)"
     Write-Host "[gen-stubs] Copied 0Harmony.dll ($((Get-Item "$coreDir/0Harmony.dll").Length / 1KB) KB)"
 } else {
-    Write-Warning "[gen-stubs] BepInEx not available -- stubs only, build will fail"
+    throw "[gen-stubs] BepInEx.dll not found after download — cannot build without it"
 }
 
 $targets = @'
