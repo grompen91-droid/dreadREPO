@@ -54,10 +54,13 @@ namespace Dread.Systems
         {
             SceneManager.sceneLoaded -= OnSceneLoaded;
             RestoreDrain();
+            RestoreSprintMultiplier();
         }
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
+            RestoreDrain();
+            RestoreSprintMultiplier();
             _originalDrain = -1f;
             _panicActive = false;
             _panicTimer = 0f;
@@ -85,7 +88,11 @@ namespace Dread.Systems
 
         private void UpdateAdrenaline()
         {
-            if (!DreadConfig.AdrenalineEnabled.Value || SemiFunc.MenuLevel()) return;
+            if (!DreadConfig.AdrenalineEnabled.Value || SemiFunc.MenuLevel())
+            {
+                RestoreDrain();
+                return;
+            }
 
             var pc = PlayerController.instance;
             if ((object)pc == null) return;
@@ -104,6 +111,16 @@ namespace Dread.Systems
         {
             if (_originalDrain >= 0f && (object)PlayerController.instance != null)
                 PlayerController.instance.EnergySprintDrain = _originalDrain;
+        }
+
+        private void RestoreSprintMultiplier()
+        {
+            if (_originalSprintMultiplier >= 0f && (object)PlayerController.instance != null)
+            {
+                Traverse.Create(PlayerController.instance).Field<float>("SprintSpeedMultiplier").Value = _originalSprintMultiplier;
+                _originalSprintMultiplier = -1f;
+                _panicActive = false;
+            }
         }
 
         // ── Low Stamina ───────────────────────────────────────────────────────
@@ -138,7 +155,12 @@ namespace Dread.Systems
 
         private void UpdatePanicSprint()
         {
-            if (!DreadConfig.PanicSprintEnabled.Value || SemiFunc.MenuLevel()) return;
+            if (!DreadConfig.PanicSprintEnabled.Value || SemiFunc.MenuLevel())
+            {
+                if (_panicActive)
+                    RestoreSprintMultiplier();
+                return;
+            }
 
             var pc = PlayerController.instance;
             if ((object)pc == null) return;
