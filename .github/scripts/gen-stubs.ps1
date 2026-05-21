@@ -62,7 +62,6 @@ namespace UnityEngine
         public static Vector3 operator -(Vector3 v) => v;
         public static Vector3 operator +(Vector3 a, Vector3 b) => a;
         public static Vector3 operator -(Vector3 a, Vector3 b) => a;
-        public static Vector3 operator -(Vector3 v) => new Vector3();
     }
     public class Camera : Behaviour
     {
