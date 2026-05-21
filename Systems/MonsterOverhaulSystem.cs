@@ -55,7 +55,7 @@ namespace Dread.Systems
         {
             foreach (var src in enemy.GetComponentsInChildren<AudioSource>())
             {
-                src.pitch = Mathf.Clamp(src.pitch * 0.72f, 0.3f, 1f);
+                src.pitch = Mathf.Clamp(src.pitch * Random.Range(0.5f, 1.5f), 0.3f, 1.5f);
                 src.reverbZoneMix = 1.0f;
                 src.spatialBlend = 1.0f;
             }

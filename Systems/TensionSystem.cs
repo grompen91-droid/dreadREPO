@@ -270,12 +270,12 @@ namespace Dread.Systems
         {
             while (true)
             {
-                yield return new WaitForSeconds(Random.Range(120f, 240f));
+                yield return new WaitForSeconds(Random.Range(180f, 360f));
 
                 if (!DreadConfig.FakeFootstepsEnabled.Value || SemiFunc.MenuLevel() || _footstepClip == null)
                     continue;
 
-                if (Random.value > 0.35f) continue;
+                if (Random.value > 0.2f) continue;
 
                 var cam = Camera.main;
                 if (cam == null) continue;
@@ -295,6 +295,7 @@ namespace Dread.Systems
             host.transform.position = pos;
             var src = host.AddComponent<AudioSource>();
             src.clip = _footstepClip;
+            src.pitch = Random.Range(0.5f, 1.5f);
             src.spatialBlend = 1f;
             src.volume = 0.55f;
             src.rolloffMode = AudioRolloffMode.Linear;

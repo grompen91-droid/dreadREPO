@@ -21,10 +21,10 @@ namespace Dread.Systems
         // Weight per clip name — lower = rarer. Unlisted clips default to 1.0.
         private static readonly Dictionary<string, float> ClipWeights = new()
         {
-            { "scraping.ogg",   1.0f },
-            { "footsteps.ogg",  1.0f },
-            { "breathing.ogg",  0.6f },
-            { "whisper.ogg",    0.25f },
+            { "scraping.ogg",   0.6f },
+            { "footsteps.ogg",  0.6f },
+            { "breathing.ogg",  0.3f },
+            { "whisper.ogg",    0.1f },
         };
 
         private void Start()
@@ -71,7 +71,7 @@ namespace Dread.Systems
         {
             while (true)
             {
-                var baseDelay = Random.Range(30f, 90f) / DreadConfig.AudioFrequency.Value;
+                var baseDelay = Random.Range(60f, 180f) / DreadConfig.AudioFrequency.Value;
                 yield return new WaitForSeconds(baseDelay);
 
                 if (!DreadConfig.AudioEnabled.Value || SemiFunc.MenuLevel() || _clips.Count == 0)
@@ -116,6 +116,7 @@ namespace Dread.Systems
             host.transform.position = pos;
             var src = host.AddComponent<AudioSource>();
             src.clip = clip;
+            src.pitch = Random.Range(0.5f, 1.5f);
             src.spatialBlend = 1.0f;
             src.volume = DreadConfig.AudioVolume.Value;
             src.rolloffMode = AudioRolloffMode.Linear;
