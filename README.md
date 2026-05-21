@@ -9,22 +9,6 @@
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 ![Thunderstore](https://img.shields.io/badge/thunderstore-elytraking/Dread-243e58?style=flat-square)
 
-## Table of Contents
-
-- [Overview](#overview)
-- [How It Works](#how-it-works)
-- [Features](#features)
-- [Configuration](#configuration)
-- [Netcode Model](#netcode-model)
-- [Mod Compatibility](#mod-compatibility)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Version History](#version-history)
-- [Getting Started](#getting-started)
-- [Building from Source](#building-from-source)
-- [License](#license)
-
----
 
 ## Overview
 
@@ -243,7 +227,7 @@ Dread/
 | **v1.4.1** | Thunderstore reupload, no functional changes |
 | **v1.5.0** | Pitch randomization across all audio systems, rarer ambient sounds (60-180s, reduced weights), rarer fake footsteps (3-6 min, 20%), state leak fixes, config bounds fixes |
 
-See [CHANGELOG.md](CHANGELOG.md) for full version history.
+Full version history in `CHANGELOG.md` on [GitHub](https://github.com/grompen91-droid/dreadREPO).
 
 ---
 
