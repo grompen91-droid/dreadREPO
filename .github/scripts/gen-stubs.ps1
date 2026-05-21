@@ -7,6 +7,7 @@ $ErrorActionPreference = "Stop"
 $stubsDir = New-Item -ItemType Directory -Force "$OutDir/refs" | Select-Object -ExpandProperty FullName
 
 $stubs = @'
+#pragma warning disable CS0067, CS0108, CS0649, CS0169, CS0414
 using System;
 using System.Collections;
 using System.Reflection;
