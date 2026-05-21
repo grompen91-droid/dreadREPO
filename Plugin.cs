@@ -33,6 +33,7 @@ namespace Dread
             host.AddComponent<AudioDreadSystem>();
             host.AddComponent<MonsterOverhaulSystem>();
             host.AddComponent<TensionSystem>();
+            Plugin.Logger.LogInfo("Systems initialized on DreadHost.");
         }
     }
 }
