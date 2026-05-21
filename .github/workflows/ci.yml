@@ -100,7 +100,7 @@ jobs:
         with:
           path: |
             ${{ env.DOTNET_ROOT }}\sdk-manifests
-            ${{ env.DOTNET_ROOT }}\packs\Microsoft.NETFramework.ReferenceAssemblies
+            ${{ env.DOTNET_ROOT }}\packs
           key: maui-windows-${{ hashFiles('.github/scripts/gen-stubs.ps1', 'Dread.csproj') }}-${{ runner.os }}
           restore-keys: |
             maui-windows-${{ runner.os }}
@@ -161,6 +161,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: [relevance]
+    if: ${{ needs.relevance.outputs.passed == 'True' }}
 
     steps:
       - name: Checkout
@@ -229,7 +230,9 @@ jobs:
           Write-Host "| Build     | $bld |"
           Write-Host "| Analysis  | $anl |"
           Write-Host ""
-          if ($bld -eq "success" -and $rel -ne "failure" -and $anl -eq "success") {
+          $allSkipped = ($bld -eq "skipped" -and $anl -eq "skipped")
+          $allPassed = ($bld -eq "success" -and $anl -eq "success")
+          if ($allPassed -or $allSkipped) {
             Write-Host "::notice::All CI checks passed"
           } else {
             Write-Host "::error::Some CI checks failed"

@@ -3,7 +3,9 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$PSNativeCommandUseErrorActionPreference = $false
+if ($PSVersionTable.PSVersion.Major -ge 7) {
+    $PSNativeCommandUseErrorActionPreference = $false
+}
 
 $stubsDir = New-Item -ItemType Directory -Force "$OutDir/refs" | Select-Object -ExpandProperty FullName
 
@@ -248,9 +250,10 @@ $emptyAssemblies = @(
     'Photon3Unity3D'
 )
 
-foreach ($name in $emptyAssemblies) {
-    Compile-StubAssembly -Name $name -SourceFile $emptyStubCs
-}
+$compileFunc = ${function:Compile-StubAssembly}
+$emptyAssemblies | ForEach-Object -Parallel {
+    & $using:compileFunc -Name $_ -SourceFile $using:emptyStubCs
+} -ThrottleLimit 4
 
 $bepinVersion = "5.4.21"
 $bepinUrl = "https://github.com/BepInEx/BepInEx/releases/download/v$bepinVersion/BepInEx_x64_$bepinVersion.0.zip"
