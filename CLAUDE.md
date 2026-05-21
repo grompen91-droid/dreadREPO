@@ -104,3 +104,24 @@ Write PR bodies in this voice: submissive, self-aware, hip youngster energy. Eag
 ```
 
 Fill every section. Don't leave placeholders. The table must list every changed file with a real description. The checklist must have real steps someone can follow.
+
+### Merging and Closing
+
+After review, merge the PR and close any related issues:
+
+```powershell
+# merge PR
+gh pr merge <number> --merge
+
+# close issue(s) related to the PR
+gh issue close <number>
+
+# close multiple issues
+gh issue close <number1> <number2>
+```
+
+Check open PRs and issues anytime:
+```powershell
+gh pr list
+gh issue list
+```
