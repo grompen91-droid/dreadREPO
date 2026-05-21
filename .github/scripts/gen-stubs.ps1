@@ -3,20 +3,21 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$PSNativeCommandUseErrorActionPreference = $false
 
 $stubsDir = New-Item -ItemType Directory -Force "$OutDir/refs" | Select-Object -ExpandProperty FullName
 
-$stubs = @'
+$stubCode = @'
 using System;
 using System.Collections;
 using System.Reflection;
+using UnityEngine;
+using UnityEngine.AI;
 
 namespace UnityEngine
 {
     public abstract class MonoBehaviour : Behaviour
     {
-        public GameObject gameObject { get; }
-        public Transform transform { get; }
         public Coroutine StartCoroutine(IEnumerator routine) => null;
     }
     public class Behaviour : Component { }
@@ -31,6 +32,7 @@ namespace UnityEngine
         public GameObject() { }
         public GameObject(string name) { }
         public T AddComponent<T>() where T : Component => null;
+        public T[] GetComponentsInChildren<T>() where T : class => null;
         public Transform transform { get; }
     }
     public class Transform : Component
@@ -45,7 +47,7 @@ namespace UnityEngine
         public static T[] FindObjectsOfType<T>() where T : Object => null;
         public static void Destroy(Object obj, float t = 0f) { }
         public static void DontDestroyOnLoad(Object obj) { }
-        public static implicit operator bool(Object exists) => exists != null;
+        public static implicit operator bool(Object exists) { return exists != null; }
     }
     public struct Vector3
     {
@@ -57,7 +59,9 @@ namespace UnityEngine
         public static float Distance(Vector3 a, Vector3 b) => 0f;
         public Vector3(float x, float y, float z) { this.x = x; this.y = y; this.z = z; }
         public static Vector3 operator *(Vector3 v, float s) => v;
+        public static Vector3 operator -(Vector3 v) => v;
         public static Vector3 operator +(Vector3 a, Vector3 b) => a;
+        public static Vector3 operator -(Vector3 a, Vector3 b) => a;
     }
     public class Camera : Behaviour
     {
@@ -113,7 +117,9 @@ namespace UnityEngine.SceneManagement
 {
     public static class SceneManager
     {
+#pragma warning disable 0067
         public static event Action<Scene, LoadSceneMode> sceneLoaded;
+#pragma warning restore 0067
         public static void LoadScene(string name) { }
     }
     public struct Scene
@@ -179,11 +185,75 @@ public static class SemiFunc
 }
 '@
 
-Add-Type -TypeDefinition $stubs -OutputAssembly "$stubsDir/CIStubs.dll" -WarningAction SilentlyContinue
-Write-Host "[gen-stubs] Created CIStubs.dll ($((Get-Item "$stubsDir/CIStubs.dll").Length / 1KB) KB)"
+$unityStubCs = "$stubsDir/UnityEngine_stubs.cs"
+$stubCode | Out-File -FilePath $unityStubCs -Encoding utf8
+
+$emptyStubCs = "$stubsDir/_empty.cs"
+'// empty stub' | Out-File -FilePath $emptyStubCs -Encoding utf8
+
+function Compile-StubAssembly {
+    param([string]$Name, [string]$SourceFile)
+
+    $csprojPath = "$stubsDir/$Name.csproj"
+    $projContent = @"
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>$Name</AssemblyName>
+    <RootNamespace>$Name</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <Configurations>Release</Configurations>
+    <OutDir>$stubsDir</OutDir>
+    <IntermediateOutputPath>$stubsDir\obj\$Name\</IntermediateOutputPath>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$SourceFile" />
+  </ItemGroup>
+</Project>
+"@
+    $projContent | Out-File -FilePath $csprojPath -Encoding utf8
+
+    Write-Host "[gen-stubs] Compiling $Name..."
+    $output = dotnet build $csprojPath -c Release --nologo 2>&1
+    $exitCode = $LASTEXITCODE
+    $output | Out-String | ForEach-Object { Write-Host "$_" }
+    if ($exitCode -ne 0) {
+        Write-Host "::error::[gen-stubs] Failed to compile $Name (exit $exitCode)"
+        exit 1
+    }
+    $dllPath = "$stubsDir/$Name.dll"
+    if (Test-Path $dllPath) {
+        $size = (Get-Item $dllPath).Length / 1KB
+        Write-Host "[gen-stubs] Created $Name.dll ($size KB)"
+    }
+}
+
+Compile-StubAssembly -Name "UnityEngine" -SourceFile $unityStubCs
+
+$emptyAssemblies = @(
+    'UnityEngine.CoreModule',
+    'UnityEngine.AudioModule',
+    'UnityEngine.UI',
+    'UnityEngine.PhysicsModule',
+    'UnityEngine.ImageConversionModule',
+    'UnityEngine.AnimationModule',
+    'UnityEngine.AIModule',
+    'UnityEngine.UIModule',
+    'UnityEngine.UnityWebRequestModule',
+    'UnityEngine.UnityWebRequestAudioModule',
+    'Assembly-CSharp',
+    'PhotonUnityNetworking',
+    'Photon3Unity3D'
+)
+
+foreach ($name in $emptyAssemblies) {
+    Compile-StubAssembly -Name $name -SourceFile $emptyStubCs
+}
 
 $bepinVersion = "5.4.21"
-$bepinUrl = "https://github.com/BepInEx/BepInEx/releases/download/v$bepinVersion/BepInEx_win_x64_$bepinVersion.0.zip"
+$bepinUrl = "https://github.com/BepInEx/BepInEx/releases/download/v$bepinVersion/BepInEx_x64_$bepinVersion.0.zip"
 $bepinZip = "$OutDir/bepinex.zip"
 $bepinDir = "$OutDir/bepinex"
 
@@ -210,22 +280,4 @@ if (Test-Path "$bepinDir/BepInEx/core/BepInEx.dll") {
     Write-Warning "[gen-stubs] BepInEx not available -- stubs only, build will fail"
 }
 
-$targets = @'
-<Project>
-  <Target Name="ReplaceGameRefsWithCIStubs" BeforeTargets="ResolveAssemblyReferences">
-    <ItemGroup>
-      <_CIRefs Include="@(Reference)" Condition="
-        '%(Identity)' != 'BepInEx' And
-        '%(Identity)' != '0Harmony'" />
-      <Reference Remove="@(_CIRefs)" />
-      <Reference Include="CIStubs">
-        <HintPath>$(MSBuildProjectDirectory)/.github/_ci/refs/CIStubs.dll</HintPath>
-      </Reference>
-    </ItemGroup>
-  </Target>
-</Project>
-'@
-
-$targets | Out-File -FilePath "$OutDir/Directory.Build.targets" -Encoding utf8
-Write-Host "[gen-stubs] Created Directory.Build.targets"
 Write-Host "[gen-stubs] Done"

@@ -1,5 +1,9 @@
 name: CI
 
+permissions:
+  contents: read
+  packages: read
+
 on:
   pull_request:
     types: [opened, synchronize, reopened, edited]
@@ -67,7 +71,7 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 15
     needs: [relevance]
-    if: ${{ always() && needs.relevance.result != 'cancelled' }}
+    if: ${{ needs.relevance.outputs.passed == 'True' }}
 
     steps:
       - name: Checkout
@@ -90,7 +94,19 @@ jobs:
         env:
           OutDir: ${{ github.workspace }}\.github\_ci
 
+      - name: Cache MAUI workload (net48 targeting pack)
+        id: cache-maui
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.DOTNET_ROOT }}\sdk-manifests
+            ${{ env.DOTNET_ROOT }}\packs\Microsoft.NETFramework.ReferenceAssemblies
+          key: maui-windows-${{ hashFiles('.github/scripts/gen-stubs.ps1', 'Dread.csproj') }}-${{ runner.os }}
+          restore-keys: |
+            maui-windows-${{ runner.os }}
+
       - name: Install net48 targeting pack
+        if: steps.cache-maui.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
           dotnet workload install maui-windows 2>$null
@@ -100,19 +116,6 @@ jobs:
           dotnet add package Microsoft.NETFramework.ReferenceAssemblies --version 1.0.3 2>$null
           cd ..
           Remove-Item -Recurse -Force _getref 2>$null
-
-      - name: Apply CI Directory.Build.targets
-        shell: pwsh
-        run: |
-          $src = "${{ github.workspace }}\.github\_ci\Directory.Build.targets"
-          $dst = "${{ github.workspace }}\Directory.Build.targets"
-          if (Test-Path $src) {
-            Copy-Item $src $dst -Force
-            Write-Host "Applied Directory.Build.targets for CI"
-          } else {
-            Write-Error "Directory.Build.targets not found at $src"
-            exit 1
-          }
 
       - name: Build
         id: build
@@ -153,18 +156,11 @@ jobs:
           path: ${{ runner.temp }}\build-output.txt
           retention-days: 7
 
-      - name: Cleanup Directory.Build.targets
-        if: always()
-        shell: pwsh
-        run: |
-          $dst = "${{ github.workspace }}\Directory.Build.targets"
-          if (Test-Path $dst) { Remove-Item $dst -Force }
-
   analyze:
     name: Code Analysis
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [build]
+    needs: [relevance]
 
     steps:
       - name: Checkout
@@ -233,7 +229,7 @@ jobs:
           Write-Host "| Build     | $bld |"
           Write-Host "| Analysis  | $anl |"
           Write-Host ""
-          if ($bld -eq "success") {
+          if ($bld -eq "success" -and $rel -ne "failure" -and $anl -eq "success") {
             Write-Host "::notice::All CI checks passed"
           } else {
             Write-Host "::error::Some CI checks failed"
