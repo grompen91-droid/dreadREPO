@@ -19,6 +19,7 @@ namespace Dread.Systems
         // Proximity scan shared by adrenaline and panic sprint
         private float _nextScan;
         private float _nearestDist = float.MaxValue;
+        private Camera? _mainCam;
 
         // Adrenaline state
         private float _originalDrain = -1f;
@@ -39,6 +40,7 @@ namespace Dread.Systems
         private void Start()
         {
             SceneManager.sceneLoaded += OnSceneLoaded;
+            _mainCam = Camera.main;
 
             _breathSource = gameObject.AddComponent<AudioSource>();
             _breathSource.spatialBlend = 0f;
@@ -54,10 +56,13 @@ namespace Dread.Systems
         {
             SceneManager.sceneLoaded -= OnSceneLoaded;
             RestoreDrain();
+            RestoreSprintMultiplier();
         }
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
+            RestoreSprintMultiplier();
+            _mainCam = Camera.main;
             _originalDrain = -1f;
             _panicActive = false;
             _panicTimer = 0f;
@@ -104,6 +109,15 @@ namespace Dread.Systems
         {
             if (_originalDrain >= 0f && (object)PlayerController.instance != null)
                 PlayerController.instance.EnergySprintDrain = _originalDrain;
+        }
+
+        private void RestoreSprintMultiplier()
+        {
+            if (_originalSprintMultiplier >= 0f && (object)PlayerController.instance != null)
+            {
+                Traverse.Create(PlayerController.instance).Field<float>("SprintSpeedMultiplier").Value = _originalSprintMultiplier;
+                _originalSprintMultiplier = -1f;
+            }
         }
 
         // ── Low Stamina ───────────────────────────────────────────────────────
@@ -177,7 +191,8 @@ namespace Dread.Systems
 
         private float FindNearestEnemyDist()
         {
-            var cam = Camera.main;
+            if (_mainCam == null) _mainCam = Camera.main;
+            var cam = _mainCam;
             if (cam == null) return float.MaxValue;
 
             var enemies = FindObjectsOfType<EnemyHealth>();
