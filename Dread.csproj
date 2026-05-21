@@ -74,14 +74,6 @@
       <HintPath>$(GameDir)\Assembly-CSharp.dll</HintPath>
       <Private>false</Private>
     </Reference>
-    <Reference Include="PhotonUnityNetworking">
-      <HintPath>$(GameDir)\PhotonUnityNetworking.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Photon3Unity3D">
-      <HintPath>$(GameDir)\Photon3Unity3D.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
   </ItemGroup>
 
   <!-- Copy audio folder to output alongside DLL -->
@@ -101,13 +93,13 @@
   </Target>
 
   <PropertyGroup>
-    <DistPluginDir>$(MSBuildProjectDirectory)\dist\elytraking-Dread-1.4.0\BepInEx\plugins\elytraking-Dread</DistPluginDir>
+    <DistPluginDir>$(MSBuildProjectDirectory)\dist\elytraking-Dread-1.4.2\BepInEx\plugins\elytraking-Dread</DistPluginDir>
   </PropertyGroup>
 
   <Target Name="DeployToDist" AfterTargets="Build" Condition="Exists('$(DistPluginDir)')">
     <Copy SourceFiles="$(OutputPath)Dread.dll" DestinationFolder="$(DistPluginDir)" SkipUnchangedFiles="false" />
-    <Delete Files="$(MSBuildProjectDirectory)\dist\elytraking-Dread-1.4.0.zip" />
-    <ZipDirectory SourceDirectory="$(MSBuildProjectDirectory)\dist\elytraking-Dread-1.4.0" DestinationFile="$(MSBuildProjectDirectory)\dist\elytraking-Dread-1.4.0.zip" />
+    <Delete Files="$(MSBuildProjectDirectory)\dist\elytraking-Dread-1.4.2.zip" />
+    <ZipDirectory SourceDirectory="$(MSBuildProjectDirectory)\dist\elytraking-Dread-1.4.2" DestinationFile="$(MSBuildProjectDirectory)\dist\elytraking-Dread-1.4.2.zip" />
     <Message Text="[Dread] Deployed to dist and re-zipped" Importance="high" />
   </Target>
 </Project>

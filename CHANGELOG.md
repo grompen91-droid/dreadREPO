@@ -7,6 +7,38 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.4.2] - 2026-05-21
+
+![Status](https://img.shields.io/badge/status-stable-brightgreen?style=flat-square)
+![Type](https://img.shields.io/badge/type-minor-yellow?style=flat-square)
+
+> **Highlight:** Full architectural cleanup resolving all 10 open issues. No gameplay changes.
+
+### Added
+- `EnemyProximityScanner` -- dedicated MonoBehaviour that owns the 0.5s enemy scan and exposes `NearestDist` to all tension features (fixes #1, #8)
+- `AdrenalineFeature`, `LowStaminaFeature`, `PanicSprintFeature`, `FakeFootstepFeature` -- each tension feature is now a self-contained MonoBehaviour in `Systems/Tension/` (fixes #1)
+- `AudioLoader` -- shared static clip cache in `Systems/AudioLoader.cs`; each .ogg is decoded once and reused across all systems (fixes #2, #3)
+- `QOLSystem.cs` -- `PlayerControllerAwakePatch` (crouch speed boost) moved out of MonsterOverhaulSystem into its own file (fixes #4)
+- `CONTEXT.md` -- domain glossary and system boundary map (fixes #10)
+- `docs/adr/0001-remove-repolib-hostoptions-postprocessing.md` -- ADR capturing the v1.4.0 removals and their rationale (fixes #10)
+- `AGENTS.md` merged from PR #11 and trimmed to a redirect stub (fixes #9)
+- `docs/agents/` directory: `domain.md`, `issue-tracker.md`, `triage-labels.md` (from PR #11)
+
+### Changed
+- `TensionSystem` is now a 12-line coordinator that adds the scanner and feature components. All feature logic lives in dedicated classes (fixes #1)
+- `AudioDreadSystem` and `TensionSystem` both delegate clip loading to `AudioLoader` -- `footsteps.ogg` and `breathing.ogg` no longer loaded twice (fixes #2, #3)
+- `EnemyProximityScanner.Update()` early-exits when all four tension features are disabled, eliminating the `FindObjectsOfType` call (fixes #8)
+- `Plugin.VERSION` corrected to `1.4.1` to match `manifest.json` (fixes #6)
+- `build.ps1` default version updated from `1.2.0` to `1.4.1` (fixes #6)
+- `Dread.csproj` `DeployToDist` target paths updated from `1.4.0` to `1.4.1` (fixes #6)
+
+### Removed
+- Orphaned `PhotonUnityNetworking` and `Photon3Unity3D` assembly references from `Dread.csproj` (fixes #7)
+- Duplicate build/versioning/changelog/GitHub instructions from `AGENTS.md`; canonical copy lives in `CLAUDE.md` (fixes #9)
+- Inline audio loading coroutines from `AudioDreadSystem` and `TensionSystem` (replaced by `AudioLoader`)
+
+---
+
 ## [1.4.1] - 2026-05-21
 
 ![Status](https://img.shields.io/badge/status-stable-brightgreen?style=flat-square)
