@@ -184,6 +184,27 @@ public static class SemiFunc
 Add-Type -TypeDefinition $stubs -OutputAssembly "$stubsDir/CIStubs.dll" -WarningAction SilentlyContinue
 Write-Host "[gen-stubs] Created CIStubs.dll ($((Get-Item "$stubsDir/CIStubs.dll").Length / 1KB) KB)"
 
+$stubAliases = @(
+    'UnityEngine.dll',
+    'UnityEngine.CoreModule.dll',
+    'UnityEngine.AudioModule.dll',
+    'UnityEngine.UI.dll',
+    'UnityEngine.PhysicsModule.dll',
+    'UnityEngine.ImageConversionModule.dll',
+    'UnityEngine.AnimationModule.dll',
+    'UnityEngine.AIModule.dll',
+    'UnityEngine.UIModule.dll',
+    'UnityEngine.UnityWebRequestModule.dll',
+    'UnityEngine.UnityWebRequestAudioModule.dll',
+    'Assembly-CSharp.dll',
+    'PhotonUnityNetworking.dll',
+    'Photon3Unity3D.dll'
+)
+foreach ($alias in $stubAliases) {
+    Copy-Item "$stubsDir/CIStubs.dll" "$stubsDir/$alias" -Force
+}
+Write-Host "[gen-stubs] Created $($stubAliases.Count) stub aliases"
+
 $bepinVersion = "5.4.21"
 $bepinUrl = "https://github.com/BepInEx/BepInEx/releases/download/v$bepinVersion/BepInEx_x64_$bepinVersion.0.zip"
 $bepinZip = "$OutDir/bepinex.zip"
@@ -212,22 +233,5 @@ if (Test-Path "$bepinDir/BepInEx/core/BepInEx.dll") {
     Write-Warning "[gen-stubs] BepInEx not available -- stubs only, build will fail"
 }
 
-$targets = @'
-<Project>
-  <Target Name="ReplaceGameRefsWithCIStubs" BeforeTargets="ResolveAssemblyReferences">
-    <ItemGroup>
-      <_CIRefs Include="@(Reference)" Condition="
-        '%(Identity)' != 'BepInEx' And
-        '%(Identity)' != '0Harmony'" />
-      <Reference Remove="@(_CIRefs)" />
-      <Reference Include="CIStubs">
-        <HintPath>$(MSBuildProjectDirectory)/.github/_ci/refs/CIStubs.dll</HintPath>
-      </Reference>
-    </ItemGroup>
-  </Target>
-</Project>
-'@
-
-$targets | Out-File -FilePath "$OutDir/Directory.Build.targets" -Encoding utf8
-Write-Host "[gen-stubs] Created Directory.Build.targets"
+# No Directory.Build.targets needed -- GameDir refs resolve to stub aliases directly
 Write-Host "[gen-stubs] Done"
