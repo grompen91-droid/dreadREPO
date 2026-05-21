@@ -182,8 +182,8 @@ public static class SemiFunc
 }
 '@
 
-Add-Type -TypeDefinition $stubs -OutputAssembly "$stubsDir/CIStubs.dll" -WarningAction SilentlyContinue
-Write-Host "[gen-stubs] Created CIStubs.dll ($((Get-Item "$stubsDir/CIStubs.dll").Length / 1KB) KB)"
+Add-Type -TypeDefinition $stubs -OutputAssembly "$stubsDir/UnityEngine.dll" -WarningAction SilentlyContinue
+Write-Host "[gen-stubs] Created UnityEngine.dll ($((Get-Item "$stubsDir/UnityEngine.dll").Length / 1KB) KB)"
 
 $bepinZip = "$OutDir/bepinex.zip"
 $bepinDir = "$OutDir/bepinex"
@@ -231,8 +231,18 @@ $targets = @'
   <Target Name="ReplaceGameRefsWithCIStubs" BeforeTargets="ResolveAssemblyReferences">
     <ItemGroup>
       <Reference Remove="@(Reference)" />
-      <Reference Include="CIStubs">
-        <HintPath>$(MSBuildProjectDirectory)/.github/_ci/refs/CIStubs.dll</HintPath>
+      <!-- All Unity module references point to our single stub DLL compiled as assembly name "UnityEngine" -->
+      <Reference Include="UnityEngine">
+        <HintPath>$(MSBuildProjectDirectory)/.github/_ci/refs/UnityEngine.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.CoreModule">
+        <HintPath>$(MSBuildProjectDirectory)/.github/_ci/refs/UnityEngine.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.AudioModule">
+        <HintPath>$(MSBuildProjectDirectory)/.github/_ci/refs/UnityEngine.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.AIModule">
+        <HintPath>$(MSBuildProjectDirectory)/.github/_ci/refs/UnityEngine.dll</HintPath>
       </Reference>
       <Reference Include="BepInEx">
         <HintPath>$(MSBuildProjectDirectory)/.github/_ci/refs/core/BepInEx.dll</HintPath>
