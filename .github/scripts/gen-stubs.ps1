@@ -3,6 +3,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$PSNativeCommandUseErrorActionPreference = $false
 
 $stubsDir = New-Item -ItemType Directory -Force "$OutDir/refs" | Select-Object -ExpandProperty FullName
 
@@ -214,9 +215,10 @@ function Compile-StubAssembly {
 
     Write-Host "[gen-stubs] Compiling $Name..."
     $output = dotnet build $csprojPath -c Release --nologo 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error "[gen-stubs] Failed to compile $Name"
-        Write-Host $output
+    $exitCode = $LASTEXITCODE
+    $output | Out-String | ForEach-Object { Write-Host "$_" }
+    if ($exitCode -ne 0) {
+        Write-Host "::error::[gen-stubs] Failed to compile $Name (exit $exitCode)"
         exit 1
     }
     $dllPath = "$stubsDir/$Name.dll"
