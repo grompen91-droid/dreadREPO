@@ -2,7 +2,6 @@ name: CI
 
 permissions:
   contents: read
-  metadata: read
   packages: read
 
 on:
