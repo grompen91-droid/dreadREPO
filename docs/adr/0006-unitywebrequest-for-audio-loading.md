@@ -38,7 +38,7 @@ Clips are loaded once at startup (in a coroutine), cached in a `List<AudioClip>`
 
 ## Rejected Alternatives
 
-- **Embedded resources (`.resx`)** -- audio is embedded in the DLL, increasing DLL size and making it impossible for users to add or replace sounds without recompiling.
-- **AssetBundles** -- over-engineered for 5 files. AssetBundles require a build step with Unity's `BuildPipeline.BuildAssetBundle`, which adds friction to development.
-- **`Resources.Load()`** -- R.E.P.O. does not use Unity's Resources system for mod assets. The `audio/` folder is outside any Resources directory.
-- **`File.ReadAllBytes()` + `AudioClip.Create()`** -- would require manual OGG decoding. Unity's `UnityWebRequestMultimedia` handles this natively.
+- **Embedded resources (`.resx`)**: audio is embedded in the DLL, increasing DLL size and making it impossible for users to add or replace sounds without recompiling.
+- **AssetBundles**: over-engineered for 5 files. AssetBundles require a build step with Unity's `BuildPipeline.BuildAssetBundle`, which adds friction to development.
+- **`Resources.Load()`**: R.E.P.O. does not use Unity's Resources system for mod assets. The `audio/` folder is outside any Resources directory.
+- **`File.ReadAllBytes()` + `AudioClip.Create()`**: would require manual OGG decoding. Unity's `UnityWebRequestMultimedia` handles this natively.

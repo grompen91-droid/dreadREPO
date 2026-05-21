@@ -13,7 +13,7 @@ The `MonsterOverhaulSystem.AudioOverhaul` runs a scan loop every 4 seconds that 
 
 ## Decision
 
-Define a marker component `DreadAudioTweaked : MonoBehaviour` with no fields or methods -- purely a flag. Before applying audio tweaks to an enemy, check if it already has the component. If not, apply tweaks and add the marker.
+Define a marker component `DreadAudioTweaked : MonoBehaviour` with no fields or methods: purely a flag. Before applying audio tweaks to an enemy, check if it already has the component. If not, apply tweaks and add the marker.
 
 ```csharp
 private class DreadAudioTweaked : MonoBehaviour { }
@@ -40,6 +40,6 @@ The marker persists for the lifetime of the enemy GameObject. When the enemy is 
 
 ## Rejected Alternatives
 
-- **Track enemies in a HashSet** -- requires cleanup on enemy death. `EnemyHealth` does not expose a reliable death event across all enemy types (including modded ones). Leaked references would cause memory growth over long sessions.
-- **Check audio values before applying** -- comparing floating-point pitch/reverb values is fragile. An enemy might legitimately have a low pitch from another mod.
-- **Timed re-application** -- reapplying every N cycles doesn't fix stacking and wastes CPU.
+- **Track enemies in a HashSet**: requires cleanup on enemy death. `EnemyHealth` does not expose a reliable death event across all enemy types (including modded ones). Leaked references would cause memory growth over long sessions.
+- **Check audio values before applying**: comparing floating-point pitch/reverb values is fragile. An enemy might legitimately have a low pitch from another mod.
+- **Timed re-application**: reapplying every N cycles doesn't fix stacking and wastes CPU.

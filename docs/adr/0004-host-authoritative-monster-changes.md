@@ -9,7 +9,7 @@
 
 R.E.P.O. uses Photon PUN for multiplayer. Enemy `NavMeshAgent` position, speed, and state are synced from the host to all clients. Dread needed to decide where to apply its monster modifications: on the host only, or on every client independently.
 
-Applying speed/acceleration changes on every client would work for single-player but would cause desync in multiplayer -- clients would compute different NavMeshAgent positions and Photon would fight itself trying to reconcile.
+Applying speed/acceleration changes on every client would work for single-player but would cause desync in multiplayer: clients would compute different NavMeshAgent positions and Photon would fight itself trying to reconcile.
 
 ---
 
@@ -40,5 +40,5 @@ Host-only features check `SemiFunc.IsMasterClient()` or similar at the point of 
 
 ## Rejected Alternatives
 
-- **Apply all changes on all clients** -- causes Photon position desync for enemies. Tested internally, enemies visibly teleported.
-- **Sync modified speed via Photon RPC** -- requires new networked custom types. Increases complexity and bandwidth. Not justified for a 1.2x multiplier.
+- **Apply all changes on all clients**: causes Photon position desync for enemies. Tested internally, enemies visibly teleported.
+- **Sync modified speed via Photon RPC**: requires new networked custom types. Increases complexity and bandwidth. Not justified for a 1.2x multiplier.

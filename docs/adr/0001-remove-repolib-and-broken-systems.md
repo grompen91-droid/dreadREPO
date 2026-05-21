@@ -41,5 +41,5 @@ Remove all three systems. Drop REPOLib dependency entirely. Dread is now BepInEx
 
 ## Rejected Alternatives
 
-- **Keep HostOptionsSystem as optional** -- would require conditional compile or runtime check for REPOLib. Complexity not worth the feature value.
-- **Work around PostProcessing** -- investigated `Traverse`-based access to R.E.P.O.'s PP internals. No stable field path found.
+- **Keep HostOptionsSystem as optional**: would require conditional compile or runtime check for REPOLib. Complexity not worth the feature value.
+- **Work around PostProcessing**: investigated `Traverse`-based access to R.E.P.O.'s PP internals. No stable field path found.

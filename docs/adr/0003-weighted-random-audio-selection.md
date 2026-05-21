@@ -37,5 +37,5 @@ Whisper is 4x rarer than scraping. Weights are chosen by feel during testing, no
 
 ## Rejected Alternatives
 
-- **Uniform random with exclusion timer** -- ensures variety but doesn't produce the intended rarity distribution. A timer that blocks whisper for 5 minutes is the same as just making it rare.
-- **Configurable per-sound weights** -- over-engineered for four sounds. If the sound pool grows significantly, revisit.
+- **Uniform random with exclusion timer**: ensures variety but doesn't produce the intended rarity distribution. A timer that blocks whisper for 5 minutes is the same as just making it rare.
+- **Configurable per-sound weights**: over-engineered for four sounds. If the sound pool grows significantly, revisit.

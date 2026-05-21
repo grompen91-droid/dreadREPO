@@ -38,5 +38,5 @@ The shared proximity state (nearest enemy distance) is computed once and passed 
 
 ## Rejected Alternatives
 
-- **Keep separate classes but inject a shared scanner** -- would have required an `EnemyProximityScanner` singleton or injected dependency. Extra complexity without clear benefit since all features are always enabled together.
-- **Event-driven instead of polling** -- would require hooking enemy spawn/death events. R.E.P.O. does not expose these reliably across modded enemy types.
+- **Keep separate classes but inject a shared scanner**: would have required an `EnemyProximityScanner` singleton or injected dependency. Extra complexity without clear benefit since all features are always enabled together.
+- **Event-driven instead of polling**: would require hooking enemy spawn/death events. R.E.P.O. does not expose these reliably across modded enemy types.
