@@ -59,8 +59,10 @@ namespace UnityEngine
         public static float Distance(Vector3 a, Vector3 b) => 0f;
         public Vector3(float x, float y, float z) { this.x = x; this.y = y; this.z = z; }
         public static Vector3 operator *(Vector3 v, float s) => v;
+        public static Vector3 operator -(Vector3 v) => v;
         public static Vector3 operator +(Vector3 a, Vector3 b) => a;
         public static Vector3 operator -(Vector3 a, Vector3 b) => a;
+        public static Vector3 operator -(Vector3 v) => new Vector3();
     }
     public class Camera : Behaviour
     {
@@ -280,4 +282,3 @@ if (Test-Path "$bepinDir/BepInEx/core/BepInEx.dll") {
 }
 
 Write-Host "[gen-stubs] Done"
-# CI test trigger
