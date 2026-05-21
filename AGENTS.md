@@ -44,14 +44,20 @@ manifest.json format:
 
 ## Versioning Rules
 
-- Increment version in BOTH `manifest.json` AND `Plugin.cs` (`Plugin.VERSION`) before every upload
+- Version format: semantic versioning `MAJOR.MINOR.PATCH`
+- Releases triggered by pushing a tag to master:
+  - `vmajor` -- bumps major (1.5.0 > 2.0.0)
+  - `vminor` -- bumps minor (1.5.0 > 1.6.0)
+  - `vpatch` -- bumps patch (1.5.0 > 1.5.1)
+- CD pipeline auto-increments `manifest.json` + `Plugin.cs` and commits the bump back to master
 - Thunderstore rejects any version number already published
 - Never change `"name"` in manifest.json -- changing it creates a new listing, not an update
-- Version format: semantic versioning `MAJOR.MINOR.PATCH`
 
-## Changelog Rules
+## Changelog Convention
 
-- Maintain `CHANGELOG.md` in the project root
+- Maintain `[Unreleased]` section in `CHANGELOG.md` with all unreleased changes
+- CD pipeline reads `[Unreleased]` for release notes, renames it to the new version, and recreates an empty `[Unreleased]` header
+- Workflow fails if `[Unreleased]` section is missing when a release tag is pushed
 - Use detailed markdown with special formatting (badges, collapsible sections, tables, blockquotes)
 - Never use em dash (--) in any file, ever. Use a colon, comma, or rewrite the sentence instead
 - Each version entry must include: version header, release date, and categorized changes (Added, Changed, Fixed, Removed)
