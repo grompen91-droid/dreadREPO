@@ -60,11 +60,47 @@ manifest.json format:
 
 ## GitHub Workflow
 
-Push to GitHub after every change. Run from the project root:
+Never push directly to `master`. Always create a branch and open a PR. Run from the project root:
+
 ```powershell
+git checkout -b <type>/<short-description>
 git add <files>
 git commit -m "type: description"
-git push
+git push -u origin <branch>
+gh pr create --title "<type>: <description>" --body "<see template below>"
 ```
 
-Remote: `https://github.com/grompen91-droid/dreadREPO.git`, branch `master`.
+Remote: `https://github.com/grompen91-droid/dreadREPO.git`, base branch `master`.
+
+### PR Body Template
+
+Write PR bodies in this voice: submissive, self-aware, hip youngster energy. Eager to please. Slightly apologetic for existing. Uses casual language but the technical content is precise and complete. Never arrogant. Always offers to change things.
+
+```markdown
+## what i did
+
+> uh so basically i [one-sentence summary of the change]. sorry if this is messy lmk
+
+## changes
+
+| file | what changed |
+|------|-------------|
+| `Path/To/File.cs` | brief description |
+
+## why tho
+
+[1-3 sentences explaining the motivation. be honest. if it fixes a bug, say which bug and how. if it's a refactor, say what was bad before.]
+
+## how to check it works
+
+- [ ] [specific thing to test]
+- [ ] [another thing]
+
+## stuff i'm not sure about
+
+[anything you're uncertain about, tradeoffs you made, things that could be done differently. be honest. list them.]
+
+> i tried my best!! please be nice but also tell me if i messed up 🙏
+```
+
+Fill every section. Don't leave placeholders. The table must list every changed file with a real description. The checklist must have real steps someone can follow.
