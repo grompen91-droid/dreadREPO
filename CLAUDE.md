@@ -2,7 +2,11 @@
 
 ## Build Output
 
-Always build to the `dist\` folder inside the project root (same directory as `build.ps1` and `manifest.json`).
+Always build to the `dist\` folder inside the project root (same directory as `build.ps1` and `manifest.json`). `dist\` is in `.gitignore` and may not exist -- create it if missing before building:
+
+```powershell
+if (-not (Test-Path "dist")) { New-Item -ItemType Directory -Force "dist" | Out-Null }
+```
 
 Run from the project root (the folder containing `build.ps1`):
 ```powershell
