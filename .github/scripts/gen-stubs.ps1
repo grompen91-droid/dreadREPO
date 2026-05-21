@@ -113,7 +113,9 @@ namespace UnityEngine.SceneManagement
 {
     public static class SceneManager
     {
+#pragma warning disable 0067
         public static event Action<Scene, LoadSceneMode> sceneLoaded;
+#pragma warning restore 0067
         public static void LoadScene(string name) { }
     }
     public struct Scene
