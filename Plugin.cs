@@ -3,7 +3,6 @@ using BepInEx.Logging;
 using Dread.Config;
 using Dread.Systems;
 using HarmonyLib;
-using System.Reflection;
 using UnityEngine;
 
 namespace Dread
