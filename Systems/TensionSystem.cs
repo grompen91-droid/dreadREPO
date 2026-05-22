@@ -30,7 +30,6 @@ namespace Dread.Systems
 
         // Panic sprint state
         private bool _wasSprinting;
-        private bool _panicActive;
         private float _panicTimer;
         private float _panicCooldown;
         private float _originalSprintMultiplier = -1f;
@@ -66,7 +65,6 @@ namespace Dread.Systems
             RestoreSprintMultiplier();
             _mainCam = Camera.main;
             _originalDrain = -1f;
-            _panicActive = false;
             _panicTimer = 0f;
             _panicCooldown = 0f;
             _originalSprintMultiplier = -1f;
@@ -123,7 +121,6 @@ namespace Dread.Systems
             {
                 Traverse.Create(PlayerController.instance).Field<float>("SprintSpeedMultiplier").Value = _originalSprintMultiplier;
                 _originalSprintMultiplier = -1f;
-                _panicActive = false;
             }
         }
 
@@ -167,7 +164,7 @@ namespace Dread.Systems
         {
             if (!DreadConfig.PanicSprintEnabled.Value || SemiFunc.MenuLevel())
             {
-                if (_panicActive)
+                if (_originalSprintMultiplier >= 0f)
                     RestoreSprintMultiplier();
                 return;
             }
@@ -179,12 +176,11 @@ namespace Dread.Systems
 
             bool currentlySprinting = pc.sprinting;
 
-            if (_panicActive)
+            if (_originalSprintMultiplier >= 0f)
             {
                 _panicTimer -= Time.deltaTime;
                 if (_panicTimer <= 0f)
                 {
-                    _panicActive = false;
                     _panicCooldown = 20f;
                     if (_originalSprintMultiplier >= 0f)
                     {
@@ -198,7 +194,6 @@ namespace Dread.Systems
                 var tpc = Traverse.Create(pc);
                 _originalSprintMultiplier = tpc.Field<float>("SprintSpeedMultiplier").Value;
                 tpc.Field<float>("SprintSpeedMultiplier").Value = _originalSprintMultiplier * 1.25f;
-                _panicActive = true;
                 _panicTimer = 2f;
             }
 
