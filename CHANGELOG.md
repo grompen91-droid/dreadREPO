@@ -10,6 +10,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ![Status](https://img.shields.io/badge/status-development-yellow?style=flat-square)
 
 ### Changed
+- CI pipeline: 4-job architecture (relevance, build, analyze, summary) per spec v1.2
+- CI pipeline: relevance hard gate skips build/analyze on non-project PRs
+- CI pipeline: summary table prints all job results and exits 1 on failure
+- CI pipeline: MSBuild log uploaded as artifact on build failure
+- CI pipeline: anti-pattern and format checks fail the build (hard gates)
 - CD pipeline: version-specific release tags (`vX.Y.Z` instead of reusing `vmajor`/`vminor`/`vpatch`)
 - CD pipeline: idempotency check prevents duplicate releases
 - CD pipeline: divergence guard prevents master branch desync on concurrent pushes

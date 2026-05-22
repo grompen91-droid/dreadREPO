@@ -12,10 +12,45 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  verify:
-    name: Verify
+  relevance:
+    name: PR Relevance
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 3
+    outputs:
+      passed: ${{ steps.check.outputs.passed }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR relevance
+        id: check
+        shell: bash
+        run: |
+          title="${{ github.event.pull_request.title }}"
+          passed="true"
+
+          if echo "$title" | grep -qiE 'dread|audio|monster|tension|panic|psychotic|telemetry|crash'; then
+            echo "::notice::PR title matches project keywords"
+          else
+            files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD 2>/dev/null || echo "")
+            if echo "$files" | grep -qiE '\.cs$|\.ps1$|\.yml$|\.md$|\.csproj$'; then
+              echo "::notice::PR touches project files, relevance passed"
+            else
+              echo "::notice::PR does not appear project-relevant (skipping build/analyze)"
+              passed="false"
+            fi
+          fi
+
+          echo "passed=$passed" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [relevance]
+    if: needs.relevance.outputs.passed == 'true'
 
     steps:
       - uses: actions/checkout@v4
@@ -47,6 +82,7 @@ jobs:
         run: .github/scripts/gen-stubs.ps1
 
       - name: Build
+        id: build
         shell: bash
         run: |
           set -e
@@ -55,25 +91,43 @@ jobs:
             -p:GameDir="$refsDir" \
             -p:BepInExDir="$refsDir" \
             -p:DeployToProfile=false \
-            -p:DeployToDist=false
+            -p:DeployToDist=false \
+            -fileLoggerParameters:LogFile=${{ runner.temp }}/msbuild.log
 
-      - name: Relevance check
-        shell: bash
-        run: |
-          title="${{ github.event.pull_request.title }}"
-          if echo "$title" | grep -qiE 'dread|audio|monster|tension'; then
-            :
-          elif [ -n "$title" ]; then
-            echo "::error::PR title does not mention any project-relevant keywords (dread, audio, monster, tension)"
-            exit 1
-          fi
+      - name: Upload Dread.dll
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dread-CI-DLL
+          path: bin/Release/net48/Dread.dll
+          retention-days: 7
+
+      - name: Upload MSBuild log on build failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: ${{ runner.temp }}/msbuild.log
+          retention-days: 7
+
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [relevance]
+    if: needs.relevance.outputs.passed == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Anti-pattern check
+        id: anti-pattern
         shell: bash
         run: |
           has_issues=0
 
-          if grep -rnP '(?<!\!)=(\!)(?!\=)' *.cs Systems/*.cs Config/*.cs 2>/dev/null; then
+          if grep -rnP '!\s*[\.\w(]' *.cs Systems/*.cs Config/*.cs 2>/dev/null | grep -v '!= '; then
             echo "::error::Null-forgiving operator (!) usage found"
             has_issues=1
           fi
@@ -86,6 +140,7 @@ jobs:
           exit $has_issues
 
       - name: Format check
+        id: format
         shell: bash
         run: |
           has_issues=0
@@ -101,3 +156,38 @@ jobs:
           fi
 
           exit $has_issues
+
+  summary:
+    name: Summary
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    needs: [relevance, build, analyze]
+
+    if: always()
+
+    steps:
+      - name: Print summary table
+        shell: bash
+        run: |
+          echo "### CI Pipeline Results"
+          echo ""
+          echo "| Job | Status |"
+          echo "|-----|--------|"
+
+          exit_code=0
+
+          for job in relevance build analyze; do
+            result="${{ needs[job].result }}"
+            case "$result" in
+              success) status=":green_circle: Passed" ;;
+              skipped) status=":yellow_circle: Skipped" ;;
+              failure) status=":red_circle: Failed"; exit_code=1 ;;
+              *)       status=":white_circle: $result" ;;
+            esac
+            echo "| $job | $status |"
+          done
+
+          echo ""
+          echo "**Result:** $([ $exit_code -eq 0 ] && echo 'All checks passed' || echo 'Some checks failed')"
+
+          exit $exit_code
