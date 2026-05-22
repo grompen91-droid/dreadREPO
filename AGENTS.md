@@ -49,7 +49,7 @@ manifest.json format:
   - `vmajor` -- bumps major (1.5.0 > 2.0.0)
   - `vminor` -- bumps minor (1.5.0 > 1.6.0)
   - `vpatch` -- bumps patch (1.5.0 > 1.5.1)
-- CD pipeline auto-increments `manifest.json` + `Plugin.cs` and commits the bump back to master
+- CD pipeline auto-increments `manifest.json` + `Plugin.cs` + `README.md` version badge and commits the bump back to master
 - Thunderstore rejects any version number already published
 - Never change `"name"` in manifest.json -- changing it creates a new listing, not an update
 
