@@ -5,7 +5,7 @@ All notable changes to **Dread** are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.5.2] - 2026-05-22
 
 ![Status](https://img.shields.io/badge/status-development-yellow?style=flat-square)
 
@@ -24,6 +24,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - CD pipeline: `THUNDERSTORE_README.md` support in package zip
 
 ---
+
+
+## [Unreleased]
 
 ## [1.5.1] - 2026-05-21
 
@@ -236,3 +239,4 @@ These were rapid hotfix commits resolving reference and dependency issues during
 ---
 
 *Maintained by [elytraking](https://github.com/grompen91-droid)*
+
