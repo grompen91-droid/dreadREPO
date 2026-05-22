@@ -1,10 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
 using Dread.Config;
 using UnityEngine;
-using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
 namespace Dread.Systems
@@ -16,13 +13,14 @@ namespace Dread.Systems
 
         private static readonly string[] ClipNames =
         {
-            "scraping.ogg", "breathing.ogg", "whisper.ogg"
+            "scraping.ogg", "footsteps.ogg", "breathing.ogg", "whisper.ogg"
         };
 
         // Weight per clip name — lower = rarer. Unlisted clips default to 1.0.
         private static readonly Dictionary<string, float> ClipWeights = new()
         {
             { "scraping.ogg",   0.6f },
+            { "footsteps.ogg",  0.6f },
             { "breathing.ogg",  0.3f },
             { "whisper.ogg",    0.1f },
         };
@@ -46,34 +44,10 @@ namespace Dread.Systems
 
         private IEnumerator LoadClips()
         {
-            var audioDir = Path.Combine(
-                Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
-                "audio");
-
-            foreach (var name in ClipNames)
+            yield return AudioClipLoader.LoadClips(ClipNames, (name, clip) =>
             {
-                var path = Path.Combine(audioDir, name);
-                if (!File.Exists(path))
-                {
-                    Plugin.Logger.LogWarning($"[AudioDread] Missing audio file: {path}");
-                    continue;
-                }
-
-                using var req = UnityWebRequestMultimedia.GetAudioClip(
-                    "file:///" + path.Replace('\\', '/'), AudioType.OGGVORBIS);
-                yield return req.SendWebRequest();
-
-                if (req.result == UnityWebRequest.Result.Success)
-                {
-                    var clip = DownloadHandlerAudioClip.GetContent(req);
-                    clip.name = name;
-                    _clips.Add(clip);
-                }
-                else
-                {
-                    Plugin.Logger.LogWarning($"[AudioDread] Failed to load {name}: {req.error}");
-                }
-            }
+                if (clip != null) _clips.Add(clip);
+            });
 
             Plugin.Logger.LogInfo($"[AudioDread] Loaded {_clips.Count}/{ClipNames.Length} clips.");
             StartCoroutine(PlayLoop());
