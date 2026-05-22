@@ -117,7 +117,8 @@ namespace Dread.Systems
         {
             if (_originalSprintMultiplier >= 0f && (object)PlayerController.instance != null)
             {
-                Traverse.Create(PlayerController.instance).Field<float>("SprintSpeedMultiplier").Value = _originalSprintMultiplier;
+                var sprintField = Traverse.Create(PlayerController.instance).Field<float>("SprintSpeedMultiplier");
+                sprintField.Value = _originalSprintMultiplier;
                 _originalSprintMultiplier = -1f;
             }
         }
@@ -142,7 +143,8 @@ namespace Dread.Systems
             bool currentlySprinting = pc.sprinting;
 
             // Trigger each time player stops sprinting because energy ran out
-            if (_wasSprintingForBreath && !currentlySprinting && pc.EnergyCurrent <= pc.EnergyStart * 0.1f && _breathCooldown <= 0f)
+            var lowEnergy = pc.EnergyCurrent <= pc.EnergyStart * 0.1f;
+            if (_wasSprintingForBreath && !currentlySprinting && lowEnergy && _breathCooldown <= 0f)
             {
                 _breathCooldown = 60f;
 

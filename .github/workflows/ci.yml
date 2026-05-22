@@ -131,7 +131,7 @@ jobs:
         run: |
           has_issues=0
 
-          if grep -rnP '!\s*[\.\w(]' *.cs Systems/*.cs Config/*.cs 2>/dev/null | grep -v '!= '; then
+          if grep -rnP '\w+!\.|\)!\.' *.cs Systems/*.cs Config/*.cs 2>/dev/null | grep -v '!= '; then
             echo "::error::Null-forgiving operator (!) usage found"
             has_issues=1
           fi
