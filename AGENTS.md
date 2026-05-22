@@ -44,12 +44,18 @@ manifest.json format:
 
 ## Versioning Rules
 
-- Increment version in BOTH `manifest.json` AND `Plugin.cs` (`Plugin.VERSION`) before every upload
-- Thunderstore rejects any version number already published
-- Never change `"name"` in manifest.json -- changing it creates a new listing, not an update
 - Version format: semantic versioning `MAJOR.MINOR.PATCH`
+- **Never manually edit version strings** in `manifest.json`, `Plugin.cs`, `README.md`, or `THUNDERSTORE_README.md`. The CD pipeline handles all version bumps.
+- When working on changes for a future release, add entries under `## [Unreleased]` in `CHANGELOG.md`. The CD pipeline reads this section for release notes.
+- When ready to release, push a trigger tag to master:
+  - `vmajor` -- bumps major (1.5.0 > 2.0.0)
+  - `vminor` -- bumps minor (1.5.0 > 1.6.0)
+  - `vpatch` -- bumps patch (1.5.0 > 1.5.1)
+- The CD pipeline auto-increments `manifest.json` + `Plugin.cs` + `README.md` + `THUNDERSTORE_README.md` version badges, creates a git tag, pushes to master, builds the DLL, packages the Thunderstore zip, creates a GitHub Release, and publishes to Thunderstore.
+- Thunderstore rejects any version number already published. Use `vpatch` for successive releases -- never reuse a version number.
+- Never change `"name"` in manifest.json -- changing it creates a new listing, not an update.
 
-## Changelog Rules
+## Changelog Convention
 
 - Maintain `CHANGELOG.md` in the project root
 - Use detailed markdown with special formatting (badges, collapsible sections, tables, blockquotes)
