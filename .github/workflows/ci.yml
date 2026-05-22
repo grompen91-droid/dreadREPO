@@ -1,8 +1,5 @@
 name: CI
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 permissions:
   contents: read
 
@@ -25,6 +22,10 @@ jobs:
         with:
           fetch-depth: 1
 
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
       - name: Cache NuGet packages
         uses: actions/cache@v4
         with:
@@ -45,37 +46,58 @@ jobs:
         shell: pwsh
         run: .github/scripts/gen-stubs.ps1
 
-      - name: Build & verify
+      - name: Build
         shell: bash
         run: |
           set -e
           refsDir=".github/stubs/refs"
-
-          # Build (includes NuGet restore, cached if available)
           dotnet build Dread.csproj -c Release --nologo \
             -p:GameDir="$refsDir" \
             -p:BepInExDir="$refsDir" \
             -p:DeployToProfile=false \
-            -p:DeployToDist=false &
-          build_pid=$!
+            -p:DeployToDist=false
 
-          # Relevance check (inline, fast, runs during build)
+      - name: Relevance check
+        shell: bash
+        run: |
           title="${{ github.event.pull_request.title }}"
-          if echo "$title" | grep -qiE 'dread|audio|monster|tension|fix|feat|refactor|docs|chore|ci|build'; then
+          if echo "$title" | grep -qiE 'dread|audio|monster|tension'; then
             :
           elif [ -n "$title" ]; then
-            echo "::warning::PR title does not mention any project-relevant keywords"
+            echo "::error::PR title does not mention any project-relevant keywords (dread, audio, monster, tension)"
+            exit 1
           fi
 
-          # Anti-pattern check (runs during build)
-          grep -rn '[\w)\]]!\.' *.cs Systems/*.cs Config/*.cs 2>/dev/null && echo "::warning::Null-forgiving operator (!) usage found" || true
-          grep -rn '[A-Z]:\\' *.cs Systems/*.cs Config/*.cs 2>/dev/null && echo "::warning::Hardcoded Windows paths found" || true
+      - name: Anti-pattern check
+        shell: bash
+        run: |
+          has_issues=0
 
-          # Format check (grep-based, instant)
-          grep -rnI '[[:blank:]]$' *.cs Systems/*.cs Config/*.cs 2>/dev/null && \
-            echo "::warning::Trailing whitespace found" || true
-          grep -rnI $'\t' *.cs Systems/*.cs Config/*.cs 2>/dev/null && \
-            echo "::warning::Tab characters found" || true
+          if grep -rnP '(?<!\!)=(\!)(?!\=)' *.cs Systems/*.cs Config/*.cs 2>/dev/null; then
+            echo "::error::Null-forgiving operator (!) usage found"
+            has_issues=1
+          fi
 
-          wait $build_pid && echo "::notice::Build succeeded" || { echo "::error::Build failed"; exit 1; }
-          echo "::notice::All CI checks passed"
+          if grep -rni '[A-Z]:\\' *.cs Systems/*.cs Config/*.cs 2>/dev/null; then
+            echo "::error::Hardcoded Windows paths found"
+            has_issues=1
+          fi
+
+          exit $has_issues
+
+      - name: Format check
+        shell: bash
+        run: |
+          has_issues=0
+
+          if grep -rnI '[[:blank:]]$' *.cs Systems/*.cs Config/*.cs 2>/dev/null; then
+            echo "::error::Trailing whitespace found"
+            has_issues=1
+          fi
+
+          if grep -rnI $'\t' *.cs Systems/*.cs Config/*.cs 2>/dev/null; then
+            echo "::error::Tab characters found"
+            has_issues=1
+          fi
+
+          exit $has_issues
