@@ -11,7 +11,10 @@ namespace UnityEngine
         public Coroutine StartCoroutine(IEnumerator routine) => null;
         public void StopAllCoroutines() { }
     }
-    public class Behaviour : Component { }
+    public class Behaviour : Component
+    {
+        public bool enabled { get; set; }
+    }
     public class Component : Object
     {
         public T GetComponent<T>() where T : class => null;
