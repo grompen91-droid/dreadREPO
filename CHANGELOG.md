@@ -20,7 +20,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased]
+## [1.5.1] - 2026-05-21
 
 ![Status](https://img.shields.io/badge/status-stable-brightgreen?style=flat-square)
 ![Type](https://img.shields.io/badge/type-feature-green?style=flat-square)

@@ -175,7 +175,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .github/stubs/refs
-          key: stubs-${{ hashFiles('.github/scripts/gen-stubs.ps1') }}
+          key: stubs-${{ hashFiles('.github/scripts/gen-stubs.ps1', '.github/scripts/UnityEngine_stubs.cs') }}
 
       - name: Generate stubs
         if: steps.cache-stubs.outputs.cache-hit != 'true'
@@ -344,10 +344,11 @@ jobs:
           git commit -m "release: v${newVersion} bump"
 
           git fetch origin $defaultBranch
-          $rebaseResult = 0
-          git rebase origin/$defaultBranch 2>&1 | ForEach-Object { Write-Host $_; if ($_ -match 'CONFLICT') { $rebaseResult = 1 } }
-          if ($rebaseResult -ne 0) {
-            Write-Error "Rebase failed due to conflicts. Manual intervention required."
+          $rebaseOutput = git rebase origin/$defaultBranch 2>&1
+          $rebaseExit = $LASTEXITCODE
+          Write-Host $rebaseOutput
+          if ($rebaseExit -ne 0) {
+            Write-Error "Rebase failed (exit $rebaseExit). Manual intervention required."
             exit 1
           }
 
