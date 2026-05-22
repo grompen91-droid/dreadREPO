@@ -104,8 +104,7 @@ namespace Dread.Systems
 
                 agent.speed *= 1.2f;
                 agent.acceleration *= 1.2f;
-                t.Field<float>("DefaultSpeed").Value *= 1.2f;
-                t.Field<float>("DefaultAcceleration").Value *= 1.2f;
+
             }
             catch
             {
@@ -140,19 +139,6 @@ namespace Dread.Systems
             if (!DreadConfig.CrouchSpeedBoostEnabled.Value) return;
 
             __instance.CrouchSpeed *= 1.3f;
-            var t = Traverse.Create(__instance);
-            try
-            {
-                float orig = t.Field<float>("playerOriginalCrouchSpeed").Value;
-                if (orig > 0f)
-                    t.Field<float>("playerOriginalCrouchSpeed").Value = orig * 1.3f;
-                else
-                    t.Field<float>("playerOriginalCrouchSpeed").Value = __instance.CrouchSpeed;
-            }
-            catch
-            {
-                // silently skip if field doesn't exist
-            }
         }
     }
 
