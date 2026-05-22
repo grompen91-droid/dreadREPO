@@ -17,7 +17,7 @@ Atmospheric horror overhaul for R.E.P.O. Five systems that layer ambient dread, 
 
 **Tension System:** scans for danger every 0.5s. Adrenaline reduces sprint drain near enemies. Panic sprint gives a speed burst. Fake footsteps play behind you. Breath sounds on low stamina.
 
-**Psychotic Break:** When you are solo, scared, and hiding in the dark, a terrifying 20-second episode can trigger. Complete with darkness, flickering shadows, circling phantom footsteps, and bone-chilling screams.
+**Psychotic Break:** When everyone is dead and you're alone, scared, and hiding in the dark, a terrifying 20-second episode can trigger. Complete with darkness, flickering shadows, circling phantom footsteps, and bone-chilling screams.
 
 **QOL:** crouch speed +30%.
 
