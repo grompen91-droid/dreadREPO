@@ -289,7 +289,7 @@ namespace Dread.Systems
                     _footstepSource.volume = Mathf.Lerp(0.5f, 1f, progress);
                 }
 
-                _phantomSoundAccumulator += 0.02f * Time.deltaTime;
+                _phantomSoundAccumulator += Time.deltaTime * 0.3f;
                 if (_phantomSoundAccumulator >= 1f)
                 {
                     _phantomSoundAccumulator = 0f;

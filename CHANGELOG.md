@@ -87,8 +87,6 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Build failure after bump: local changes discarded, remote untouched, user re-pushes tag after fix
 - Duplicate release tag: `gh release create` fails; user must delete existing release and re-run
 
----
-
 ## [1.5.0] - 2026-05-21
 
 ![Status](https://img.shields.io/badge/status-stable-brightgreen?style=flat-square)
