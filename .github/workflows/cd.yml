@@ -172,7 +172,6 @@ jobs:
         with:
           path: .github/stubs/refs
           key: stubs-${{ hashFiles('.github/scripts/gen-stubs.ps1') }}
-
       - name: Generate stubs
         if: steps.cache-stubs.outputs.cache-hit != 'true'
         shell: pwsh
