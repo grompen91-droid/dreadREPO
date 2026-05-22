@@ -25,6 +25,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       new_version: ${{ steps.bump.outputs.new_version }}
+      release_tag: ${{ steps.bump.outputs.release_tag }}
 
     steps:
       - name: Checkout
@@ -57,8 +58,18 @@ jobs:
             'vpatch' { $patch++ }
           }
           $newVersion = "$major.$minor.$patch"
+          $releaseTag = "v$newVersion"
           Write-Host "New version: $newVersion"
-          echo "new_version=$newVersion" >> $env:GITHUB_OUTPUT
+          Write-Host "Release tag: $releaseTag"
+
+          $existing = git ls-remote --tags origin $releaseTag
+          if ($existing) {
+            Write-Error "Tag $releaseTag already exists on remote. Aborting."
+            exit 1
+          }
+
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "new_version=$newVersion"
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "release_tag=$releaseTag"
 
           $changelog = Get-Content CHANGELOG.md -Raw
           if ($changelog -notmatch '## \[Unreleased\]') {
@@ -94,10 +105,10 @@ jobs:
           Set-Content README.md $readme
 
           if (Test-Path "THUNDERSTORE_README.md") {
-              $tsReadme = Get-Content THUNDERSTORE_README.md -Raw
-              $tsReadme = $tsReadme -replace 'version-[\d.]+-crimson', "version-$newVersion-crimson"
-              $tsReadme = $tsReadme -replace 'status-(active|release)-brightgreen', "status-release-brightgreen"
-              Set-Content THUNDERSTORE_README.md $tsReadme
+            $tsReadme = Get-Content THUNDERSTORE_README.md -Raw
+            $tsReadme = $tsReadme -replace 'version-[\d.]+-crimson', "version-$newVersion-crimson"
+            $tsReadme = $tsReadme -replace 'status-(active|release)-brightgreen', "status-release-brightgreen"
+            Set-Content THUNDERSTORE_README.md $tsReadme
           }
 
           $date = Get-Date -Format "yyyy-MM-dd"
@@ -119,13 +130,6 @@ jobs:
             $newChangelog = "## [Unreleased]`n`n$changelog"
           }
           Set-Content CHANGELOG.md $newChangelog
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add manifest.json Plugin.cs CHANGELOG.md README.md
-          if (Test-Path "THUNDERSTORE_README.md") { git add THUNDERSTORE_README.md }
-          git commit -m "release: v${newVersion} bump"
-          echo "bump_commit_sha=$(git rev-parse HEAD)" >> $env:GITHUB_OUTPUT
 
       - name: Upload modified files
         uses: actions/upload-artifact@v4
@@ -172,6 +176,7 @@ jobs:
         with:
           path: .github/stubs/refs
           key: stubs-${{ hashFiles('.github/scripts/gen-stubs.ps1') }}
+
       - name: Generate stubs
         if: steps.cache-stubs.outputs.cache-hit != 'true'
         shell: pwsh
@@ -286,11 +291,11 @@ jobs:
     needs: [version, package]
 
     steps:
-      - name: Checkout master
+      - name: Checkout default branch
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: master
+          ref: ${{ github.event.repository.default_branch }}
 
       - name: Download Dread.dll
         uses: actions/download-artifact@v4
@@ -316,10 +321,12 @@ jobs:
           name: thunderstore-zip
           path: ${{ runner.temp }}/zip
 
-      - name: Apply bump and push to master
+      - name: Apply bump and push to default branch
         shell: pwsh
         run: |
           $newVersion = "${{ needs.version.outputs.new_version }}"
+          $releaseTag = "${{ needs.version.outputs.release_tag }}"
+          $defaultBranch = "${{ github.event.repository.default_branch }}"
 
           Copy-Item "${{ runner.temp }}/modified/manifest.json" "manifest.json"
           Copy-Item "${{ runner.temp }}/modified/Plugin.cs" "Plugin.cs"
@@ -327,7 +334,7 @@ jobs:
           Copy-Item "${{ runner.temp }}/modified/README.md" "README.md"
 
           if (Test-Path "${{ runner.temp }}/modified/THUNDERSTORE_README.md") {
-              Copy-Item "${{ runner.temp }}/modified/THUNDERSTORE_README.md" "THUNDERSTORE_README.md"
+            Copy-Item "${{ runner.temp }}/modified/THUNDERSTORE_README.md" "THUNDERSTORE_README.md"
           }
 
           git config user.name "github-actions[bot]"
@@ -336,13 +343,36 @@ jobs:
           if (Test-Path "THUNDERSTORE_README.md") { git add THUNDERSTORE_README.md }
           git commit -m "release: v${newVersion} bump"
 
-          $tag = "${{ github.ref_name }}"
-          git tag -f $tag HEAD
-          git push origin $tag -f
+          git fetch origin $defaultBranch
+          $rebaseResult = 0
+          git rebase origin/$defaultBranch 2>&1 | ForEach-Object { Write-Host $_; if ($_ -match 'CONFLICT') { $rebaseResult = 1 } }
+          if ($rebaseResult -ne 0) {
+            Write-Error "Rebase failed due to conflicts. Manual intervention required."
+            exit 1
+          }
 
-          git push origin master
+          git push origin $defaultBranch
+
+          git tag "$releaseTag" HEAD
+          git push origin "$releaseTag"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          $newVersion = "${{ needs.version.outputs.new_version }}"
+          $releaseTag = "${{ needs.version.outputs.release_tag }}"
+          $zipFile = Get-ChildItem "${{ runner.temp }}/zip/*.zip" | Select-Object -First 1
+
+          gh release create "$releaseTag" `
+            --title "v$newVersion" `
+            --notes-file "${{ runner.temp }}/release-body/release-body.md" `
+            "${{ runner.temp }}/dll/Dread.dll" `
+            "$($zipFile.FullName)"
 
       - name: Create post-release issue
+        if: success()
         env:
           GH_TOKEN: ${{ github.token }}
         shell: pwsh
@@ -358,21 +388,8 @@ jobs:
             Write-Host "Open README update issue already exists, skipping"
           }
 
-      - name: Create GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: pwsh
-        run: |
-          $newVersion = "${{ needs.version.outputs.new_version }}"
-          $zipFile = Get-ChildItem "${{ runner.temp }}/zip/*.zip" | Select-Object -First 1
-
-          gh release create "${{ github.ref_name }}" `
-            --title "v$newVersion" `
-            --notes-file "${{ runner.temp }}/release-body/release-body.md" `
-            "${{ runner.temp }}/dll/Dread.dll" `
-            "$($zipFile.FullName)"
-
       - name: Publish to Thunderstore
+        if: success()
         env:
           TCLI_AUTH_TOKEN: ${{ secrets.TCLI_AUTH_TOKEN }}
         shell: pwsh

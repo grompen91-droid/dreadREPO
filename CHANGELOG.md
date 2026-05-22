@@ -5,6 +5,19 @@ All notable changes to **Dread** are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+![Status](https://img.shields.io/badge/status-development-yellow?style=flat-square)
+
+### Changed
+- CD pipeline: version-specific release tags (`vX.Y.Z` instead of reusing `vmajor`/`vminor`/`vpatch`)
+- CD pipeline: idempotency check prevents duplicate releases
+- CD pipeline: divergence guard prevents master branch desync on concurrent pushes
+- CD pipeline: release step runs before post-release issue creation
+- CD pipeline: migrated build to `ubuntu-latest` with NuGet and stubs caching
+- CD pipeline: added Thunderstore auto-publish via `tcli`
+- CD pipeline: `THUNDERSTORE_README.md` support in package zip
+
 ---
 
 ## [Unreleased]
