@@ -20,6 +20,15 @@ namespace Dread.Systems
         private const int MaxBatchSize = 50;
         private const int MaxStackTraceLength = 3000;
         private const int MaxMessageLength = 500;
+        private const float ProximityRange = 15f;
+        private readonly Queue<RawLogEntry> _pendingLogs = new Queue<RawLogEntry>(32);
+
+        private class RawLogEntry
+        {
+            public string Message;
+            public string StackTrace;
+            public LogType Type;
+        }
 
         private void OnEnable()
         {
@@ -43,33 +52,61 @@ namespace Dread.Systems
             if (!DreadConfig.ErrorReportingEnabled.Value)
                 return;
 
-            var report = new ErrorReport
+            lock (_pendingLogs)
             {
-                Hash = ComputeHash(stackTrace, logString),
-                Timestamp = DateTime.UtcNow.ToString("o"),
-                Type = type == LogType.Exception ? "exception" : "error",
-                ExceptionType = ParseExceptionType(logString),
-                Message = Truncate(logString, MaxMessageLength),
-                StackTrace = Truncate(stackTrace, MaxStackTraceLength),
-                Scene = SceneManager.GetActiveScene()?.name ?? "unknown",
-                GameState = CaptureGameState(),
-                SystemInfo = CaptureSystemInfo(),
-                Display = CaptureDisplayInfo(),
-                Config = CaptureConfig()
-            };
-
-            lock (_buffer)
-            {
-                _buffer.Add(report);
-                if (_buffer.Count >= MaxBatchSize)
-                    _shouldFlush = true;
+                if (_pendingLogs.Count < 100)
+                    _pendingLogs.Enqueue(new RawLogEntry
+                    {
+                        Message = logString,
+                        StackTrace = stackTrace,
+                        Type = type
+                    });
             }
         }
 
         private void Update()
         {
+            ProcessPendingLogs();
+
             if (_shouldFlush || Time.realtimeSinceStartup - _lastFlushTime >= FlushInterval)
                 FlushNow();
+        }
+
+        private void ProcessPendingLogs()
+        {
+            RawLogEntry[] batch;
+            lock (_pendingLogs)
+            {
+                if (_pendingLogs.Count == 0)
+                    return;
+                batch = _pendingLogs.ToArray();
+                _pendingLogs.Clear();
+            }
+
+            foreach (var raw in batch)
+            {
+                var report = new ErrorReport
+                {
+                    Hash = ComputeHash(raw.StackTrace, raw.Message),
+                    Timestamp = DateTime.UtcNow.ToString("o"),
+                    Type = raw.Type == LogType.Exception ? "exception" : "error",
+                    ExceptionType = ParseExceptionType(raw.Message),
+                    Message = Truncate(raw.Message, MaxMessageLength),
+                    StackTrace = Truncate(raw.StackTrace, MaxStackTraceLength),
+                    Scene = SceneManager.GetActiveScene()?.name ?? "unknown",
+                    GameState = CaptureGameState(),
+                    SystemInfo = CaptureSystemInfo(),
+                    Display = CaptureDisplayInfo(),
+                    Config = CaptureConfig()
+                };
+
+                lock (_buffer)
+                {
+                    _buffer.Add(report);
+                    if (_buffer.Count >= MaxBatchSize)
+                        _shouldFlush = true;
+                }
+            }
         }
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -152,11 +189,11 @@ namespace Dread.Systems
                 var enemies = FindObjectsOfType<EnemyHealth>();
                 state.EnemiesTotal = enemies.Length;
                 int alive = 0, nearby = 0;
+                var player = FindObjectOfType<PlayerController>();
                 foreach (var e in enemies)
                 {
                     if (e.CurrentHealth > 0) alive++;
-                    var player = FindObjectOfType<PlayerController>();
-                    if (player != null && Vector3.Distance(e.transform.position, player.transform.position) < 15f)
+                    if (player != null && Vector3.Distance(e.transform.position, player.transform.position) < ProximityRange)
                         nearby++;
                 }
                 state.EnemiesAlive = alive;
