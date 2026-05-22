@@ -15,6 +15,7 @@ namespace Dread.Systems
         private const string WorkerUrl = "https://dread-error-reporter.your-worker.workers.dev/api/report";
         private readonly List<ErrorReport> _buffer = new List<ErrorReport>();
         private float _lastFlushTime;
+        private volatile bool _shouldFlush;
         private const float FlushInterval = 300f;
         private const int MaxBatchSize = 50;
         private const int MaxStackTraceLength = 3000;
@@ -61,13 +62,13 @@ namespace Dread.Systems
             {
                 _buffer.Add(report);
                 if (_buffer.Count >= MaxBatchSize)
-                    FlushNow();
+                    _shouldFlush = true;
             }
         }
 
         private void Update()
         {
-            if (Time.realtimeSinceStartup - _lastFlushTime >= FlushInterval)
+            if (_shouldFlush || Time.realtimeSinceStartup - _lastFlushTime >= FlushInterval)
                 FlushNow();
         }
 
@@ -87,6 +88,7 @@ namespace Dread.Systems
                 _buffer.Clear();
             }
 
+            _shouldFlush = false;
             _lastFlushTime = Time.realtimeSinceStartup;
             StartCoroutine(SendBatch(batch));
         }
@@ -169,7 +171,7 @@ namespace Dread.Systems
                     state.PlayerPosition = pc.transform.position;
                 }
             }
-            catch { }
+            catch { Plugin.Logger.LogWarning("Failed to capture game state for error report"); }
 
             state.PlayTimeSeconds = (int)Time.realtimeSinceStartup;
             return state;
