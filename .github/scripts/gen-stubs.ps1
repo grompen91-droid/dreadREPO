@@ -207,7 +207,7 @@ function Compile-StubAssembly {
     <Nullable>enable</Nullable>
     <Configurations>Release</Configurations>
     <OutDir>$stubsDir</OutDir>
-    <IntermediateOutputPath>$stubsDir\obj\$Name\</IntermediateOutputPath>
+    <IntermediateOutputPath>$stubsDir/obj/$Name/</IntermediateOutputPath>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
   <ItemGroup>

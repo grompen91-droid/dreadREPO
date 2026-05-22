@@ -136,55 +136,49 @@ jobs:
 
   build:
     name: Build
-    runs-on: windows-latest
-    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: [version]
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            6.0.x
-            8.0.x
+          dotnet-version: 8.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ hashFiles('**/*.csproj') }}-${{ runner.os }}
+          restore-keys: |
+            nuget-${{ runner.os }}
+
+      - name: Cache stubs
+        id: cache-stubs
+        uses: actions/cache@v4
+        with:
+          path: .github/_ci
+          key: stubs-${{ hashFiles('.github/scripts/gen-stubs.ps1') }}-${{ runner.os }}
 
       - name: Generate stub assemblies
+        if: steps.cache-stubs.outputs.cache-hit != 'true'
         shell: pwsh
-        run: .\.github\scripts\gen-stubs.ps1
-        env:
-          OutDir: ${{ github.workspace }}\.github\_ci
-
-      - name: Install net48 targeting pack
-        shell: pwsh
-        run: |
-          dotnet workload install maui-windows 2>$null
-          cd $env:RUNNER_TEMP
-          dotnet new console -n _getref -o _getref --force 2>$null
-          cd _getref
-          dotnet add package Microsoft.NETFramework.ReferenceAssemblies --version 1.0.3 2>$null
-          cd ..
-          Remove-Item -Recurse -Force _getref 2>$null
+        run: pwsh .github/scripts/gen-stubs.ps1
 
       - name: Build
         shell: pwsh
         run: |
-          $refsDir = "${{ github.workspace }}\.github\_ci\refs"
-          $output = dotnet build Dread.csproj `
-            -c Release `
-            --nologo `
-            -p:GameDir="$refsDir" `
-            -p:BepInExDir="$refsDir" `
-            -p:DeployToProfile=false `
-            -p:DeployToDist=false `
-            2>&1
+          $refsDir = "${{ github.workspace }}/.github/_ci/refs"
+          $output = dotnet build Dread.csproj -c Release --nologo -p:GameDir="$refsDir" -p:BepInExDir="$refsDir" -p:DeployToProfile=false -p:DeployToDist=false 2>&1
           $exitCode = $LASTEXITCODE
           if ($exitCode -ne 0) {
-            "$output" | Out-File -FilePath "$env:RUNNER_TEMP\build-output.txt" -Encoding utf8
+            "$output" | Out-File -FilePath "$env:RUNNER_TEMP/build-output.txt" -Encoding utf8
             Write-Error "Build failed (exit code $exitCode)"
             exit $exitCode
           }
@@ -193,12 +187,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Dread-DLL
-          path: bin\Release\net48\Dread.dll
+          path: bin/Release/net48/Dread.dll
           retention-days: 1
 
   package:
     name: Package
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: [version, build]
 
@@ -210,36 +204,36 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: Dread-DLL
-          path: ${{ runner.temp }}\dll
+          path: ${{ runner.temp }}/dll
 
       - name: Download modified files
         uses: actions/download-artifact@v4
         with:
           name: modified-files
-          path: ${{ runner.temp }}\modified
+          path: ${{ runner.temp }}/modified
 
       - name: Create Thunderstore package
         shell: pwsh
         run: |
           $newVersion = "${{ needs.version.outputs.new_version }}"
           $name = "elytraking-Dread"
-          $outDir = "${{ runner.temp }}\$name-$newVersion"
-          $zipPath = "${{ runner.temp }}\$name-$newVersion.zip"
+          $outDir = "${{ runner.temp }}/$name-$newVersion"
+          $zipPath = "${{ runner.temp }}/$name-$newVersion.zip"
 
-          New-Item -ItemType Directory -Force "$outDir\BepInEx\plugins\$name" | Out-Null
+          New-Item -ItemType Directory -Force "$outDir/BepInEx/plugins/$name" | Out-Null
 
-          Copy-Item "${{ runner.temp }}\dll\Dread.dll" "$outDir\BepInEx\plugins\$name\"
+          Copy-Item "${{ runner.temp }}/dll/Dread.dll" "$outDir/BepInEx/plugins/$name/"
 
           if (Test-Path "audio") {
-            Copy-Item -Recurse "audio" "$outDir\BepInEx\plugins\$name\"
+            Copy-Item -Recurse "audio" "$outDir/BepInEx/plugins/$name/"
           }
 
-          Copy-Item "${{ runner.temp }}\modified\manifest.json" $outDir
+          Copy-Item "${{ runner.temp }}/modified/manifest.json" $outDir
 
           if (Test-Path "THUNDERSTORE_README.md") {
-            Copy-Item "THUNDERSTORE_README.md" "$outDir\README.md"
+            Copy-Item "THUNDERSTORE_README.md" "$outDir/README.md"
           } else {
-            Copy-Item "${{ runner.temp }}\modified\README.md" $outDir
+            Copy-Item "${{ runner.temp }}/modified/README.md" $outDir
           }
 
           if (Test-Path "icon.png") {
@@ -248,14 +242,14 @@ jobs:
             Write-Warning "icon.png missing"
           }
 
-          Compress-Archive -Path "$outDir\*" -DestinationPath $zipPath -Force
+          Compress-Archive -Path "$outDir/*" -DestinationPath $zipPath -Force
           Write-Host "Package created: $zipPath"
 
       - name: Upload Thunderstore zip
         uses: actions/upload-artifact@v4
         with:
           name: thunderstore-zip
-          path: ${{ runner.temp }}\*.zip
+          path: ${{ runner.temp }}/*.zip
           retention-days: 1
 
   release:
