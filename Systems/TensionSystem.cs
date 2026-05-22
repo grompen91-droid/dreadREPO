@@ -1,11 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
 using Dread.Config;
 using HarmonyLib;
 using UnityEngine;
-using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
 namespace Dread.Systems
@@ -63,6 +60,7 @@ namespace Dread.Systems
         {
             RestoreDrain();
             RestoreSprintMultiplier();
+            AudioClipLoader.ClearCache();
             _mainCam = Camera.main;
             _originalDrain = -1f;
             _panicTimer = 0f;
@@ -224,47 +222,19 @@ namespace Dread.Systems
 
         private IEnumerator LoadBreathClips()
         {
-            var audioDir = Path.Combine(
-                Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
-                "audio");
-
-            foreach (var name in BreathCandidates)
+            yield return AudioClipLoader.LoadClips(BreathCandidates, (name, clip) =>
             {
-                var path = Path.Combine(audioDir, name);
-                if (!File.Exists(path)) continue;
-
-                using var req = UnityWebRequestMultimedia.GetAudioClip(
-                    "file:///" + path.Replace('\\', '/'), AudioType.OGGVORBIS);
-                yield return req.SendWebRequest();
-
-                if (req.result == UnityWebRequest.Result.Success)
-                {
-                    _breathClips.Add(DownloadHandlerAudioClip.GetContent(req));
-                    Plugin.Logger.LogInfo($"[Dread] Breath clip loaded: {name}");
-                }
-                else
-                {
-                    Plugin.Logger.LogWarning($"[Dread] Breath clip failed {name}: {req.error}");
-                }
-            }
+                if (clip != null) _breathClips.Add(clip);
+            });
         }
 
         // ── Fake Footsteps ────────────────────────────────────────────────────
 
         private IEnumerator LoadFootstepClip()
         {
-            var audioDir = Path.Combine(
-                Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
-                "audio");
-            var path = Path.Combine(audioDir, "footsteps.ogg");
-            if (!File.Exists(path)) yield break;
-
-            using var req = UnityWebRequestMultimedia.GetAudioClip(
-                "file:///" + path.Replace('\\', '/'), AudioType.OGGVORBIS);
-            yield return req.SendWebRequest();
-
-            if (req.result == UnityWebRequest.Result.Success)
-                _footstepClip = DownloadHandlerAudioClip.GetContent(req);
+            AudioClip? clip = null;
+            yield return AudioClipLoader.LoadClip("footsteps.ogg", c => clip = c);
+            if (clip != null) _footstepClip = clip;
         }
 
         private IEnumerator FakeFootstepLoop()
