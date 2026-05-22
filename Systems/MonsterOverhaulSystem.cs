@@ -19,7 +19,8 @@ namespace Dread.Systems
         private void Start()
         {
             SceneManager.sceneLoaded += OnSceneLoaded;
-            _inLevel = !SceneManager.GetActiveScene().name.Contains("Menu") && !SceneManager.GetActiveScene().name.Contains("Main");
+            var sceneName = SceneManager.GetActiveScene().name;
+            _inLevel = !sceneName.Contains("Menu") && !sceneName.Contains("Main");
             StartCoroutine(MonsterAudioLoop());
         }
 
@@ -154,7 +155,8 @@ namespace Dread.Systems
         internal static void Apply(Harmony harmony)
         {
             _original = AccessTools.Method(typeof(EnemyDirector), "SetInvestigate");
-            harmony.Patch(_original, prefix: new HarmonyMethod(typeof(EnemyDirectorSetInvestigatePatch), nameof(Prefix)));
+            var patch = new HarmonyMethod(typeof(EnemyDirectorSetInvestigatePatch), nameof(Prefix));
+            harmony.Patch(_original, prefix: patch);
         }
 
         internal static void Remove(Harmony harmony)
