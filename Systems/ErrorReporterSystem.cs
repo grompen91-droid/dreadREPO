@@ -12,7 +12,7 @@ namespace Dread.Systems
 {
     public class ErrorReporterSystem : MonoBehaviour
     {
-        private const string WorkerUrl = "https://dread-error-reporter.your-worker.workers.dev/api/report";
+        private const string WorkerUrl = "https://dread-error-reporter.nox-heights.workers.dev/api/report";
         private readonly List<ErrorReport> _buffer = new List<ErrorReport>();
         private float _lastFlushTime;
         private volatile bool _shouldFlush;
