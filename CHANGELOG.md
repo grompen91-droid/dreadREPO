@@ -17,6 +17,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- FakeFootstepLoop: restructured with early-exit guards before wait, 60-90s post-cycle cooldown, 35% trigger chance. Effective interval reduced from ~22.5 min to ~3.6 min (Issue: #57)
 - TensionSystem proximity features (adrenaline, panic sprint, low stamina breath) silently failed when MonsterAudio was disabled due to cross-system cache coupling. Each system now scans independently (Issue: #103)
 - AudioDreadSystem: null-guard `Camera.main` and `Destroy()` clip calls, guard empty `_clips` list in `PickWeightedClip()`, stop coroutines in `OnDestroy`, remove duplicate `footsteps.ogg` load, refresh `_mainCam` on scene transition
 - TensionSystem: use cached `_mainCam` instead of `Camera.main` in `FakeFootstepLoop`, percentage-based low stamina threshold, re-save `SprintSpeedMultiplier` before panic activation, framerate-independent adrenaline lerp, guard `_breathCooldown` decrement when disabled, stop coroutines in `OnDestroy`
