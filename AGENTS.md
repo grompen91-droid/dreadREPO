@@ -58,6 +58,22 @@ manifest.json format:
 - Add a `> **Highlight:**` blockquote for notable releases
 - Use collapsible `<details>` blocks for long technical notes
 
+## CD Pipeline
+
+The CD pipeline (`.github/workflows/cd.yml`) handles version bumps, builds, packaging, release, and Thunderstore publishing.
+
+Trigger a release by pushing one of these tags:
+- `vmajor` -- bumps major version (X.0.0)
+- `vminor` -- bumps minor version (X.Y.0)
+- `vpatch` -- bumps patch version (X.Y.Z)
+
+```powershell
+git tag vpatch
+git push origin vpatch
+```
+
+The pipeline produces a version-specific tag (e.g., `v1.6.1`) and creates a GitHub Release with the DLL and Thunderstore zip attached. Thunderstore publish requires the `TCLI_AUTH_TOKEN` secret.
+
 ## GitHub Workflow
 
 Push to GitHub after every change. Run from the project root:

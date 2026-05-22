@@ -1,5 +1,8 @@
 name: CD
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   push:
     tags:
@@ -58,6 +61,7 @@ jobs:
           $releaseTag = "v$newVersion"
           Write-Host "New version: $newVersion"
           Write-Host "Release tag: $releaseTag"
+
           $existing = git ls-remote --tags origin $releaseTag
           if ($existing) {
             Write-Error "Tag $releaseTag already exists on remote. Aborting."
@@ -100,6 +104,13 @@ jobs:
           $readme = $readme -replace 'status-(active|release)-brightgreen', "status-release-brightgreen"
           Set-Content README.md $readme
 
+          if (Test-Path "THUNDERSTORE_README.md") {
+            $tsReadme = Get-Content THUNDERSTORE_README.md -Raw
+            $tsReadme = $tsReadme -replace 'version-[\d.]+-crimson', "version-$newVersion-crimson"
+            $tsReadme = $tsReadme -replace 'status-(active|release)-brightgreen', "status-release-brightgreen"
+            Set-Content THUNDERSTORE_README.md $tsReadme
+          }
+
           $date = Get-Date -Format "yyyy-MM-dd"
           $changelog = $changelog -replace '## \[Unreleased\]', "## [$newVersion] - $date"
           $lines = $changelog -split "`n"
@@ -129,6 +140,7 @@ jobs:
             Plugin.cs
             CHANGELOG.md
             README.md
+            THUNDERSTORE_README.md
           retention-days: 1
 
       - name: Upload release body
@@ -140,69 +152,79 @@ jobs:
 
   build:
     name: Build
-    runs-on: windows-latest
-    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: [version]
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v4
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
         with:
-          dotnet-version: |
-            6.0.x
-            8.0.x
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
 
-      - name: Generate stub assemblies
-        shell: pwsh
-        run: .\.github\scripts\gen-stubs.ps1
-        env:
-          OutDir: ${{ github.workspace }}\.github\_ci
+      - name: Cache generated stubs
+        id: cache-stubs
+        uses: actions/cache@v4
+        with:
+          path: .github/stubs/refs
+          key: stubs-${{ hashFiles('.github/scripts/gen-stubs.ps1') }}
 
-      - name: Install net48 targeting pack
+      - name: Generate stubs
+        if: steps.cache-stubs.outputs.cache-hit != 'true'
         shell: pwsh
+        run: .github/scripts/gen-stubs.ps1
+
+      - name: Download modified files
+        uses: actions/download-artifact@v4
+        with:
+          name: modified-files
+          path: ${{ runner.temp }}/modified
+
+      - name: Apply bumped Plugin.cs
+        shell: bash
         run: |
-          dotnet workload install maui-windows 2>$null
-          cd $env:RUNNER_TEMP
-          dotnet new console -n _getref -o _getref --force 2>$null
-          cd _getref
-          dotnet add package Microsoft.NETFramework.ReferenceAssemblies --version 1.0.3 2>$null
-          cd ..
-          Remove-Item -Recurse -Force _getref 2>$null
+          cp "${{ runner.temp }}/modified/Plugin.cs" Plugin.cs
+
+      - name: Verify Plugin.cs version
+        shell: bash
+        run: |
+          grep -q "VERSION = \"${{ needs.version.outputs.new_version }}\"" Plugin.cs \
+            || { echo "::error::Plugin.cs version mismatch (expected ${{ needs.version.outputs.new_version }})"; exit 1; }
 
       - name: Build
-        shell: pwsh
+        shell: bash
         run: |
-          $refsDir = "${{ github.workspace }}\.github\_ci\refs"
-          $output = dotnet build Dread.csproj `
-            -c Release `
-            --nologo `
-            -p:GameDir="$refsDir" `
-            -p:BepInExDir="$refsDir" `
-            -p:DeployToProfile=false `
-            -p:DeployToDist=false `
-            2>&1
-          $exitCode = $LASTEXITCODE
-          if ($exitCode -ne 0) {
-            "$output" | Out-File -FilePath "$env:RUNNER_TEMP\build-output.txt" -Encoding utf8
-            Write-Error "Build failed (exit code $exitCode)"
+          refsDir=".github/stubs/refs"
+          output=$(dotnet build Dread.csproj -c Release --nologo \
+            -p:GameDir="$refsDir" \
+            -p:BepInExDir="$refsDir" \
+            -p:DeployToProfile=false \
+            -p:DeployToDist=false 2>&1)
+          exitCode=$?
+          if [ $exitCode -ne 0 ]; then
+            echo "$output"
+            echo "::error::Build failed (exit code $exitCode)"
             exit $exitCode
-          }
+          fi
 
       - name: Upload Dread.dll
         uses: actions/upload-artifact@v4
         with:
           name: Dread-DLL
-          path: bin\Release\net48\Dread.dll
+          path: bin/Release/net48/Dread.dll
           retention-days: 1
 
   package:
     name: Package
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: [version, build]
 
@@ -214,36 +236,36 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: Dread-DLL
-          path: ${{ runner.temp }}\dll
+          path: ${{ runner.temp }}/dll
 
       - name: Download modified files
         uses: actions/download-artifact@v4
         with:
           name: modified-files
-          path: ${{ runner.temp }}\modified
+          path: ${{ runner.temp }}/modified
 
       - name: Create Thunderstore package
         shell: pwsh
         run: |
           $newVersion = "${{ needs.version.outputs.new_version }}"
           $name = "elytraking-Dread"
-          $outDir = "${{ runner.temp }}\$name-$newVersion"
-          $zipPath = "${{ runner.temp }}\$name-$newVersion.zip"
+          $outDir = "${{ runner.temp }}/$name-$newVersion"
+          $zipPath = "${{ runner.temp }}/$name-$newVersion.zip"
 
-          New-Item -ItemType Directory -Force "$outDir\BepInEx\plugins\$name" | Out-Null
+          New-Item -ItemType Directory -Force "$outDir/BepInEx/plugins/$name" | Out-Null
 
-          Copy-Item "${{ runner.temp }}\dll\Dread.dll" "$outDir\BepInEx\plugins\$name\"
+          Copy-Item "${{ runner.temp }}/dll/Dread.dll" "$outDir/BepInEx/plugins/$name/"
 
           if (Test-Path "audio") {
-            Copy-Item -Recurse "audio" "$outDir\BepInEx\plugins\$name\"
+            Copy-Item -Recurse "audio" "$outDir/BepInEx/plugins/$name/"
           }
 
-          Copy-Item "${{ runner.temp }}\modified\manifest.json" $outDir
+          Copy-Item "${{ runner.temp }}/modified/manifest.json" $outDir
 
           if (Test-Path "THUNDERSTORE_README.md") {
-            Copy-Item "THUNDERSTORE_README.md" "$outDir\README.md"
+            Copy-Item "THUNDERSTORE_README.md" "$outDir/README.md"
           } else {
-            Copy-Item "${{ runner.temp }}\modified\README.md" $outDir
+            Copy-Item "${{ runner.temp }}/modified/README.md" $outDir
           }
 
           if (Test-Path "icon.png") {
@@ -252,14 +274,14 @@ jobs:
             Write-Warning "icon.png missing"
           }
 
-          Compress-Archive -Path "$outDir\*" -DestinationPath $zipPath -Force
+          Compress-Archive -Path "$outDir/*" -DestinationPath $zipPath -Force
           Write-Host "Package created: $zipPath"
 
       - name: Upload Thunderstore zip
         uses: actions/upload-artifact@v4
         with:
           name: thunderstore-zip
-          path: ${{ runner.temp }}\*.zip
+          path: ${{ runner.temp }}/*.zip
           retention-days: 1
 
   release:
@@ -311,9 +333,14 @@ jobs:
           Copy-Item "${{ runner.temp }}/modified/CHANGELOG.md" "CHANGELOG.md"
           Copy-Item "${{ runner.temp }}/modified/README.md" "README.md"
 
+          if (Test-Path "${{ runner.temp }}/modified/THUNDERSTORE_README.md") {
+            Copy-Item "${{ runner.temp }}/modified/THUNDERSTORE_README.md" "THUNDERSTORE_README.md"
+          }
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add manifest.json Plugin.cs CHANGELOG.md README.md
+          if (Test-Path "THUNDERSTORE_README.md") { git add THUNDERSTORE_README.md }
           git commit -m "release: v${newVersion} bump"
 
           git fetch origin $defaultBranch
@@ -351,7 +378,29 @@ jobs:
         shell: pwsh
         run: |
           $newVersion = "${{ needs.version.outputs.new_version }}"
-          gh issue create `
-            --title "Update README for v$newVersion release" `
-            --body "The CD pipeline has released **v$newVersion**. Please update \`README.md\` to reflect any new features, configuration changes, installation instructions, or other documentation updates for this release. Review the [changelog](CHANGELOG.md) for what changed." `
-            --label documentation
+          $existing = gh issue list --label documentation --state open --json title --jq '[.[] | select(.title | startswith("Update README for v"))] | length'
+          if ([int]$existing -eq 0) {
+            gh issue create `
+              --title "Update README for v$newVersion release" `
+              --body "The CD pipeline has released **v$newVersion**. Please update \`README.md\` to reflect any new features, configuration changes, installation instructions, or other documentation updates for this release. Review the [changelog](CHANGELOG.md) for what changed." `
+              --label documentation
+          } else {
+            Write-Host "Open README update issue already exists, skipping"
+          }
+
+      - name: Publish to Thunderstore
+        if: success()
+        env:
+          TCLI_AUTH_TOKEN: ${{ secrets.TCLI_AUTH_TOKEN }}
+        shell: pwsh
+        run: |
+          $newVersion = "${{ needs.version.outputs.new_version }}"
+          $zipFile = Get-ChildItem "${{ runner.temp }}/zip/*.zip" | Select-Object -First 1 -ExpandProperty FullName
+
+          dotnet tool install -g tcli --version 0.2.2
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "tcli install failed (exit $LASTEXITCODE)"
+            exit 1
+          }
+          tcli publish --file $zipFile --package-version $newVersion
+          if ($LASTEXITCODE -ne 0) { throw "tcli publish failed" }
