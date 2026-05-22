@@ -35,9 +35,9 @@ The `gen-stubs.ps1` script generates 14 reference assemblies (~632KB total, incl
 
 The script itself was optimized for speed:
 - Real stubs (UnityEngine.dll with actual type stubs) are built with `dotnet build` once
-- Empty stub assemblies (13 of them) are built with `dotnet build --no-restore` (skips NuGet restore, fast sequential builds)
+- Empty stub assemblies (13 of them) are built with `dotnet build` sequentially (each restore resolves the built-in netstandard2.0 targeting pack from the SDK, no NuGet download needed)
 - BepInEx is downloaded and extracted from GitHub Releases
-- Total generation time: ~8-12s on first run (uncached), ~0s on subsequent runs (cached)
+- Total generation time: ~16s on first run (uncached), ~0s on subsequent runs (cached)
 
 **3. Remove MAUI workload installation**
 
