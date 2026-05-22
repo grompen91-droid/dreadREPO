@@ -69,7 +69,8 @@ namespace Dread.Config
                 "Crouch movement is 30% faster.");
 
             ErrorReportingEnabled = cfg.Bind("5. Error Reporting", "ErrorReportingEnabled", true,
-                "Send anonymous error reports to the developer when crashes occur. Helps fix bugs faster. Disable if you prefer no telemetry.");
+                "Send anonymous error reports to the developer when crashes occur. "
+                    + "Helps fix bugs faster. Disable if you prefer no telemetry.");
 
             PsychoticBreakEnabled = cfg.Bind("6. Psychotic Break", "PsychoticBreakEnabled", true,
                 "Master toggle for the Psychotic Break system.");

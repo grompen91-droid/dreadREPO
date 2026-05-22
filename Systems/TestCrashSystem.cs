@@ -13,7 +13,8 @@ namespace Dread.Systems
 
             DreadConfig.TestCrashButton.Value = false;
             throw new InvalidOperationException(
-                "[Dread TestCrash] Game crashed deliberately via the 'Crash Game' config button to verify error reporting."
+                "[Dread TestCrash] Game crashed deliberately via the "
+                    + "'Crash Game' config button to verify error reporting."
             );
         }
     }
