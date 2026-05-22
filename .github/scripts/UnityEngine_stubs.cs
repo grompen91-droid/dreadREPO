@@ -34,6 +34,7 @@ namespace UnityEngine
         public Vector3 localPosition { get; set; }
         public Vector3 localEulerAngles { get; set; }
         public void SetParent(Transform parent) { }
+        public void SetParent(Transform parent, bool worldPositionStays) { }
     }
     public class Object
     {
@@ -127,10 +128,14 @@ namespace UnityEngine
         public static float MoveTowards(float current, float target, float maxDelta) => current;
         public static float Clamp(float value, float min, float max) => value;
         public static float Sin(float f) => 0f;
+        public static float Sqrt(float f) => 0f;
+        public static float Clamp01(float value) => value;
     }
     public class Texture2D : Object
     {
         public Texture2D(int width, int height, TextureFormat format, bool mipChain) { }
+        public void SetPixel(int x, int y, Color color) { }
+        public void Apply() { }
     }
     public enum TextureFormat { RGBA32 }
     public enum RenderMode { ScreenSpaceOverlay }
@@ -182,11 +187,25 @@ namespace UnityEngine
         public static string graphicsDeviceVendor => "";
         public static string deviceModel => "";
         public static string deviceName => "";
+        public static string operatingSystemFamily => "";
+        public static int processorFrequency => 0;
+        public static string graphicsDeviceVersion => "";
+        public static int graphicsShaderLevel => 0;
+        public static string deviceType => "";
     }
+    public struct Resolution
+    {
+        public int width;
+        public int height;
+    }
+    public enum FullScreenMode { FullScreenWindow, ExclusiveFullScreen, Windowed, MaximizedWindow }
     public static class Screen
     {
         public static int width => 0;
         public static int height => 0;
+        public static Resolution currentResolution => new Resolution();
+        public static float dpi => 0f;
+        public static FullScreenMode fullScreenMode => FullScreenMode.FullScreenWindow;
     }
 }
 namespace UnityEngine.SceneManagement
@@ -244,12 +263,15 @@ namespace UnityEngine.UI
     {
         public Color color { get; set; }
         public RectTransform rectTransform { get; }
+        public Texture2D texture { get; set; }
     }
     public class RectTransform : Component
     {
         public Vector2 sizeDelta { get; set; }
         public Vector2 anchoredPosition { get; set; }
         public Vector2 localScale { get; set; }
+        public Vector2 anchorMin { get; set; }
+        public Vector2 anchorMax { get; set; }
     }
 }
 
