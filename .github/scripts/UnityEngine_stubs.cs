@@ -39,6 +39,7 @@ namespace UnityEngine
         public Vector3 localEulerAngles { get; set; }
         public void SetParent(Transform parent) { }
         public void SetParent(Transform parent, bool worldPositionStays) { }
+        public bool IsChildOf(Transform parent) => false;
     }
     public class Object
     {
@@ -136,6 +137,38 @@ namespace UnityEngine
         public static float Sqrt(float f) => 0f;
         public static float Clamp01(float value) => value;
     }
+
+    public static class Physics
+    {
+        public static int DefaultRaycastLayers => -1;
+
+        public static bool Linecast(
+            Vector3 start, Vector3 end,
+            out RaycastHit hitInfo,
+            int layerMask,
+            QueryTriggerInteraction queryTriggerInteraction)
+        {
+            hitInfo = default;
+            return false;
+        }
+    }
+
+    public struct RaycastHit
+    {
+        public Collider collider { get; }
+        public Transform transform { get; }
+        public Vector3 point { get; }
+    }
+
+    public class Collider : Component { }
+
+    public enum QueryTriggerInteraction
+    {
+        UseGlobal = 0,
+        Ignore = 1,
+        Collide = 2
+    }
+}
     public class Texture2D : Object
     {
         public Texture2D(int width, int height, TextureFormat format, bool mipChain) { }
@@ -154,16 +187,6 @@ namespace UnityEngine
         public RenderMode renderMode { get; set; }
         public int sortingOrder { get; set; }
     }
-    public static class Physics
-    {
-        public static bool Linecast(Vector3 start, Vector3 end, out RaycastHit hitInfo, int layerMask, QueryTriggerInteraction queryTriggerInteraction)
-        {
-            hitInfo = new RaycastHit();
-            return false;
-        }
-    }
-    public struct RaycastHit { }
-    public enum QueryTriggerInteraction { UseGlobal, Ignore, Collide }
     public enum LogType { Error, Assert, Warning, Log, Exception }
     public static class Application
     {
