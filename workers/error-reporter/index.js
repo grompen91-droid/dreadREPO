@@ -95,7 +95,7 @@ function buildIssueBody(report, payload) {
     lines.push('|-----------|---------|');
     if (systemInfo.Os) lines.push(`| OS | ${escapeTableCell(systemInfo.Os)} |`);
     if (systemInfo.Cpu) lines.push(`| CPU | ${escapeTableCell(systemInfo.Cpu)} |`);
-    if (systemInfo.RamMB) lines.push(`| RAM | ${escapeTableCell(String(systemInfo.RamMB))} MB |`);
+    if (systemInfo.MemoryMB) lines.push(`| RAM | ${escapeTableCell(String(systemInfo.MemoryMB))} MB |`);
     if (systemInfo.Gpu) lines.push(`| GPU | ${escapeTableCell(systemInfo.Gpu)} |`);
     if (systemInfo.VramMB) lines.push(`| VRAM | ${escapeTableCell(String(systemInfo.VramMB))} MB |`);
     lines.push('');
