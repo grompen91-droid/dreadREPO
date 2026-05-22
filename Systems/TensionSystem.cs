@@ -131,9 +131,15 @@ namespace Dread.Systems
 
         private void UpdateLowStamina()
         {
+            if (!DreadConfig.LowStaminaSoundEnabled.Value || SemiFunc.MenuLevel())
+            {
+                _breathCooldown = 0f;
+                return;
+            }
+
             _breathCooldown -= Time.deltaTime;
 
-            if (!DreadConfig.LowStaminaSoundEnabled.Value || SemiFunc.MenuLevel() || _breathSource == null || _breathClips.Count == 0) return;
+            if (_breathSource == null || _breathClips.Count == 0) return;
 
             var pc = PlayerController.instance;
             if ((object)pc == null || pc.EnergyStart <= 0f) return;
