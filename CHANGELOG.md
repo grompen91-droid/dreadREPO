@@ -11,9 +11,18 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ![Status](https://img.shields.io/badge/status-stable-brightgreen?style=flat-square)
-![Type](https://img.shields.io/badge/type-maintenance-blue?style=flat-square)
+![Type](https://img.shields.io/badge/type-feature-green?style=flat-square)
 
-> **Highlight:** 23 bugfixes across all systems. Null-safety hardening, coroutine lifecycle fixes, config initialization guards, CI/CD fixes, and performance improvements.
+> **Highlight:** Automated error reporting. Crashes and exceptions are now captured and sent to the developer as GitHub Issues for faster bug fixes. Opt-out via config.
+
+### Added
+
+- Error telemetry: `ErrorReporterSystem` MonoBehaviour hooks Unity's `logMessageReceivedThreaded`, buffers exceptions and errors, and sends batched reports to a Cloudflare Worker which creates GitHub Issues with `auto-reported` and `bug` labels
+- Config toggle: `ErrorReportingEnabled` in section "5. Error Reporting" (default: on). Disable to opt out of telemetry
+- Cloudflare Worker (`workers/error-reporter/`): processes error reports via API, deduplicates by error hash, rate-limits per IP (5/hr), auto-reopens closed duplicate issues, and creates formatted issues with system info, game state, config table, and collapsible raw JSON
+- GitHub Actions workflow: auto-deploys Worker on push to `workers/error-reporter/**` or manual trigger
+- Error payload includes: exception type and stack trace, scene name, enemy count and proximity, player HP/stamina/position, system specs (OS, CPU, GPU, RAM, VRAM, display), and all DreadConfig values
+- `ErrorReporterSystem` follows thread-safe design: raw log entry queue on background thread, Unity API calls on main thread via `Update()`, locked buffer for batched transmission
 
 ### Fixed
 
