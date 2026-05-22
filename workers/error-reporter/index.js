@@ -121,14 +121,18 @@ function buildIssueBody(report, payload) {
     lines.push('');
   }
 
-  lines.push('## Configuration');
-  lines.push('');
   const config = report.Config;
   if (config && Object.keys(config).length > 0) {
+    lines.push('## Configuration');
+    lines.push('');
+    lines.push('| Setting | Value |');
+    lines.push('|---------|-------|');
     for (const [key, value] of Object.entries(config)) {
-      lines.push(`- **${escapeMd(key)}**: ${escapeMd(String(value))}`);
+      lines.push(`| ${escapeMd(key)} | ${escapeMd(String(value))} |`);
     }
   } else {
+    lines.push('## Configuration');
+    lines.push('');
     lines.push('All default values');
   }
   lines.push('');
@@ -178,9 +182,15 @@ async function handleReport(request, env) {
     }
 
     try {
-      const searchQuery = `hash:${report.Hash}+repo:${env.GITHUB_OWNER}/${env.GITHUB_REPO}+label:auto-reported+type:issue`;
+      const searchTerms = [
+        `hash:${report.Hash}`,
+        `repo:${env.GITHUB_OWNER}/${env.GITHUB_REPO}`,
+        `label:auto-reported`,
+        `type:issue`
+      ];
+      const searchQuery = searchTerms.map(t => encodeURIComponent(t)).join('+');
       const searchResult = await gh(
-        `https://api.github.com/search/issues?q=${encodeURIComponent(searchQuery)}&per_page=1`,
+        `https://api.github.com/search/issues?q=${searchQuery}&per_page=1`,
         env.CF_API_TOKEN
       );
 
