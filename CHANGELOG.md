@@ -33,6 +33,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - CI: tightened null-forgiving grep pattern from `\w+!` to `[\w)\]]!\.`
 - CI stubs: added missing `StopAllCoroutines()`, `GetActiveScene()`, `MoveTowards()` methods
 - CI cache: key includes stubs source hash to invalidate on stub changes
+- CI: removed invalid `metadata: read` permission from workflow (PR #143). `metadata` is not a valid GITHUB_TOKEN scope — setting it caused GitHub Actions to reject the workflow at YAML parse time, producing 0s failures on every branch
+- CD: `gh release create` now uses version-specific tags (e.g. `v1.5.2`) instead of the trigger tag literal (`vpatch`/`vminor`/`vmajor`), preventing tag collisions on subsequent releases (PR #135)
+- CD: removed incompatible `--package-version` flag from `tcli publish` command. In tcli 0.2.2, `--file` and `--package-version` are mutually exclusive CommandLine sets — the version is now read from the zip's internal `manifest.json` (`eb350e4`)
 
 ### Changed
 - MonsterOverhaulSystem: shared static `CachedEnemies` list avoids per-frame `FindObjectsOfType` allocations
