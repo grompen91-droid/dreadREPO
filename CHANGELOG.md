@@ -25,7 +25,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - `ErrorReporterSystem` follows thread-safe design: raw log entry queue on background thread, Unity API calls on main thread via `Update()`, locked buffer for batched transmission
 - Psychotic Break: `PsychoticBreakSystem` MonoBehaviour triggers when solo + recent threat memory (15m/30s) + line of sight lost + crouching. 1% chance per 2s check, once per match (configurable)
 - Psychotic Break episode: 20-second state machine with 4 phases (buildup, crescendo, peak, climax). Screen darkens, edge shadows pulse with flicker frequency crescendo, footsteps circle with dynamic stereo panning (subtle to frantic to close + cut)
-- Psychotic Break audio: 3 scream variants (`shadow_scream_1/2/3.ogg`) played as 3D spatialized sounds at random positions. Phantom monster sounds reuse scream clips (lower volume, randomized pitch 0.5x-1.5x)
+- Psychotic Break audio: `scream_peak.ogg` (9s intense) played as dedicated burst at peak entry. `scream_distant.ogg` (30s escalating ambience) played during buildup/crescendo. `scream_threat.ogg` (30s fade-in) used by phantom sound system with randomized pitch and 3D spatialization. `phantom_footsteps.ogg` circles with stereo panning
 - Psychotic Break mechanics: flashlight disabled via `FlashlightStateTracker` component, input fully locked during episode, stumble camera effect at end
 - Psychotic Break config: 4 config entries under section "6. Psychotic Break" (Enabled, TriggerChance=0.01, Duration=20s, OncePerMatch=true)
 
