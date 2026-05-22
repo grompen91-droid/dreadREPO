@@ -17,7 +17,7 @@ New-Item -ItemType Directory -Force "$outDir\BepInEx\plugins\$name" | Out-Null
 # Build release DLL
 Write-Host "Building..."
 $stubsDir = ".github/stubs/refs"
-$stubsExist = Test-Path "$stubsDir/UnityEngine.dll"
+$stubsExist = (Test-Path "$stubsDir/UnityEngine.dll") -and (Test-Path "$stubsDir/core/BepInEx.dll")
 $buildArgs = @(
     "build", "Dread.csproj", "-c", "Release", "--nologo", "-v", "quiet"
 )

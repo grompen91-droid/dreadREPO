@@ -7,6 +7,9 @@
 - .NET 8+ SDK (for build tooling; the project targets `net48`)
 - PowerShell 7+ (`pwsh`)
 
+> The `net48` target works cross-platform via the `Microsoft.NETFramework.ReferenceAssemblies`
+> NuGet package, which provides the .NET Framework 4.8 reference assemblies on Linux/macOS.
+
 ### Setup
 
 The project references R.E.P.O.'s game DLLs (`Assembly-CSharp.dll`, `UnityEngine*.dll`, `Photon*.dll`)
@@ -84,9 +87,9 @@ Output in `dist/`:
      -p:DeployToDist=false
    ```
 
-   Or use the packaging script directly (it auto-detects the stubs):
+   Or use the packaging script directly (it auto-detects version and stubs):
    ```shell
-   pwsh ./build.ps1 -Version "$(grep version_number manifest.json | cut -d'"' -f4)"
+   pwsh ./build.ps1
    ```
 
 Output: `bin/Release/net48/Dread.dll`
