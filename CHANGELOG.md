@@ -25,8 +25,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-
 ## [Unreleased]
+
+![Status](https://img.shields.io/badge/status-development-yellow?style=flat-square)
+
+### Changed
+- CD pipeline: fixed Thunderstore publish — `tcli` 0.2.2 does not support `--file` with `--package-version` (mutually exclusive flags)
+- THUNDERSTORE_README.md: updated with Psychotic Break, error telemetry, and CD pipeline documentation
 
 ## [1.5.1] - 2026-05-21
 
