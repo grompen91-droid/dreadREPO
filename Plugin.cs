@@ -3,6 +3,7 @@ using BepInEx.Logging;
 using Dread.Config;
 using Dread.Systems;
 using HarmonyLib;
+using System.Reflection;
 using UnityEngine;
 
 namespace Dread
@@ -22,7 +23,37 @@ namespace Dread
         {
             Logger = base.Logger;
             DreadConfig.Initialize(Config);
-            _harmony.PatchAll();
+
+            if (DreadConfig.MonsterAggressionEnabled.Value)
+            {
+                EnemyNavMeshAgentAwakePatch.Apply(_harmony);
+                EnemyDirectorSetInvestigatePatch.Apply(_harmony);
+            }
+            if (DreadConfig.CrouchSpeedBoostEnabled.Value)
+                PlayerControllerAwakePatch.Apply(_harmony);
+
+            DreadConfig.MonsterAggressionEnabled.SettingChanged += (_, _) =>
+            {
+                if (DreadConfig.MonsterAggressionEnabled.Value)
+                {
+                    EnemyNavMeshAgentAwakePatch.Apply(_harmony);
+                    EnemyDirectorSetInvestigatePatch.Apply(_harmony);
+                }
+                else
+                {
+                    EnemyNavMeshAgentAwakePatch.Remove(_harmony);
+                    EnemyDirectorSetInvestigatePatch.Remove(_harmony);
+                }
+            };
+
+            DreadConfig.CrouchSpeedBoostEnabled.SettingChanged += (_, _) =>
+            {
+                if (DreadConfig.CrouchSpeedBoostEnabled.Value)
+                    PlayerControllerAwakePatch.Apply(_harmony);
+                else
+                    PlayerControllerAwakePatch.Remove(_harmony);
+            };
+
             Logger.LogInfo($"{NAME} v{VERSION} loaded.");
         }
 
