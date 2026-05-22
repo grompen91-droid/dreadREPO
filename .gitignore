@@ -4,5 +4,7 @@ dist/
 *.user
 .vs/
 .github/_ci/
-.github/stubs/refs/
+.github/stubs/
+.github/bepinex/
+.github/bepinex.zip
 Directory.Build.targets

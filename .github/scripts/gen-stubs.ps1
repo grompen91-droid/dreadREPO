@@ -269,8 +269,8 @@ foreach ($name in $emptyAssemblies) {
 # Download and extract BepInEx (cached across runs)
 $bepinVersion = "5.4.21"
 $bepinUrl = "https://github.com/BepInEx/BepInEx/releases/download/v$bepinVersion/BepInEx_x64_$bepinVersion.0.zip"
-$bepinZip = "$stubsDir/../../bepinex.zip"
-$bepinDir = "$stubsDir/../../bepinex"
+$bepinZip = "$stubsDir/../bepinex.zip"
+$bepinDir = "$stubsDir/../bepinex"
 
 $coreDir = "$stubsDir/core"
 New-Item -ItemType Directory -Force $coreDir | Out-Null
