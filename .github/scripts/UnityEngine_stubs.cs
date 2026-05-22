@@ -15,6 +15,7 @@ namespace UnityEngine
     public class Component : Object
     {
         public T GetComponent<T>() where T : class => null;
+        public T GetComponentInChildren<T>() where T : class => null;
         public GameObject gameObject { get; }
         public Transform transform { get; }
     }
@@ -121,6 +122,7 @@ namespace UnityEngine
         public static float Range(float min, float max) => min;
         public static int Range(int min, int max) => min;
         public static float value { get; }
+        public static Vector3 insideUnitSphere => new Vector3();
     }
     public static class Mathf
     {
@@ -197,6 +199,7 @@ namespace UnityEngine
     {
         public int width;
         public int height;
+        public int refreshRate;
     }
     public enum FullScreenMode { FullScreenWindow, ExclusiveFullScreen, Windowed, MaximizedWindow }
     public static class Screen
