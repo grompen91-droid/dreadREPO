@@ -75,12 +75,17 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .github/stubs/refs
-          key: stubs-${{ hashFiles('.github/scripts/gen-stubs.ps1', '.github/scripts/UnityEngine_stubs.cs', 'Dread.csproj') }}
+          key: stubs-${{ hashFiles('.github/scripts/gen-stubs.ps1', '.github/scripts/UnityEngine_stubs.cs', '.github/scripts/Assembly-CSharp_stubs.cs', 'Dread.csproj') }}
 
       - name: Generate stubs
         if: steps.cache-stubs.outputs.cache-hit != 'true'
         shell: pwsh
         run: .github/scripts/gen-stubs.ps1
+
+      - name: Verify stubs
+        shell: bash
+        run: |
+          dotnet run --project .github/scripts/verify-stubs -- .github/stubs/refs
 
       - name: Build
         id: build

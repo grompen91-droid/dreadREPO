@@ -18,7 +18,13 @@ $emptyStubCs = "$stubsDir/_empty.cs"
 '// empty stub' | Out-File -FilePath $emptyStubCs -Encoding utf8
 
 function Write-StubProject {
-    param([string]$Name, [string]$SourceFile, [string]$Directory)
+    param([string]$Name, [string]$SourceFile, [string]$Directory, [string[]]$References)
+
+    $refsBlock = ""
+    if ($References) {
+        $refLines = $References | ForEach-Object { "    <Reference Include=`"$_`" HintPath=`"$Directory/$_.dll`" />`n" }
+        $refsBlock = "  <ItemGroup>`n$refLines  </ItemGroup>"
+    }
 
     $csprojContent = @"
 <Project Sdk="Microsoft.NET.Sdk">
@@ -36,6 +42,7 @@ function Write-StubProject {
   <ItemGroup>
     <Compile Include="$SourceFile" />
   </ItemGroup>
+$refsBlock
 </Project>
 "@
     $csprojPath = "$Directory/$Name.csproj"
@@ -59,6 +66,22 @@ if (Test-Path $dllPath) {
     Write-Host "[gen-stubs] Created UnityEngine.dll ($size KB)"
 }
 
+# Build the Assembly-CSharp stubs (game-specific types, depends on UnityEngine stubs)
+$acCsproj = Write-StubProject -Name "Assembly-CSharp" -SourceFile "$PSScriptRoot/Assembly-CSharp_stubs.cs" -Directory $stubsDir -References @("UnityEngine")
+Write-Host "[gen-stubs] Compiling Assembly-CSharp stubs..."
+$output = dotnet build $acCsproj -c Release --nologo 2>&1
+$exitCode = $LASTEXITCODE
+$output | Out-String | ForEach-Object { Write-Host "$_" }
+if ($exitCode -ne 0) {
+    Write-Host "::error::[gen-stubs] Failed to compile Assembly-CSharp stubs (exit $exitCode)"
+    exit 1
+}
+$acDllPath = "$stubsDir/Assembly-CSharp.dll"
+if (Test-Path $acDllPath) {
+    $size = (Get-Item $acDllPath).Length / 1KB
+    Write-Host "[gen-stubs] Created Assembly-CSharp.dll ($size KB)"
+}
+
 # Generate empty stub assemblies (no MSBuild restore needed, fast sequential builds)
 $emptyAssemblies = @(
     'UnityEngine.CoreModule',
@@ -71,7 +94,6 @@ $emptyAssemblies = @(
     'UnityEngine.UIModule',
     'UnityEngine.UnityWebRequestModule',
     'UnityEngine.UnityWebRequestAudioModule',
-    'Assembly-CSharp',
     'PhotonUnityNetworking',
     'Photon3Unity3D'
 )
