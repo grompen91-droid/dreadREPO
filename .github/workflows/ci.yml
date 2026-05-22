@@ -191,7 +191,7 @@ jobs:
         shell: pwsh
         run: |
           $issues = 0
-          $nullForgiving = Select-String -Path "*.cs" -Pattern '\w+!' -Include "*.cs" -SimpleMatch
+          $nullForgiving = Select-String -Path "*.cs" -Pattern '[\w)\]]!\.' -Include "*.cs"
           if ($nullForgiving) {
             Write-Host "::warning::Null-forgiving operator (!) usage found"
             $nullForgiving
