@@ -104,6 +104,33 @@ namespace UnityEngine
         public static float MoveTowards(float current, float target, float maxDelta) => current;
         public static float Clamp(float value, float min, float max) => value;
     }
+    public class Texture2D : Object
+    {
+        public Texture2D(int width, int height, TextureFormat format, bool mipChain) { }
+    }
+    public enum TextureFormat { RGBA32 }
+    public enum RenderMode { ScreenSpaceOverlay }
+    public struct LayerMask
+    {
+        public static int GetMask(params string[] layerNames) => 0;
+    }
+    public class Light : Behaviour { }
+    public class Canvas : Behaviour
+    {
+        public RenderMode renderMode { get; set; }
+        public int sortingOrder { get; set; }
+    }
+    public static class Physics
+    {
+        public static bool Linecast(Vector3 start, Vector3 end, out RaycastHit hitInfo, int layerMask, QueryTriggerInteraction queryTriggerInteraction)
+        {
+            hitInfo = new RaycastHit();
+            return false;
+        }
+    }
+    public struct RaycastHit { }
+    public enum QueryTriggerInteraction { UseGlobal, Ignore, Collide }
+    public enum LogType { Error, Assert, Warning, Log, Exception }
 }
 namespace UnityEngine.SceneManagement
 {
@@ -140,6 +167,11 @@ namespace UnityEngine.Networking
         public static AudioClip GetContent(UnityWebRequest req) => null;
     }
 }
+namespace UnityEngine.UI
+{
+    public class RawImage : MonoBehaviour { }
+}
+
 namespace UnityEngine.AI
 {
     public class NavMeshAgent : Behaviour
