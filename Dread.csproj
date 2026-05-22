@@ -91,6 +91,10 @@
     </None>
   </ItemGroup>
 
+  <Target Name="GenerateStubs" BeforeTargets="CoreCompile" Condition="!Exists('$(GameDir)\UnityEngine.dll') And !Exists('$(MSBuildProjectDirectory)/.github/stubs/refs/UnityEngine.dll')">
+    <Exec Command="pwsh -NoProfile .github/scripts/gen-stubs.ps1" />
+  </Target>
+
   <Target Name="DeployToProfile" AfterTargets="Build" Condition="Exists('$(PluginDir)')">
     <Copy SourceFiles="$(OutputPath)Dread.dll" DestinationFolder="$(PluginDir)" SkipUnchangedFiles="false" />
     <ItemGroup>
@@ -110,4 +114,11 @@
     <ZipDirectory SourceDirectory="$(MSBuildProjectDirectory)\dist\elytraking-Dread-1.4.0" DestinationFile="$(MSBuildProjectDirectory)\dist\elytraking-Dread-1.4.0.zip" />
     <Message Text="[Dread] Deployed to dist and re-zipped" Importance="high" />
   </Target>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
 </Project>
