@@ -81,13 +81,20 @@ namespace Dread.Systems
             if (!DreadConfig.MonsterAggressionEnabled.Value) return;
 
             var t = Traverse.Create(__instance);
-            var agent = t.Field<NavMeshAgent>("Agent").Value;
-            if (agent == null) return;
+            try
+            {
+                var agent = t.Field<NavMeshAgent>("Agent").Value;
+                if (agent == null) return;
 
-            agent.speed *= 1.2f;
-            agent.acceleration *= 1.2f;
-            t.Field<float>("DefaultSpeed").Value *= 1.2f;
-            t.Field<float>("DefaultAcceleration").Value *= 1.2f;
+                agent.speed *= 1.2f;
+                agent.acceleration *= 1.2f;
+                t.Field<float>("DefaultSpeed").Value *= 1.2f;
+                t.Field<float>("DefaultAcceleration").Value *= 1.2f;
+            }
+            catch
+            {
+                // silently skip if fields don't exist
+            }
         }
     }
 
