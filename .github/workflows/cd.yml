@@ -177,6 +177,23 @@ jobs:
         shell: pwsh
         run: .github/scripts/gen-stubs.ps1
 
+      - name: Download modified files
+        uses: actions/download-artifact@v4
+        with:
+          name: modified-files
+          path: ${{ runner.temp }}/modified
+
+      - name: Apply bumped Plugin.cs
+        shell: bash
+        run: |
+          cp "${{ runner.temp }}/modified/Plugin.cs" Plugin.cs
+
+      - name: Verify Plugin.cs version
+        shell: bash
+        run: |
+          grep -q "VERSION = \"${{ needs.version.outputs.new_version }}\"" Plugin.cs \
+            || { echo "::error::Plugin.cs version mismatch (expected ${{ needs.version.outputs.new_version }})"; exit 1; }
+
       - name: Build
         shell: bash
         run: |

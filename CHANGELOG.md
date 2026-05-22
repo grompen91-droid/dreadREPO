@@ -17,6 +17,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- CD pipeline: `Dread.dll` now compiled with the correct bumped version instead of the stale pre-bump version. Build job downloads and applies the modified `Plugin.cs` from the version job artifact before compiling (Issue: #70)
 - FakeFootstepLoop: restructured with early-exit guards before wait, 60-90s post-cycle cooldown, 35% trigger chance. Effective interval reduced from ~22.5 min to ~3.6 min (Issue: #57)
 - TensionSystem proximity features (adrenaline, panic sprint, low stamina breath) silently failed when MonsterAudio was disabled due to cross-system cache coupling. Each system now scans independently (Issue: #103)
 - AudioDreadSystem: null-guard `Camera.main` and `Destroy()` clip calls, guard empty `_clips` list in `PickWeightedClip()`, stop coroutines in `OnDestroy`, remove duplicate `footsteps.ogg` load, refresh `_mainCam` on scene transition
