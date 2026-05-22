@@ -337,5 +337,6 @@ jobs:
           $newVersion = "${{ needs.version.outputs.new_version }}"
           $zipFile = Get-ChildItem "${{ runner.temp }}/zip/*.zip" | Select-Object -First 1 -ExpandProperty FullName
 
-          dotnet tool install -g tcli --version 0.2.2 2>&1 | Out-Null
+          dotnet tool install -g tcli --version 0.2.2
           tcli publish --file $zipFile --package-version $newVersion
+          if ($LASTEXITCODE -ne 0) { throw "tcli publish failed" }
