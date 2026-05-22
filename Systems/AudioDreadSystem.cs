@@ -88,6 +88,7 @@ namespace Dread.Systems
 
         private AudioClip PickWeightedClip()
         {
+            if (_clips.Count == 0) return null;
             float total = 0f;
             foreach (var c in _clips)
                 total += ClipWeights.TryGetValue(c.name, out var w) ? w : 1.0f;
@@ -109,6 +110,7 @@ namespace Dread.Systems
                 return;
 
             var clip = PickWeightedClip();
+            if (clip == null) return;
             var cam = _mainCam;
 
             var offset = new Vector3(
