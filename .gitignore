@@ -4,4 +4,5 @@ dist/
 *.user
 .vs/
 .github/_ci/
+.github/stubs/refs/
 Directory.Build.targets

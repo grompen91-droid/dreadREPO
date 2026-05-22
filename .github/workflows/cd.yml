@@ -149,6 +149,18 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Cache generated stubs
+        id: cache-stubs
+        uses: actions/cache@v4
+        with:
+          path: .github/stubs/refs
+          key: stubs-${{ hashFiles('.github/scripts/gen-stubs.ps1') }}
+
+      - name: Generate stubs
+        if: steps.cache-stubs.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: .github/scripts/gen-stubs.ps1
+
       - name: Build
         shell: bash
         run: |

@@ -1,5 +1,5 @@
 param(
-    [string]$OutDir = "$PSScriptRoot/../_ci"
+    [string]$OutDir = "$PSScriptRoot/../stubs/refs"
 )
 
 $ErrorActionPreference = "Stop"
@@ -7,7 +7,7 @@ if ($PSVersionTable.PSVersion.Major -ge 7) {
     $PSNativeCommandUseErrorActionPreference = $false
 }
 
-$stubsDir = New-Item -ItemType Directory -Force "$OutDir/refs" | Select-Object -ExpandProperty FullName
+$stubsDir = New-Item -ItemType Directory -Force $OutDir | Select-Object -ExpandProperty FullName
 
 $stubCode = @'
 using System;
@@ -193,21 +193,19 @@ $stubCode | Out-File -FilePath $unityStubCs -Encoding utf8
 $emptyStubCs = "$stubsDir/_empty.cs"
 '// empty stub' | Out-File -FilePath $emptyStubCs -Encoding utf8
 
-function Compile-StubAssembly {
-    param([string]$Name, [string]$SourceFile)
+function Write-StubProject {
+    param([string]$Name, [string]$SourceFile, [string]$Directory)
 
-    $csprojPath = "$stubsDir/$Name.csproj"
-    $projContent = @"
+    $csprojContent = @"
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>$Name</AssemblyName>
-    <RootNamespace>$Name</RootNamespace>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <Configurations>Release</Configurations>
-    <OutDir>$stubsDir</OutDir>
-    <IntermediateOutputPath>$stubsDir/obj/$Name/</IntermediateOutputPath>
+    <OutDir>$Directory</OutDir>
+    <IntermediateOutputPath>$Directory/obj/$Name/</IntermediateOutputPath>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
   <ItemGroup>
@@ -215,25 +213,28 @@ function Compile-StubAssembly {
   </ItemGroup>
 </Project>
 "@
-    $projContent | Out-File -FilePath $csprojPath -Encoding utf8
-
-    Write-Host "[gen-stubs] Compiling $Name..."
-    $output = dotnet build $csprojPath -c Release --nologo 2>&1
-    $exitCode = $LASTEXITCODE
-    $output | Out-String | ForEach-Object { Write-Host "$_" }
-    if ($exitCode -ne 0) {
-        Write-Host "::error::[gen-stubs] Failed to compile $Name (exit $exitCode)"
-        exit 1
-    }
-    $dllPath = "$stubsDir/$Name.dll"
-    if (Test-Path $dllPath) {
-        $size = (Get-Item $dllPath).Length / 1KB
-        Write-Host "[gen-stubs] Created $Name.dll ($size KB)"
-    }
+    $csprojPath = "$Directory/$Name.csproj"
+    $csprojContent | Out-File -FilePath $csprojPath -Encoding utf8
+    return $csprojPath
 }
 
-Compile-StubAssembly -Name "UnityEngine" -SourceFile $unityStubCs
+# Build the real Unity stubs (has actual types)
+$unityCsproj = Write-StubProject -Name "UnityEngine" -SourceFile $unityStubCs -Directory $stubsDir
+Write-Host "[gen-stubs] Compiling UnityEngine stubs..."
+$output = dotnet build $unityCsproj -c Release --nologo 2>&1
+$exitCode = $LASTEXITCODE
+$output | Out-String | ForEach-Object { Write-Host "$_" }
+if ($exitCode -ne 0) {
+    Write-Host "::error::[gen-stubs] Failed to compile UnityEngine stubs (exit $exitCode)"
+    exit 1
+}
+$dllPath = "$stubsDir/UnityEngine.dll"
+if (Test-Path $dllPath) {
+    $size = (Get-Item $dllPath).Length / 1KB
+    Write-Host "[gen-stubs] Created UnityEngine.dll ($size KB)"
+}
 
+# Generate empty stub assemblies (no MSBuild restore needed, fast sequential builds)
 $emptyAssemblies = @(
     'UnityEngine.CoreModule',
     'UnityEngine.AudioModule',
@@ -251,35 +252,42 @@ $emptyAssemblies = @(
 )
 
 foreach ($name in $emptyAssemblies) {
-    Compile-StubAssembly -Name $name -SourceFile $emptyStubCs
-}
-
-$bepinVersion = "5.4.21"
-$bepinUrl = "https://github.com/BepInEx/BepInEx/releases/download/v$bepinVersion/BepInEx_x64_$bepinVersion.0.zip"
-$bepinZip = "$OutDir/bepinex.zip"
-$bepinDir = "$OutDir/bepinex"
-
-if (!(Test-Path "$bepinDir/BepInEx/core/BepInEx.dll")) {
-    Write-Host "[gen-stubs] Downloading BepInEx $bepinVersion..."
-    try {
-        Invoke-WebRequest -Uri $bepinUrl -OutFile $bepinZip -UseBasicParsing -ErrorAction Stop
-        Expand-Archive -Path $bepinZip -DestinationPath $bepinDir -Force
-        Remove-Item $bepinZip -Force
-    } catch {
-        Write-Warning "[gen-stubs] BepInEx download failed: $_"
+    $csproj = Write-StubProject -Name $name -SourceFile $emptyStubCs -Directory $stubsDir
+    dotnet build $csproj -c Release --nologo --no-restore 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "::error::[gen-stubs] Failed to compile $name (exit $LASTEXITCODE)"
+        exit 1
     }
 }
+
+# Download and extract BepInEx (cached across runs)
+$bepinVersion = "5.4.21"
+$bepinUrl = "https://github.com/BepInEx/BepInEx/releases/download/v$bepinVersion/BepInEx_x64_$bepinVersion.0.zip"
+$bepinZip = "$stubsDir/../../bepinex.zip"
+$bepinDir = "$stubsDir/../../bepinex"
 
 $coreDir = "$stubsDir/core"
 New-Item -ItemType Directory -Force $coreDir | Out-Null
 
-if (Test-Path "$bepinDir/BepInEx/core/BepInEx.dll") {
-    Copy-Item "$bepinDir/BepInEx/core/BepInEx.dll" "$coreDir/BepInEx.dll"
-    Copy-Item "$bepinDir/BepInEx/core/0Harmony.dll" "$coreDir/0Harmony.dll"
-    Write-Host "[gen-stubs] Copied BepInEx.dll ($((Get-Item "$coreDir/BepInEx.dll").Length / 1KB) KB)"
-    Write-Host "[gen-stubs] Copied 0Harmony.dll ($((Get-Item "$coreDir/0Harmony.dll").Length / 1KB) KB)"
+if (!(Test-Path "$coreDir/BepInEx.dll")) {
+    if (!(Test-Path "$bepinDir/BepInEx/core/BepInEx.dll")) {
+        Write-Host "[gen-stubs] Downloading BepInEx $bepinVersion..."
+        try {
+            Invoke-WebRequest -Uri $bepinUrl -OutFile $bepinZip -UseBasicParsing -ErrorAction Stop
+            Expand-Archive -Path $bepinZip -DestinationPath $bepinDir -Force
+            Remove-Item $bepinZip -Force
+        } catch {
+            Write-Warning "[gen-stubs] BepInEx download failed: $_"
+        }
+    }
+    if (Test-Path "$bepinDir/BepInEx/core/BepInEx.dll") {
+        Copy-Item "$bepinDir/BepInEx/core/BepInEx.dll" "$coreDir/BepInEx.dll"
+        Copy-Item "$bepinDir/BepInEx/core/0Harmony.dll" "$coreDir/0Harmony.dll"
+        Write-Host "[gen-stubs] Copied BepInEx.dll ($((Get-Item "$coreDir/BepInEx.dll").Length / 1KB) KB)"
+        Write-Host "[gen-stubs] Copied 0Harmony.dll ($((Get-Item "$coreDir/0Harmony.dll").Length / 1KB) KB)"
+    }
 } else {
-    Write-Warning "[gen-stubs] BepInEx not available -- stubs only, build will fail"
+    Write-Host "[gen-stubs] BepInEx core already present (cached)"
 }
 
 Write-Host "[gen-stubs] Done"

@@ -13,12 +13,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ![Status](https://img.shields.io/badge/status-stable-brightgreen?style=flat-square)
 ![Type](https://img.shields.io/badge/type-ci/cd-yellow?style=flat-square)
 
-> **Highlight:** CI pipeline optimized from 5-10 minutes to under 30 seconds. Single job on ubuntu-latest, committed stub assemblies, instant grep-based checks, NuGet caching.
+> **Highlight:** CI pipeline optimized from 5-10 minutes to under 30 seconds. Single job on ubuntu-latest, auto-generated stubs with caching, instant grep-based checks, NuGet caching.
 
 ### Changed
 - CI pipeline: collapsed 4 jobs into 1 verify job on `ubuntu-latest`, saving ~30s of job overhead
 - CI runner: `windows-latest` to `ubuntu-latest` (faster startup: ~5s vs ~15s)
-- Stub generation: pre-built stub assemblies committed to `.github/stubs/refs/`, replacing 90s gen-stubs.ps1 execution
+- Stub generation: optimized `gen-stubs.ps1` for speed (`--no-restore` for empty assemblies, BepInEx caching); runs in CI with output cached via `actions/cache`; stubs no longer committed to repo
 - .NET setup: removed `actions/setup-dotnet` (SDK 10+ pre-installed on runner), saving ~7s
 - MAUI workload: removed (unnecessary on both windows-latest and ubuntu-latest with reference assemblies package)
 - Format check: replaced `dotnet-format` with instant grep-based checks (trailing whitespace, tabs), saving ~18s
@@ -28,6 +28,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 - gen-stubs.ps1: path separator (`\` to `/`) for cross-platform Linux compatibility
+
+### Removed
+- Committed stub DLLs from `.github/stubs/refs/` (now gitignored, auto-generated in CI)
 
 ## [1.5.1] - 2026-05-21
 

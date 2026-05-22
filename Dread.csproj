@@ -91,6 +91,10 @@
     </None>
   </ItemGroup>
 
+  <Target Name="GenerateStubs" BeforeTargets="CoreCompile" Condition="!Exists('$(GameDir)\UnityEngine.dll') And !Exists('$(MSBuildProjectDirectory)/.github/stubs/refs/UnityEngine.dll')">
+    <Exec Command="pwsh -NoProfile .github/scripts/gen-stubs.ps1" />
+  </Target>
+
   <Target Name="DeployToProfile" AfterTargets="Build" Condition="Exists('$(PluginDir)')">
     <Copy SourceFiles="$(OutputPath)Dread.dll" DestinationFolder="$(PluginDir)" SkipUnchangedFiles="false" />
     <ItemGroup>
