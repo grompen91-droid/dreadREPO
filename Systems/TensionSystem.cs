@@ -108,7 +108,7 @@ namespace Dread.Systems
                 ? _originalDrain * Mathf.Lerp(0.30f, 1f, _nearestDist / ProximityRange)
                 : _originalDrain;
 
-            pc.EnergySprintDrain = Mathf.Lerp(pc.EnergySprintDrain, targetDrain, Time.deltaTime * 1.2f);
+            pc.EnergySprintDrain = Mathf.MoveTowards(pc.EnergySprintDrain, targetDrain, 0.5f * Time.deltaTime);
         }
 
         private void RestoreDrain()
