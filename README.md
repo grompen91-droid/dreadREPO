@@ -3,7 +3,7 @@
 > **Atmospheric horror overhaul for R.E.P.O.**  
 > Five runtime systems that layer ambient dread, scarier monsters, a tension system that reads your proximity to danger in real time, and a psychotic break episode when you are alone and scared.
 
-![Version](https://img.shields.io/badge/version-1.6.1-crimson?style=flat-square)
+![Version](https://img.shields.io/badge/version-1.6.0-crimson?style=flat-square)
 ![Status](https://img.shields.io/badge/status-release-brightgreen?style=flat-square)
 ![BepInEx](https://img.shields.io/badge/BepInEx-5.4.21-blueviolet?style=flat-square)
 ![Game](https://img.shields.io/badge/game-R.E.P.O.-orange?style=flat-square)
@@ -345,5 +345,4 @@ Output in `dist/`:
 ## License
 
 MIT
-
 

@@ -63,4 +63,3 @@ CrouchSpeedBoost = true
 Works with modded enemies (Mimic, WesleysEnemies, etc.), REPOConfig, and other audio mods. REPOLib not required.
 
 [Changelog](CHANGELOG.md)
-
