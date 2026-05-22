@@ -131,7 +131,10 @@ namespace Dread.Systems
             src.maxDistance = 25f;
             src.Play();
 
-            Destroy(host, clip.length + 0.5f);
+            if (clip != null)
+                Destroy(host, clip.length + 0.5f);
+            else
+                Destroy(host, 0.5f);
         }
     }
 }
