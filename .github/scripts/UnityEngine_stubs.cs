@@ -255,7 +255,7 @@ namespace UnityEngine.SceneManagement
     public static class SceneManager
     {
 #pragma warning disable 0067
-        public static event UnityAction<Scene, LoadSceneMode> sceneLoaded;
+        public static event UnityEngine.Events.UnityAction<Scene, LoadSceneMode> sceneLoaded;
 #pragma warning restore 0067
         public static Scene GetActiveScene() => new Scene();
         public static void LoadScene(string name) { }
