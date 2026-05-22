@@ -24,6 +24,9 @@ namespace Dread.Config
         public static ConfigEntry<bool> LowStaminaSoundEnabled = null!;
         public static ConfigEntry<bool> PanicSprintEnabled = null!;
 
+        // 5. Error Reporting
+        public static ConfigEntry<bool> ErrorReportingEnabled = null!;
+
         public static void Initialize(ConfigFile cfg)
         {
             if (_initialized) return;
@@ -56,6 +59,7 @@ namespace Dread.Config
             CrouchSpeedBoostEnabled = cfg.Bind("4. QOL", "CrouchSpeedBoost", true,
                 "Crouch movement is 30% faster.");
 
+<<<<<<< HEAD
             ConfigEntryBase?[] allFields =
             [
                 AudioEnabled, AudioFrequency, AudioVolume,
@@ -79,6 +83,10 @@ namespace Dread.Config
         {
             if (!_initialized)
                 Plugin.Logger.LogError("[Dread] DreadConfig accessed before Initialize() was called!");
+=======
+            ErrorReportingEnabled = cfg.Bind("5. Error Reporting", "ErrorReportingEnabled", true,
+                "Send anonymous error reports to the developer when crashes occur. Helps fix bugs faster. Disable if you prefer no telemetry.");
+>>>>>>> fab6e9d (feat: add ErrorReportingEnabled config toggle)
         }
     }
 }
