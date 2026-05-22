@@ -54,6 +54,7 @@ namespace Dread.Systems
 
         private void OnDestroy()
         {
+            StopAllCoroutines();
             SceneManager.sceneLoaded -= OnSceneLoaded;
             RestoreDrain();
             RestoreSprintMultiplier();
@@ -78,7 +79,7 @@ namespace Dread.Systems
         {
             if (Time.time >= _nextScan)
             {
-                _nextScan = Time.time + 0.5f;
+                _nextScan = Time.time + 2.0f;
                 _nearestDist = SemiFunc.MenuLevel() ? float.MaxValue : FindNearestEnemyDist();
             }
 
@@ -107,7 +108,7 @@ namespace Dread.Systems
                 ? _originalDrain * Mathf.Lerp(0.30f, 1f, _nearestDist / ProximityRange)
                 : _originalDrain;
 
-            pc.EnergySprintDrain = Mathf.Lerp(pc.EnergySprintDrain, targetDrain, Time.deltaTime * 1.2f);
+            pc.EnergySprintDrain = Mathf.MoveTowards(pc.EnergySprintDrain, targetDrain, 0.5f * Time.deltaTime);
         }
 
         private void RestoreDrain()
@@ -130,9 +131,15 @@ namespace Dread.Systems
 
         private void UpdateLowStamina()
         {
+            if (!DreadConfig.LowStaminaSoundEnabled.Value || SemiFunc.MenuLevel())
+            {
+                _breathCooldown = 0f;
+                return;
+            }
+
             _breathCooldown -= Time.deltaTime;
 
-            if (!DreadConfig.LowStaminaSoundEnabled.Value || SemiFunc.MenuLevel() || _breathSource == null || _breathClips.Count == 0) return;
+            if (_breathSource == null || _breathClips.Count == 0) return;
 
             var pc = PlayerController.instance;
             if ((object)pc == null || pc.EnergyStart <= 0f) return;
@@ -140,7 +147,7 @@ namespace Dread.Systems
             bool currentlySprinting = pc.sprinting;
 
             // Trigger each time player stops sprinting because energy ran out
-            if (_wasSprintingForBreath && !currentlySprinting && pc.EnergyCurrent <= 5f && _breathCooldown <= 0f)
+            if (_wasSprintingForBreath && !currentlySprinting && pc.EnergyCurrent <= pc.EnergyStart * 0.1f && _breathCooldown <= 0f)
             {
                 _breathCooldown = 60f;
 
@@ -206,11 +213,11 @@ namespace Dread.Systems
             var cam = _mainCam;
             if (cam == null) return float.MaxValue;
 
-            var enemies = FindObjectsOfType<EnemyHealth>();
+            var enemies = MonsterOverhaulSystem.CachedEnemies;
+            enemies.RemoveAll(e => e == null);
             float nearest = float.MaxValue;
             foreach (var e in enemies)
             {
-                if (e == null) continue;
                 float d = Vector3.Distance(cam.transform.position, e.transform.position);
                 if (d < nearest) nearest = d;
             }
@@ -277,7 +284,7 @@ namespace Dread.Systems
 
                 if (Random.value > 0.2f) continue;
 
-                var cam = Camera.main;
+                var cam = _mainCam;
                 if (cam == null) continue;
 
                 SpawnFakeFootstep(cam);
@@ -303,7 +310,10 @@ namespace Dread.Systems
             src.maxDistance = 8f;
             src.Play();
 
-            Destroy(host, _footstepClip!.length + 0.5f);
+            if (_footstepClip != null)
+                Destroy(host, _footstepClip.length + 0.5f);
+            else
+                Destroy(host, 0.5f);
         }
     }
 }

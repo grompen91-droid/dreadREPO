@@ -13,6 +13,8 @@ namespace Dread.Config
         public static ConfigEntry<bool> MonsterAggressionEnabled = null!;
         public static ConfigEntry<bool> MonsterAudioEnabled = null!;
 
+        private static bool _initialized;
+
         // QOL
         public static ConfigEntry<bool> CrouchSpeedBoostEnabled = null!;
 
@@ -24,6 +26,8 @@ namespace Dread.Config
 
         public static void Initialize(ConfigFile cfg)
         {
+            if (_initialized) return;
+
             AudioEnabled = cfg.Bind("1. Audio Dread", "Enabled", true,
                 "Ambient horror sounds during runs.");
             AudioFrequency = cfg.Bind("1. Audio Dread", "Frequency", 1.0f,
@@ -51,6 +55,30 @@ namespace Dread.Config
 
             CrouchSpeedBoostEnabled = cfg.Bind("4. QOL", "CrouchSpeedBoost", true,
                 "Crouch movement is 30% faster.");
+
+            ConfigEntryBase?[] allFields =
+            [
+                AudioEnabled, AudioFrequency, AudioVolume,
+                MonsterAggressionEnabled, MonsterAudioEnabled,
+                CrouchSpeedBoostEnabled,
+                FakeFootstepsEnabled, AdrenalineEnabled, LowStaminaSoundEnabled, PanicSprintEnabled,
+            ];
+            for (int i = 0; i < allFields.Length; i++)
+            {
+                if (allFields[i] == null)
+                {
+                    Plugin.Logger.LogError($"[Dread] Config field at index {i} is null after Initialize!");
+                }
+            }
+
+            _initialized = true;
+            Plugin.Logger.LogInfo("[Dread] Config initialized successfully.");
+        }
+
+        public static void EnsureInitialized()
+        {
+            if (!_initialized)
+                Plugin.Logger.LogError("[Dread] DreadConfig accessed before Initialize() was called!");
         }
     }
 }

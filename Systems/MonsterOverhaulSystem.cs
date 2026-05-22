@@ -3,6 +3,7 @@
 //   EnemyParent       — enemy root component (has Start() lifecycle method)
 
 using System.Collections;
+using System.Collections.Generic;
 using Dread.Config;
 using UnityEngine.AI;
 using HarmonyLib;
@@ -13,22 +14,37 @@ namespace Dread.Systems
 {
     public class MonsterOverhaulSystem : MonoBehaviour
     {
+        internal static readonly List<EnemyHealth> CachedEnemies = new();
+        private float _nextEnemyRefresh;
+
         private bool _inLevel;
 
         private void Start()
         {
             SceneManager.sceneLoaded += OnSceneLoaded;
+            _inLevel = !SceneManager.GetActiveScene().name.Contains("Menu") && !SceneManager.GetActiveScene().name.Contains("Main");
             StartCoroutine(MonsterAudioLoop());
         }
 
         private void OnDestroy()
         {
+            StopAllCoroutines();
             SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             _inLevel = !scene.name.Contains("Menu") && !scene.name.Contains("Main");
+        }
+
+        private void RefreshEnemyCache()
+        {
+            if (Time.time < _nextEnemyRefresh) return;
+            _nextEnemyRefresh = Time.time + 5f;
+
+            var found = FindObjectsOfType<EnemyHealth>();
+            CachedEnemies.Clear();
+            CachedEnemies.AddRange(found);
         }
 
         // Scans for enemies periodically and applies audio tweaks.
@@ -41,8 +57,10 @@ namespace Dread.Systems
 
                 if (!DreadConfig.MonsterAudioEnabled.Value || !_inLevel) continue;
 
-                var enemies = FindObjectsOfType<EnemyHealth>();
-                foreach (var e in enemies)
+                RefreshEnemyCache();
+
+                CachedEnemies.RemoveAll(e => e == null);
+                foreach (var e in CachedEnemies)
                 {
                     if (e.GetComponent<DreadAudioTweaked>() != null) continue;
                     e.gameObject.AddComponent<DreadAudioTweaked>();
@@ -81,13 +99,20 @@ namespace Dread.Systems
             if (!DreadConfig.MonsterAggressionEnabled.Value) return;
 
             var t = Traverse.Create(__instance);
-            var agent = t.Field<NavMeshAgent>("Agent").Value;
-            if (agent == null) return;
+            try
+            {
+                var agent = t.Field<NavMeshAgent>("Agent").Value;
+                if (agent == null) return;
 
-            agent.speed *= 1.2f;
-            agent.acceleration *= 1.2f;
-            t.Field<float>("DefaultSpeed").Value *= 1.2f;
-            t.Field<float>("DefaultAcceleration").Value *= 1.2f;
+                agent.speed *= 1.2f;
+                agent.acceleration *= 1.2f;
+                t.Field<float>("DefaultSpeed").Value *= 1.2f;
+                t.Field<float>("DefaultAcceleration").Value *= 1.2f;
+            }
+            catch
+            {
+                // silently skip if fields don't exist
+            }
         }
     }
 
@@ -105,8 +130,18 @@ namespace Dread.Systems
 
             __instance.CrouchSpeed *= 1.3f;
             var t = Traverse.Create(__instance);
-            float orig = t.Field<float>("playerOriginalCrouchSpeed").Value;
-            if (orig > 0f) t.Field<float>("playerOriginalCrouchSpeed").Value = orig * 1.3f;
+            try
+            {
+                float orig = t.Field<float>("playerOriginalCrouchSpeed").Value;
+                if (orig > 0f)
+                    t.Field<float>("playerOriginalCrouchSpeed").Value = orig * 1.3f;
+                else
+                    t.Field<float>("playerOriginalCrouchSpeed").Value = __instance.CrouchSpeed;
+            }
+            catch
+            {
+                // silently skip if field doesn't exist
+            }
         }
     }
 
@@ -121,6 +156,7 @@ namespace Dread.Systems
         [HarmonyPrefix]
         private static void Prefix(ref float radius)
         {
+            if (!DreadConfig.MonsterAggressionEnabled.Value) return;
             if (radius < float.MaxValue)
                 radius *= 1.5f;
         }

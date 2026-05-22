@@ -30,10 +30,17 @@ namespace Dread
         {
             var host = new GameObject("DreadHost");
             DontDestroyOnLoad(host);
-            host.AddComponent<AudioDreadSystem>();
-            host.AddComponent<MonsterOverhaulSystem>();
-            host.AddComponent<TensionSystem>();
-            Plugin.Logger.LogInfo("Systems initialized on DreadHost.");
+            int count = 0;
+            if (host.AddComponent<AudioDreadSystem>() != null) count++;
+            else Logger.LogError("Failed to add AudioDreadSystem component.");
+            if (host.AddComponent<MonsterOverhaulSystem>() != null) count++;
+            else Logger.LogError("Failed to add MonsterOverhaulSystem component.");
+            if (host.AddComponent<TensionSystem>() != null) count++;
+            else Logger.LogError("Failed to add TensionSystem component.");
+            if (count > 0)
+                Logger.LogInfo($"Systems initialized ({count}/3) on DreadHost.");
+            else
+                Logger.LogError("All systems failed to initialize on DreadHost.");
         }
     }
 }

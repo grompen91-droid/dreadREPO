@@ -5,6 +5,7 @@ using System.Reflection;
 using Dread.Config;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
 
 namespace Dread.Systems
 {
@@ -15,21 +16,32 @@ namespace Dread.Systems
 
         private static readonly string[] ClipNames =
         {
-            "scraping.ogg", "footsteps.ogg", "breathing.ogg", "whisper.ogg"
+            "scraping.ogg", "breathing.ogg", "whisper.ogg"
         };
 
         // Weight per clip name — lower = rarer. Unlisted clips default to 1.0.
         private static readonly Dictionary<string, float> ClipWeights = new()
         {
             { "scraping.ogg",   0.6f },
-            { "footsteps.ogg",  0.6f },
             { "breathing.ogg",  0.3f },
             { "whisper.ogg",    0.1f },
         };
 
         private void Start()
         {
+            SceneManager.sceneLoaded += OnSceneLoaded;
             StartCoroutine(LoadClips());
+        }
+
+        private void OnDestroy()
+        {
+            StopAllCoroutines();
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
+
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            _mainCam = Camera.main;
         }
 
         private IEnumerator LoadClips()
@@ -88,6 +100,7 @@ namespace Dread.Systems
 
         private AudioClip PickWeightedClip()
         {
+            if (_clips.Count == 0) return null;
             float total = 0f;
             foreach (var c in _clips)
                 total += ClipWeights.TryGetValue(c.name, out var w) ? w : 1.0f;
@@ -103,8 +116,14 @@ namespace Dread.Systems
 
         private void PlayRandomSound()
         {
+            if (_mainCam == null)
+                _mainCam = Camera.main;
+            if (_mainCam == null)
+                return;
+
             var clip = PickWeightedClip();
-            var cam = _mainCam!;
+            if (clip == null) return;
+            var cam = _mainCam;
 
             var offset = new Vector3(
                 Random.Range(-1f, 1f),
@@ -124,7 +143,10 @@ namespace Dread.Systems
             src.maxDistance = 25f;
             src.Play();
 
-            Destroy(host, clip.length + 0.5f);
+            if (clip != null)
+                Destroy(host, clip.length + 0.5f);
+            else
+                Destroy(host, 0.5f);
         }
     }
 }

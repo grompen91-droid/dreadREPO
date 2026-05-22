@@ -9,6 +9,7 @@ namespace UnityEngine
     public abstract class MonoBehaviour : Behaviour
     {
         public Coroutine StartCoroutine(IEnumerator routine) => null;
+        public void StopAllCoroutines() { }
     }
     public class Behaviour : Component { }
     public class Component : Object
@@ -100,6 +101,7 @@ namespace UnityEngine
     public static class Mathf
     {
         public static float Lerp(float a, float b, float t) => a;
+        public static float MoveTowards(float current, float target, float maxDelta) => current;
         public static float Clamp(float value, float min, float max) => value;
     }
 }
@@ -110,6 +112,7 @@ namespace UnityEngine.SceneManagement
 #pragma warning disable 0067
         public static event Action<Scene, LoadSceneMode> sceneLoaded;
 #pragma warning restore 0067
+        public static Scene GetActiveScene() => new Scene();
         public static void LoadScene(string name) { }
     }
     public struct Scene

@@ -1,6 +1,11 @@
 param(
-    [string]$Version = "1.2.0"
+    [string]$Version = ""
 )
+
+if ([string]::IsNullOrEmpty($Version)) {
+    $Version = (Get-Content manifest.json -Raw | ConvertFrom-Json).version_number
+    Write-Host "No version specified, using manifest version: $Version"
+}
 
 $name = "elytraking-Dread"
 $outDir = "dist\$name-$Version"

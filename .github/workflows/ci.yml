@@ -38,7 +38,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .github/stubs/refs
-          key: stubs-${{ hashFiles('.github/scripts/gen-stubs.ps1') }}
+          key: stubs-${{ hashFiles('.github/scripts/gen-stubs.ps1', '.github/scripts/UnityEngine_stubs.cs') }}
 
       - name: Generate stubs
         if: steps.cache-stubs.outputs.cache-hit != 'true'
@@ -68,7 +68,7 @@ jobs:
           fi
 
           # Anti-pattern check (runs during build)
-          grep -rn '\w!' *.cs Systems/*.cs Config/*.cs 2>/dev/null && echo "::warning::Null-forgiving operator (!) usage found" || true
+          grep -rn '[\w)\]]!\.' *.cs Systems/*.cs Config/*.cs 2>/dev/null && echo "::warning::Null-forgiving operator (!) usage found" || true
           grep -rn '[A-Z]:\\' *.cs Systems/*.cs Config/*.cs 2>/dev/null && echo "::warning::Hardcoded Windows paths found" || true
 
           # Format check (grep-based, instant)
