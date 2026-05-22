@@ -44,6 +44,7 @@ namespace UnityEngine
     {
         public float x, y, z;
         public Vector3 normalized => this;
+        public float magnitude => 0f;
         public static Vector3 forward => new Vector3();
         public static Vector3 right => new Vector3();
         public static Vector3 zero => new Vector3();
@@ -71,6 +72,7 @@ namespace UnityEngine
         public float minDistance { get; set; }
         public float maxDistance { get; set; }
         public float reverbZoneMix { get; set; }
+        public float panStereo { get; set; }
         public void Play() { }
     }
     public class AudioClip : Object
@@ -104,6 +106,7 @@ namespace UnityEngine
         public static float Lerp(float a, float b, float t) => a;
         public static float MoveTowards(float current, float target, float maxDelta) => current;
         public static float Clamp(float value, float min, float max) => value;
+        public static float Sin(float f) => 0f;
     }
     public class Texture2D : Object
     {
@@ -147,6 +150,23 @@ namespace UnityEngine
     public static class JsonUtility
     {
         public static string ToJson(object obj) => "";
+    }
+    public static class SystemInfo
+    {
+        public static string operatingSystem => "";
+        public static string processorType => "";
+        public static int processorCount => 0;
+        public static int systemMemorySize => 0;
+        public static string graphicsDeviceName => "";
+        public static int graphicsMemorySize => 0;
+        public static string graphicsDeviceVendor => "";
+        public static string deviceModel => "";
+        public static string deviceName => "";
+    }
+    public static class Screen
+    {
+        public static int width => 0;
+        public static int height => 0;
     }
 }
 namespace UnityEngine.SceneManagement
