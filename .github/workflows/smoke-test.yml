@@ -59,8 +59,8 @@ jobs:
         shell: pwsh
         run: |
           $exe = "$env:GAME_DIR\REPO.exe"
-          Write-Host "Launching $exe -batchmode -nographics"
-          $proc = Start-Process $exe -ArgumentList "-batchmode","-nographics" -PassThru
+          Write-Host "Launching $exe -batchmode"
+          $proc = Start-Process $exe -ArgumentList "-batchmode" -PassThru
 
           $deadline = (Get-Date).AddSeconds(30)
           while ((Get-Date) -lt $deadline) {
