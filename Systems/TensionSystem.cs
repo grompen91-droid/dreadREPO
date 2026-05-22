@@ -276,17 +276,23 @@ namespace Dread.Systems
         {
             while (true)
             {
-                yield return new WaitForSeconds(Random.Range(180f, 360f));
-
                 if (!DreadConfig.FakeFootstepsEnabled.Value || SemiFunc.MenuLevel() || _footstepClip == null)
+                {
+                    yield return new WaitForSeconds(1f);
                     continue;
-
-                if (Random.value > 0.2f) continue;
+                }
 
                 var cam = _mainCam;
-                if (cam == null) continue;
+                if (cam == null)
+                {
+                    yield return new WaitForSeconds(1f);
+                    continue;
+                }
 
-                SpawnFakeFootstep(cam);
+                if (Random.value <= 0.35f)
+                    SpawnFakeFootstep(cam);
+
+                yield return new WaitForSeconds(Random.Range(60f, 90f));
             }
         }
 
