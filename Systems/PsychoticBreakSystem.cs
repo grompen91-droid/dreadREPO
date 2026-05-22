@@ -116,7 +116,6 @@ namespace Dread.Systems
                 }
             }
 
-            _hasTriggeredThisMatch = false;
             _episodeActive = false;
             _recentThreatTimestamps.Clear();
             _cachedEnemies = null;
@@ -192,7 +191,7 @@ namespace Dread.Systems
         private static bool IsPlayerAlive(PlayerController pc)
         {
             try { return pc.Health > 0f; }
-            catch { return true; }
+            catch { return false; }
         }
 
         private bool IsAnyEnemyVisible(EnemyHealth[]? enemies)

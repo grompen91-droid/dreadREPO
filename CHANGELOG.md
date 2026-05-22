@@ -27,7 +27,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Psychotic Break episode: 20-second state machine with 4 phases (buildup, crescendo, peak, climax). Screen darkens, edge shadows pulse with flicker frequency crescendo, footsteps circle with dynamic stereo panning (subtle to frantic to close + cut)
 - Psychotic Break audio: 3 scream variants (`shadow_scream_1/2/3.ogg`) played as 3D spatialized sounds at random positions. Phantom monster sounds reuse scream clips (lower volume, randomized pitch 0.5x-1.5x)
 - Psychotic Break mechanics: flashlight disabled via `FlashlightStateTracker` component, input fully locked during episode, stumble camera effect at end
-- Psychotic Break config: 5 config entries under section "6. Psychotic Break" (Enabled, TriggerChance=0.01, Duration=20s, OncePerMatch=true)
+- Psychotic Break config: 4 config entries under section "6. Psychotic Break" (Enabled, TriggerChance=0.01, Duration=20s, OncePerMatch=true)
 
 ### Fixed
 
