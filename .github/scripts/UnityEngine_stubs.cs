@@ -117,6 +117,7 @@ namespace UnityEngine
     public enum AudioRolloffMode { Linear }
     public enum AudioType { OGGVORBIS }
     public class AsyncOperation : YieldInstruction { }
+    public class UnityWebRequestAsyncOperation : AsyncOperation { }
     public sealed class WaitForSeconds : YieldInstruction
     {
         public WaitForSeconds(float seconds) { }
@@ -277,7 +278,7 @@ namespace UnityEngine.Networking
         public string method { get; set; }
         public Result result { get; }
         public string error { get; }
-        public AsyncOperation SendWebRequest() => null;
+        public UnityWebRequestAsyncOperation SendWebRequest() => null;
         public void SetRequestHeader(string name, string value) { }
         public void Dispose() { }
         public enum Result { Success }
