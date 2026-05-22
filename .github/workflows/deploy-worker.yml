@@ -24,4 +24,8 @@ jobs:
         run: npx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          TOKEN: ${{ secrets.TOKEN }}
+
+      - name: Set GitHub TOKEN secret
+        run: echo "${{ secrets.TOKEN }}" | npx wrangler secret put TOKEN
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
