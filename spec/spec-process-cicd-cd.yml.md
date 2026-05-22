@@ -9,9 +9,9 @@ tags: [process, cicd, github-actions, automation, bepinex, unity-modding, releas
 
 ## Workflow Overview
 
-**Purpose**: Build, version, and publish Dread mod releases to GitHub Releases on tag push (vmajor/vminor/vpatch), with a clear extension path to Thunderstore publishing.
+**Purpose**: Build, version, and publish Dread mod releases to GitHub Releases and Thunderstore on tag push (vmajor/vminor/vpatch).
 **Trigger Events**: Tag push matching `vmajor`, `vminor`, or `vpatch` (literal tag names; NOT `v*.*.*` semver)
-**Target Environments**: GitHub Releases (current), Thunderstore (future)
+**Target Environments**: GitHub Releases, Thunderstore
 
 ## Execution Flow Diagram
 
@@ -24,17 +24,11 @@ graph TD
     BUMP --> CHLOG[Rename [Unreleased] in CHANGELOG.md + Recreate Empty Header]
     CHLOG --> TAG_FORCE[Force-Move Trigger Tag to Bump Commit]
     TAG_FORCE --> BUILD[Build Release DLL with New Version]
-    BUILD -- success --> GH_RELEASE[Create GitHub Release at Tag with Changelog as Body]
-    GH_RELEASE --> PUSH[Push Bump Commit to master]
+    BUILD -- success --> GH_RELEASE[Create GitHub Release at Version Tag with Changelog as Body]
+    GH_RELEASE --> PUSH[Push Bump Commit and Version Tag to master]
+    PUSH --> TS_UPLOAD[Upload to Thunderstore API via tcli]
     BUILD -- fails --> ABORT[Discard Local Changes + Exit Error]
     ABORT --> DONE_FAIL
-
-    subgraph "Future Phase"
-        TS_DEPLOY[Thunderstore Deploy]
-        TS_DEPLOY --> TS_UPLOAD[Upload to Thunderstore]
-    end
-
-    PUSH --> TS_DEPLOY
 
     style TRIG fill:#e1f5fe
     style VER_READ fill:#fff3e0
@@ -55,8 +49,7 @@ graph TD
 |----------|---------|--------------|-------------------|
 | version | Validate tag name (vmajor/vminor/vpatch), read manifest.json, calculate new version, create local bump commit (manifest.json + Plugin.cs + CHANGELOG.md), force-move tag | None | ubuntu-latest, 3m timeout |
 | build | Compile Dread.dll in Release mode with new version baked in | version | windows-latest, 15m timeout |
-| commit-and-release | Create GitHub Release at tag with changelog as body; push bump commit to master | build | ubuntu-latest, 5m timeout |
-| thunderstore | (Future) Upload zip to Thunderstore API | commit-and-release | ubuntu-latest, 5m timeout |
+| commit-and-release | Create GitHub Release at version tag with changelog as body; push bump commit and version tag to master; publish zip to Thunderstore via tcli | build | ubuntu-latest, 5m timeout |
 
 ## Requirements Matrix
 
@@ -76,7 +69,7 @@ graph TD
 
 | ID | Requirement | Implementation Constraint |
 |----|-------------|---------------------------|
-| SEC-001 | GITHUB_TOKEN scoped to contents: write (release creation + push) | Minimal permissions: contents: write, metadata: read |
+| SEC-001 | GITHUB_TOKEN scoped to contents: write (release creation + push) | Minimal permissions: contents: write, issues: write |
 | SEC-002 | No external secrets exposed in logs | Redact any secrets in step output |
 | SEC-003 | Tag push validation prevents non-owner tags from triggering releases | Use github.actor or github.repository_owner check |
 
@@ -140,7 +133,7 @@ readme_update_issue: url  # GitHub issue created prompting README documentation 
 
 - **Runner Requirements**: Windows for build (same MAUI workload requirement as CI), Linux for version/commit-and-release
 - **Network Access**: GitHub API (release creation, push), NuGet.org (restore)
-- **Permissions**: `contents: write` (manage releases + push), `metadata: read`
+- **Permissions**: `contents: write` (manage releases + push), `issues: write` (post-release issue)
 
 ## Error Handling Strategy
 
@@ -206,8 +199,8 @@ readme_update_issue: url  # GitHub issue created prompting README documentation 
 
 ### Security Controls
 
-- **Access Control**: GITHUB_TOKEN scoped to `contents: write` (release creation + push)
-- **Secret Management**: THUNDERSTORE_TOKEN (future) stored as repository secret
+- **Access Control**: GITHUB_TOKEN scoped to `contents: write` (release creation + push), `issues: write` (post-release issue tracking)
+- **Secret Management**: THUNDERSTORE_TOKEN stored as repository secret
 - **Vulnerability Scanning**: None (out of scope for this workflow)
 
 ## Edge Cases & Exceptions
@@ -225,7 +218,7 @@ readme_update_issue: url  # GitHub issue created prompting README documentation 
 | CHANGELOG.md has no [Unreleased] section | Hard fail: "[Unreleased] section not found" | Remove [Unreleased], push tag |
 | Build fails after tag force-move | Local bump commit and tag move discarded; nothing pushed | Simulate build failure |
 | Force push to master between tag push and CD commit push | Push rejected; workflow fails | Manually resolve, re-push tag |
-| Thunderstore upload (future) fails after GH release succeeds | Release exists but Thunderstore missing | Manual Thunderstore upload or re-run CD with same tag |
+| Thunderstore upload fails after GH release succeeds | Release exists but Thunderstore missing | Manual Thunderstore upload or re-run CD with same tag |
 
 ## Validation Criteria
 
@@ -258,6 +251,7 @@ readme_update_issue: url  # GitHub issue created prompting README documentation 
 |---------|------|---------|--------|
 | 1.0 | 2026-05-22 | Initial specification | [Author] |
 | 2.0 | 2026-05-22 | Redesign: trigger changed from v*.*.* semver to vmajor/vminor/vpatch literal tags; version source changed from tag to manifest.json; version calculated by incrementing segment matching trigger tag; release named after actual version; CHANGELOG.md [Unreleased] rename step added; missing [Unreleased] is now a hard fail; build failure now discards all local changes; tag force-moved after bump commit, before build; sequencing updated | noxaur |
+| 2.1 | 2026-05-22 | `gh release create` now uses version-specific tag (`$releaseTag`) instead of trigger tag literal; Thunderstore publish activated (was listed as future); removed incompatible `--package-version` flag from `tcli publish` (mutually exclusive with `--file` in tcli 0.2.2); removed invalid `metadata: read` permission reference; added `issues: write` permission for post-release issue tracking | noxaur |
 
 ## Related Specifications
 
