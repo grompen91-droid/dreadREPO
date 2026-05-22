@@ -47,7 +47,7 @@ namespace Dread.Systems
         private EnemyHealth[]? _cachedEnemies;
         private float _phantomSoundAccumulator;
 
-        private static readonly int VisionBlockMask = LayerMask.GetMask("Default");
+        private static readonly int VisionBlockMask = Physics.DefaultRaycastLayers;
 
         private void Start()
         {
@@ -208,11 +208,15 @@ namespace Dread.Systems
             {
                 if (e == null) continue;
                 var target = e.transform.position;
-                var dir = target - origin;
-                float dist = dir.magnitude;
-                if (dist < 1f) return true;
-                if (!Physics.Linecast(origin, target, out _, VisionBlockMask, QueryTriggerInteraction.Ignore))
-                    return true;
+                if (Vector3.Distance(origin, target) < 1f) return true;
+
+                if (Physics.Linecast(origin, target, out var hit, VisionBlockMask, QueryTriggerInteraction.Ignore))
+                {
+                    if (hit.collider != null && hit.collider.transform.IsChildOf(e.transform))
+                        return true;
+                    continue;
+                }
+                return true;
             }
             return false;
         }
@@ -528,7 +532,7 @@ namespace Dread.Systems
                 ("scream_peak.ogg",     "PeakScream",     c => _peakScreamClip = c),
                 ("scream_distant.ogg",  "DistantScream",   c => _distantScreamClip = c),
                 ("scream_threat.ogg",   "ThreatScream",    c => _threatScreamClip = c),
-                ("phantom_footsteps.ogg", "Footsteps",     c => _footstepClip = c),
+                ("footsteps.ogg", "Footsteps",     c => _footstepClip = c),
             };
 
             foreach (var (file, label, setter) in clipDefs)
