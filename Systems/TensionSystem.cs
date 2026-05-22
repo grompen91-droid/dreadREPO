@@ -284,7 +284,7 @@ namespace Dread.Systems
 
                 if (Random.value > 0.2f) continue;
 
-                var cam = Camera.main;
+                var cam = _mainCam;
                 if (cam == null) continue;
 
                 SpawnFakeFootstep(cam);
