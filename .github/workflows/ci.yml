@@ -82,6 +82,11 @@ jobs:
         shell: pwsh
         run: .github/scripts/gen-stubs.ps1
 
+      - name: Verify stubs
+        shell: bash
+        run: |
+          dotnet run --project .github/scripts/verify-stubs -- .github/stubs/refs
+
       - name: Build
         id: build
         shell: bash
