@@ -16,6 +16,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 > **Highlight:** 23 bugfixes across all systems. Null-safety hardening, coroutine lifecycle fixes, config initialization guards, CI/CD fixes, and performance improvements.
 
 ### Fixed
+
+- TensionSystem proximity features (adrenaline, panic sprint, low stamina breath) silently failed when MonsterAudio was disabled due to cross-system cache coupling. Each system now scans independently (Issue: #103)
 - AudioDreadSystem: null-guard `Camera.main` and `Destroy()` clip calls, guard empty `_clips` list in `PickWeightedClip()`, stop coroutines in `OnDestroy`, remove duplicate `footsteps.ogg` load, refresh `_mainCam` on scene transition
 - TensionSystem: use cached `_mainCam` instead of `Camera.main` in `FakeFootstepLoop`, percentage-based low stamina threshold, re-save `SprintSpeedMultiplier` before panic activation, framerate-independent adrenaline lerp, guard `_breathCooldown` decrement when disabled, stop coroutines in `OnDestroy`
 - MonsterOverhaulSystem: field-access try/catch guards in Harmony patches, initialize `_inLevel` from current scene in `Start()`, save boosted crouch speed when `playerOriginalCrouchSpeed` is 0, stop coroutines in `OnDestroy`
