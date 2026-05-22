@@ -16,7 +16,15 @@ New-Item -ItemType Directory -Force "$outDir\BepInEx\plugins\$name" | Out-Null
 
 # Build release DLL
 Write-Host "Building..."
-dotnet build Dread.csproj -c Release --nologo -v quiet
+$stubsDir = ".github/stubs/refs"
+$stubsExist = Test-Path "$stubsDir/UnityEngine.dll"
+$buildArgs = @(
+    "build", "Dread.csproj", "-c", "Release", "--nologo", "-v", "quiet"
+)
+if ($stubsExist) {
+    $buildArgs += "-p:GameDir=$stubsDir", "-p:BepInExDir=$stubsDir", "-p:DeployToProfile=false", "-p:DeployToDist=false"
+}
+dotnet @buildArgs
 if ($LASTEXITCODE -ne 0) { Write-Error "Build failed"; exit 1 }
 
 # Copy mod files into Thunderstore package layout
