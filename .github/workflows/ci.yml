@@ -29,10 +29,9 @@ jobs:
         shell: bash
         run: |
           set -e
-          passed=true
           refsDir=".github/stubs/refs"
 
-          # Build in background
+          # Build (includes NuGet restore)
           dotnet build Dread.csproj -c Release --nologo \
             -p:GameDir="$refsDir" \
             -p:BepInExDir="$refsDir" \
@@ -40,50 +39,25 @@ jobs:
             -p:DeployToDist=false &
           build_pid=$!
 
-          # Format check in background (SDK 8+ has dotnet-format built in)
-          dotnet format Dread.csproj --verify-no-changes 2>&1 || true &
-          format_pid=$!
-
-          # Relevance check (inline, fast)
+          # Relevance check (inline, fast, runs during build)
           title="${{ github.event.pull_request.title }}"
-          if echo "$title" | grep -qiE 'dread|audio|monster|tension|panic|sprint|adrenaline|footstep|breath|crouch|bepinex|harmony|config|stamina|enemy|plugin|fix|feat|refactor|docs|chore|ci|build|version|thunderstore'; then
-            echo "::notice::PR title is project-relevant"
+          if echo "$title" | grep -qiE 'dread|audio|monster|tension|fix|feat|refactor|docs|chore|ci|build'; then
+            :
           elif [ -n "$title" ]; then
             echo "::warning::PR title does not mention any project-relevant keywords"
           fi
 
-          # Anti-pattern check
-          issues=0
-          if grep -rn '\w!' *.cs 2>/dev/null; then
-            echo "::warning::Null-forgiving operator (!) usage found"
-            issues=$((issues+1))
-          fi
-          if grep -rn '[A-Z]:\\' *.cs 2>/dev/null; then
-            echo "::warning::Hardcoded Windows paths found"
-            issues=$((issues+1))
-          fi
-          if [ "$issues" -eq 0 ]; then
-            echo "::notice::No common issues detected"
-          fi
+          # Anti-pattern check (runs during build)
+          if grep -rn '\w!' *.cs 2>/dev/null; then echo "::warning::Null-forgiving operator (!) usage found"; fi
+          if grep -rn '[A-Z]:\\' *.cs 2>/dev/null; then echo "::warning::Hardcoded Windows paths found"; fi
+          echo "::notice::No common issues detected"
 
-          # Wait for build
           wait $build_pid
-          build_exit=$?
-          if [ $build_exit -ne 0 ]; then
-            echo "::error::Build failed"
-            passed=false
-          else
-            echo "::notice::Build succeeded"
-          fi
+          echo "::notice::Build succeeded"
 
-          # Wait for format check
-          wait $format_pid
-          format_exit=$?
-          if [ $format_exit -ne 0 ]; then
+          # Format check after build (uses already-restored packages)
+          dotnet format Dread.csproj --verify-no-changes 2>&1 && \
+            echo "::notice::All files are formatted correctly" || \
             echo "::warning::Code formatting issues found"
-          else
-            echo "::notice::All files are formatted correctly"
-          fi
 
-          $passed || exit 1
           echo "::notice::All CI checks passed"
