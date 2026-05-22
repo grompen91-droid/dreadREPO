@@ -122,6 +122,8 @@ namespace Dread.Systems
             _mainCam = Camera.main;
             CleanupOverlay();
             CleanupFootstepSource();
+            if (SemiFunc.MenuLevel())
+                _hasTriggeredThisMatch = false;
         }
 
         private void Update()
@@ -323,7 +325,7 @@ namespace Dread.Systems
                     }
                 }
 
-                if (raw >= _episodeDuration - 0.5f && progress >= 0.5f)
+                if (raw >= _episodeDuration - 0.5f)
                     EndEpisode();
             }
         }
