@@ -18,6 +18,7 @@ namespace Dread.Systems
         private void Start()
         {
             SceneManager.sceneLoaded += OnSceneLoaded;
+            _inLevel = !SceneManager.GetActiveScene().name.Contains("Menu") && !SceneManager.GetActiveScene().name.Contains("Main");
             StartCoroutine(MonsterAudioLoop());
         }
 
