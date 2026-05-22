@@ -37,9 +37,19 @@ namespace UnityEngine
         public Vector3 right { get; }
         public Vector3 localPosition { get; set; }
         public Vector3 localEulerAngles { get; set; }
+        public Transform parent { get; set; }
         public void SetParent(Transform parent) { }
         public void SetParent(Transform parent, bool worldPositionStays) { }
-        public bool IsChildOf(Transform parent) => false;
+        public bool IsChildOf(Transform potentialParent)
+        {
+            var t = this;
+            while (t != null)
+            {
+                if (t == potentialParent) return true;
+                t = t.parent;
+            }
+            return false;
+        }
     }
     public class Object
     {
