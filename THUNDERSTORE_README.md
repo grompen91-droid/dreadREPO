@@ -1,6 +1,6 @@
 # Dread
 
-Atmospheric horror overhaul for R.E.P.O. Three systems that layer ambient dread, scarier monsters, and real-time proximity tension.
+Atmospheric horror overhaul for R.E.P.O. Five systems that layer ambient dread, scarier monsters, real-time proximity tension, psychotic episodes, and automated error reporting.
 
 ## Features
 
@@ -17,6 +17,8 @@ Atmospheric horror overhaul for R.E.P.O. Three systems that layer ambient dread,
 
 **Tension System:** scans for danger every 0.5s. Adrenaline reduces sprint drain near enemies. Panic sprint gives a speed burst. Fake footsteps play behind you. Breath sounds on low stamina.
 
+**Psychotic Break:** When you are solo, scared, and hiding in the dark, a terrifying 20-second episode can trigger. Complete with darkness, flickering shadows, circling phantom footsteps, and bone-chilling screams.
+
 **QOL:** crouch speed +30%.
 
 ## Installation
@@ -27,7 +29,7 @@ Atmospheric horror overhaul for R.E.P.O. Three systems that layer ambient dread,
 
 ## Multiplayer
 
-Monster changes are host-authoritative. Audio and tension are client-local. Players without Dread can join normally.
+Monster changes are host-authoritative. Audio, tension, and psychotic breaks are client-local. Players without Dread can join normally.
 
 | Feature | Who Needs It |
 |---------|-------------|
@@ -56,6 +58,18 @@ FakeFootstepsEnabled = true
 
 [4. QOL]
 CrouchSpeedBoost = true
+
+[5. Error Reporting]
+ErrorReportingEnabled = true
+
+[6. Psychotic Break]
+Enabled = true
+TriggerChance = 0.01
+Duration = 20
+OncePerMatch = true
+
+[7. Testing]
+EnableTestCrashButton = false
 ```
 
 ## Compatibility
@@ -63,4 +77,3 @@ CrouchSpeedBoost = true
 Works with modded enemies (Mimic, WesleysEnemies, etc.), REPOConfig, and other audio mods. REPOLib not required.
 
 [Changelog](CHANGELOG.md)
-
