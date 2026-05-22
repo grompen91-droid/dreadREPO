@@ -65,6 +65,5 @@ jobs:
           grep -rnI $'\t' *.cs Systems/*.cs Config/*.cs 2>/dev/null && \
             echo "::warning::Tab characters found" || true
 
-          wait $build_pid
-          echo "::notice::Build succeeded"
+          wait $build_pid && echo "::notice::Build succeeded" || { echo "::error::Build failed"; exit 1; }
           echo "::notice::All CI checks passed"
