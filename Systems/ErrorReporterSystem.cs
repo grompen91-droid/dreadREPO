@@ -1,8 +1,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
+using HarmonyLib;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
@@ -24,7 +26,8 @@ namespace Dread.Systems
         private const int MaxPendingLogs = 100;
         private const int HashPrefixLength = 16;
         private const int PlayerMaxHp = 100;
-        private readonly Queue<RawLogEntry> _pendingLogs = new Queue<RawLogEntry>(32);
+        private static readonly Queue<RawLogEntry> _pendingLogs = new Queue<RawLogEntry>(32);
+        private static readonly object _logsLock = new object();
 
         private class RawLogEntry
         {
@@ -35,19 +38,17 @@ namespace Dread.Systems
 
         private void OnEnable()
         {
-            Application.logMessageReceivedThreaded += HandleLog;
             SceneManager.sceneLoaded += OnSceneLoaded;
             _lastFlushTime = Time.realtimeSinceStartup;
         }
 
         private void OnDisable()
         {
-            Application.logMessageReceivedThreaded -= HandleLog;
             SceneManager.sceneLoaded -= OnSceneLoaded;
             FlushNow();
         }
 
-        private void HandleLog(string logString, string stackTrace, LogType type)
+        internal static void EnqueueLog(string logString, string stackTrace, LogType type)
         {
             if (type != LogType.Exception && type != LogType.Error)
                 return;
@@ -55,7 +56,7 @@ namespace Dread.Systems
             if (!DreadConfig.ErrorReportingEnabled.Value)
                 return;
 
-            lock (_pendingLogs)
+            lock (_logsLock)
             {
                 if (_pendingLogs.Count < MaxPendingLogs)
                     _pendingLogs.Enqueue(new RawLogEntry
@@ -78,7 +79,7 @@ namespace Dread.Systems
         private void ProcessPendingLogs()
         {
             RawLogEntry[] batch;
-            lock (_pendingLogs)
+            lock (_logsLock)
             {
                 if (_pendingLogs.Count == 0)
                     return;
@@ -360,6 +361,51 @@ namespace Dread.Systems
             public bool PanicSprint;
             public bool CrouchSpeedBoost;
             public bool ErrorReportingEnabled;
+        }
+    }
+
+    internal static class ErrorReportPatch
+    {
+        private static MethodInfo? _logErrorOriginal;
+        private static MethodInfo? _logExceptionOriginal;
+
+        internal static void Apply(Harmony harmony)
+        {
+            _logErrorOriginal = AccessTools.Method(typeof(Debug), "LogError", new[] { typeof(object) });
+            if (_logErrorOriginal != null)
+                harmony.Patch(_logErrorOriginal,
+                    postfix: new HarmonyMethod(typeof(ErrorReportPatch), nameof(OnLogError)));
+
+            _logExceptionOriginal = AccessTools.Method(typeof(Debug), "LogException", new[] { typeof(Exception) });
+            if (_logExceptionOriginal != null)
+                harmony.Patch(_logExceptionOriginal,
+                    postfix: new HarmonyMethod(typeof(ErrorReportPatch), nameof(OnLogException)));
+        }
+
+        internal static void Remove(Harmony harmony)
+        {
+            if (_logErrorOriginal != null)
+            {
+                harmony.Unpatch(_logErrorOriginal,
+                    AccessTools.Method(typeof(ErrorReportPatch), nameof(OnLogError)));
+                _logErrorOriginal = null;
+            }
+            if (_logExceptionOriginal != null)
+            {
+                harmony.Unpatch(_logExceptionOriginal,
+                    AccessTools.Method(typeof(ErrorReportPatch), nameof(OnLogException)));
+                _logExceptionOriginal = null;
+            }
+        }
+
+        private static void OnLogError(object __0)
+        {
+            ErrorReporterSystem.EnqueueLog(__0?.ToString() ?? "", "", LogType.Error);
+        }
+
+        private static void OnLogException(Exception __0)
+        {
+            ErrorReporterSystem.EnqueueLog(__0?.Message ?? "", __0?.StackTrace ?? "", LogType.Exception);
         }
     }
 }

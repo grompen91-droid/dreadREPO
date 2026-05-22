@@ -195,6 +195,11 @@ namespace UnityEngine
         public RenderMode renderMode { get; set; }
         public int sortingOrder { get; set; }
     }
+    public static class Debug
+    {
+        public static void LogError(object message) { }
+        public static void LogException(System.Exception exception) { }
+    }
     public enum LogType { Error, Assert, Warning, Log, Exception }
     public static class Application
     {
@@ -202,11 +207,7 @@ namespace UnityEngine
         public static string version { get; }
         public static string unityVersion { get; }
         public static RuntimePlatform platform { get; }
-#pragma warning disable 0067
-        public static event LogCallback logMessageReceivedThreaded;
-#pragma warning restore 0067
     }
-    public delegate void LogCallback(string condition, string stackTrace, LogType type);
     public enum RuntimePlatform { WindowsPlayer, OSXPlayer, LinuxPlayer }
     public static class JsonUtility
     {
@@ -245,12 +246,16 @@ namespace UnityEngine
         public static FullScreenMode fullScreenMode => FullScreenMode.FullScreenWindow;
     }
 }
+namespace UnityEngine.Events
+{
+    public delegate void UnityAction<T0, T1>(T0 arg0, T1 arg1);
+}
 namespace UnityEngine.SceneManagement
 {
     public static class SceneManager
     {
 #pragma warning disable 0067
-        public static event Action<Scene, LoadSceneMode> sceneLoaded;
+        public static event UnityEngine.Events.UnityAction<Scene, LoadSceneMode> sceneLoaded;
 #pragma warning restore 0067
         public static Scene GetActiveScene() => new Scene();
         public static void LoadScene(string name) { }

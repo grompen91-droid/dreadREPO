@@ -30,6 +30,7 @@ namespace Dread
             }
             if (DreadConfig.CrouchSpeedBoostEnabled.Value)
                 PlayerControllerAwakePatch.Apply(_harmony);
+            ErrorReportPatch.Apply(_harmony);
 
             DreadConfig.MonsterAggressionEnabled.SettingChanged += (_, _) =>
             {
