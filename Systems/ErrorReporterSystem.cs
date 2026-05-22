@@ -96,7 +96,7 @@ namespace Dread.Systems
                     ExceptionType = ParseExceptionType(raw.Message),
                     Message = Truncate(raw.Message, MaxMessageLength),
                     StackTrace = Truncate(raw.StackTrace, MaxStackTraceLength),
-                    Scene = SceneManager.GetActiveScene()?.name ?? "unknown",
+                    Scene = SceneManager.GetActiveScene().name ?? "unknown",
                     GameState = CaptureGameState(),
                     SystemInfo = CaptureSystemInfo(),
                     Display = CaptureDisplayInfo(),
@@ -184,7 +184,7 @@ namespace Dread.Systems
         {
             var state = new GameStateData
             {
-                SceneName = SceneManager.GetActiveScene()?.name ?? "unknown"
+                SceneName = SceneManager.GetActiveScene().name ?? "unknown"
             };
 
             try

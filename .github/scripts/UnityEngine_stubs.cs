@@ -91,6 +91,7 @@ namespace UnityEngine
     {
         public static float deltaTime { get; }
         public static float time { get; }
+        public static float realtimeSinceStartup { get; }
     }
     public static class Random
     {
@@ -131,6 +132,22 @@ namespace UnityEngine
     public struct RaycastHit { }
     public enum QueryTriggerInteraction { UseGlobal, Ignore, Collide }
     public enum LogType { Error, Assert, Warning, Log, Exception }
+    public static class Application
+    {
+        public static string dataPath { get; }
+        public static string version { get; }
+        public static string unityVersion { get; }
+        public static RuntimePlatform platform { get; }
+#pragma warning disable 0067
+        public static event LogCallback logMessageReceivedThreaded;
+#pragma warning restore 0067
+    }
+    public delegate void LogCallback(string condition, string stackTrace, LogType type);
+    public enum RuntimePlatform { WindowsPlayer, OSXPlayer, LinuxPlayer }
+    public static class JsonUtility
+    {
+        public static string ToJson(object obj) => "";
+    }
 }
 namespace UnityEngine.SceneManagement
 {
@@ -152,11 +169,25 @@ namespace UnityEngine.Networking
 {
     public class UnityWebRequest : IDisposable
     {
+        public UnityWebRequest() { }
+        public UnityWebRequest(string url, string method) { }
+        public UploadHandlerRaw uploadHandler { get; set; }
+        public DownloadHandlerBuffer downloadHandler { get; set; }
+        public string method { get; set; }
         public Result result { get; }
         public string error { get; }
         public AsyncOperation SendWebRequest() => null;
+        public void SetRequestHeader(string name, string value) { }
         public void Dispose() { }
         public enum Result { Success }
+    }
+    public class UploadHandlerRaw
+    {
+        public UploadHandlerRaw(byte[] data) { }
+    }
+    public class DownloadHandlerBuffer
+    {
+        public string text { get; }
     }
     public class UnityWebRequestMultimedia
     {
@@ -181,7 +212,10 @@ namespace UnityEngine.AI
     }
 }
 
-public class EnemyHealth : MonoBehaviour { }
+public class EnemyHealth : MonoBehaviour
+{
+    public int CurrentHealth { get; }
+}
 public class EnemyParent : MonoBehaviour { }
 public class EnemyNavMeshAgent : MonoBehaviour
 {
@@ -202,6 +236,8 @@ public class PlayerController : MonoBehaviour
     public float EnergyCurrent;
     public float EnergyStart;
     public float SprintSpeedMultiplier;
+    public int Health { get; }
+    public float stamina { get; }
 }
 public static class SemiFunc
 {
