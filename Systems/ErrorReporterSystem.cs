@@ -196,7 +196,8 @@ namespace Dread.Systems
                 foreach (var e in enemies)
                 {
                     if (e.CurrentHealth > 0) alive++;
-                    if (player != null && Vector3.Distance(e.transform.position, player.transform.position) < ProximityRange)
+                    var dist = Vector3.Distance(e.transform.position, player.transform.position);
+                    if (player != null && dist < ProximityRange)
                         nearby++;
                 }
                 state.EnemiesAlive = alive;

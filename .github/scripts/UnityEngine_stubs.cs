@@ -168,7 +168,7 @@ namespace UnityEngine
         Ignore = 1,
         Collide = 2
     }
-}
+
     public class Texture2D : Object
     {
         public Texture2D(int width, int height, TextureFormat format, bool mipChain) { }
