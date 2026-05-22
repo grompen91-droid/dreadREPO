@@ -7,6 +7,55 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+
+## [Unreleased]
+
+![Status](https://img.shields.io/badge/status-stable-brightgreen?style=flat-square)
+![Type](https://img.shields.io/badge/type-ci/cd-yellow?style=flat-square)
+
+> **Highlight:** CI pipeline optimized from 5-10 minutes to under 30 seconds. Single job on ubuntu-latest, auto-generated stubs with caching, instant grep-based checks, NuGet caching.
+
+### Changed
+- CI pipeline: collapsed 4 jobs into 1 verify job on `ubuntu-latest`, saving ~30s of job overhead
+- CI runner: `windows-latest` to `ubuntu-latest` (faster startup: ~5s vs ~15s)
+- Stub generation: optimized `gen-stubs.ps1` for speed (`--no-restore` for empty assemblies, BepInEx caching); runs in CI with output cached via `actions/cache`; stubs no longer committed to repo
+- .NET setup: removed `actions/setup-dotnet` (SDK 10+ pre-installed on runner), saving ~7s
+- MAUI workload: removed (unnecessary on both windows-latest and ubuntu-latest with reference assemblies package)
+- Format check: replaced `dotnet-format` with instant grep-based checks (trailing whitespace, tabs), saving ~18s
+- Build dependency: added `Microsoft.NETFramework.ReferenceAssemblies` NuGet package for cross-platform net48 builds
+- NuGet restore: cached via `actions/cache` with restore-key fallback for faster subsequent runs
+- Error handling: build failures now correctly exit the step
+
+### Fixed
+- gen-stubs.ps1: path separator (`\` to `/`) for cross-platform Linux compatibility
+
+### Removed
+- Committed stub DLLs from `.github/stubs/refs/` (now gitignored, auto-generated in CI)
+
+## [1.5.1] - 2026-05-21
+
+![Status](https://img.shields.io/badge/status-unstable-yellow?style=flat-square)
+![Type](https://img.shields.io/badge/type-cd-pipeline-blue?style=flat-square)
+
+> **Highlight:** CD pipeline release automation added. Version bumps via `vmajor`/`vminor`/`vpatch` tags, auto-generated GitHub Releases, and changelog management.
+
+### Added
+- CD pipeline: `.github/workflows/cd.yml` triggered on `vmajor`, `vminor`, or `vpatch` tag push
+- Version bump: read current from `manifest.json`, increment matching segment, write to all files
+- Changelog rename: `[Unreleased]` section renamed to new version on release, fresh `[Unreleased]` recreated above
+- GitHub Release: auto-created with actual version title (e.g., `v1.6.0`) and changelog body
+- Safety guard: pipeline hard-fails if `[Unreleased]` section is missing when a tag is pushed
+- Failure isolation: if build fails, nothing is pushed to remote (no stale commits, no moved tags)
+
+### Edge Cases
+- `VPATCH` (uppercase) is rejected; tag names are case-sensitive
+- Missing `[Unreleased]` section: workflow fails with clear error before any changes
+- Tag pushed from fork: action does not trigger (GitHub restriction on fork tag events)
+- Build failure after bump: local changes discarded, remote untouched, user re-pushes tag after fix
+- Duplicate release tag: `gh release create` fails; user must delete existing release and re-run
+
+---
+
 ## [1.5.0] - 2026-05-21
 
 ![Status](https://img.shields.io/badge/status-stable-brightgreen?style=flat-square)
@@ -138,3 +187,4 @@ These were rapid hotfix commits resolving reference and dependency issues during
 ---
 
 *Maintained by [elytraking](https://github.com/grompen91-droid)*
+
