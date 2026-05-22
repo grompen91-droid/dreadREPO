@@ -3,6 +3,7 @@
 //   EnemyParent       — enemy root component (has Start() lifecycle method)
 
 using System.Collections;
+using System.Collections.Generic;
 using Dread.Config;
 using UnityEngine.AI;
 using HarmonyLib;
@@ -13,6 +14,9 @@ namespace Dread.Systems
 {
     public class MonsterOverhaulSystem : MonoBehaviour
     {
+        internal static readonly List<EnemyHealth> CachedEnemies = new();
+        private float _nextEnemyRefresh;
+
         private bool _inLevel;
 
         private void Start()
@@ -33,6 +37,16 @@ namespace Dread.Systems
             _inLevel = !scene.name.Contains("Menu") && !scene.name.Contains("Main");
         }
 
+        private void RefreshEnemyCache()
+        {
+            if (Time.time < _nextEnemyRefresh) return;
+            _nextEnemyRefresh = Time.time + 5f;
+
+            var found = FindObjectsOfType<EnemyHealth>();
+            CachedEnemies.Clear();
+            CachedEnemies.AddRange(found);
+        }
+
         // Scans for enemies periodically and applies audio tweaks.
         // Works for all enemies including Mimic and WesleysEnemies.
         private IEnumerator MonsterAudioLoop()
@@ -43,8 +57,10 @@ namespace Dread.Systems
 
                 if (!DreadConfig.MonsterAudioEnabled.Value || !_inLevel) continue;
 
-                var enemies = FindObjectsOfType<EnemyHealth>();
-                foreach (var e in enemies)
+                RefreshEnemyCache();
+
+                CachedEnemies.RemoveAll(e => e == null);
+                foreach (var e in CachedEnemies)
                 {
                     if (e.GetComponent<DreadAudioTweaked>() != null) continue;
                     e.gameObject.AddComponent<DreadAudioTweaked>();

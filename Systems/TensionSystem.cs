@@ -213,11 +213,11 @@ namespace Dread.Systems
             var cam = _mainCam;
             if (cam == null) return float.MaxValue;
 
-            var enemies = FindObjectsOfType<EnemyHealth>();
+            var enemies = MonsterOverhaulSystem.CachedEnemies;
+            enemies.RemoveAll(e => e == null);
             float nearest = float.MaxValue;
             foreach (var e in enemies)
             {
-                if (e == null) continue;
                 float d = Vector3.Distance(cam.transform.position, e.transform.position);
                 if (d < nearest) nearest = d;
             }
