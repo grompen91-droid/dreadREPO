@@ -79,7 +79,7 @@ namespace Dread.Systems
         {
             if (Time.time >= _nextScan)
             {
-                _nextScan = Time.time + 0.5f;
+                _nextScan = Time.time + 2.0f;
                 _nearestDist = SemiFunc.MenuLevel() ? float.MaxValue : FindNearestEnemyDist();
             }
 
