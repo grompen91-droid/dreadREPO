@@ -25,13 +25,21 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
       - name: Build & verify
         shell: bash
         run: |
           set -e
           refsDir=".github/stubs/refs"
 
-          # Build (includes NuGet restore)
+          # Build (includes NuGet restore, cached if available)
           dotnet build Dread.csproj -c Release --nologo \
             -p:GameDir="$refsDir" \
             -p:BepInExDir="$refsDir" \
@@ -50,16 +58,13 @@ jobs:
           # Anti-pattern check (runs during build)
           grep -rn '\w!' *.cs 2>/dev/null && echo "::warning::Null-forgiving operator (!) usage found" || true
           grep -rn '[A-Z]:\\' *.cs 2>/dev/null && echo "::warning::Hardcoded Windows paths found" || true
-          echo "::notice::No common issues detected"
 
-          wait $build_pid
-          echo "::notice::Build succeeded"
-
-          # Format check (grep-based, instant, no NuGet needed)
+          # Format check (grep-based, instant)
           grep -rnI '[[:blank:]]$' *.cs Systems/*.cs Config/*.cs 2>/dev/null && \
             echo "::warning::Trailing whitespace found" || true
           grep -rnI $'\t' *.cs Systems/*.cs Config/*.cs 2>/dev/null && \
             echo "::warning::Tab characters found" || true
-          echo "::notice::All files are formatted correctly"
 
+          wait $build_pid
+          echo "::notice::Build succeeded"
           echo "::notice::All CI checks passed"
