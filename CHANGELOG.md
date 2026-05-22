@@ -7,22 +7,27 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-
 ## [Unreleased]
 
 ![Status](https://img.shields.io/badge/status-stable-brightgreen?style=flat-square)
 ![Type](https://img.shields.io/badge/type-feature-green?style=flat-square)
 
-> **Highlight:** Automated error reporting. Crashes and exceptions are now captured and sent to the developer as GitHub Issues for faster bug fixes. Opt-out via config.
+> **Highlight:** Psychotic Break episode system and automated error reporting. When you are solo, scared, and hiding, a terrifying 20-second episode can trigger complete with darkness, flickering shadows, circling footsteps, and a shadow scream.
 
 ### Added
 
+- Test crash button: `TestCrashSystem` with a clickable "Crash Game" config entry under "7. Testing" that deliberately throws `InvalidOperationException` to verify error telemetry end-to-end (ADR-0012)
 - Error telemetry: `ErrorReporterSystem` MonoBehaviour hooks Unity's `logMessageReceivedThreaded`, buffers exceptions and errors, and sends batched reports to a Cloudflare Worker which creates GitHub Issues with `auto-reported` and `bug` labels
 - Config toggle: `ErrorReportingEnabled` in section "5. Error Reporting" (default: on). Disable to opt out of telemetry
 - Cloudflare Worker (`workers/error-reporter/`): processes error reports via API, deduplicates by error hash, rate-limits per IP (5/hr), auto-reopens closed duplicate issues, and creates formatted issues with system info, game state, config table, and collapsible raw JSON
 - GitHub Actions workflow: auto-deploys Worker on push to `workers/error-reporter/**` or manual trigger
 - Error payload includes: exception type and stack trace, scene name, enemy count and proximity, player HP/stamina/position, system specs (OS, CPU, GPU, RAM, VRAM, display), and all DreadConfig values
 - `ErrorReporterSystem` follows thread-safe design: raw log entry queue on background thread, Unity API calls on main thread via `Update()`, locked buffer for batched transmission
+- Psychotic Break: `PsychoticBreakSystem` MonoBehaviour triggers when solo + recent threat memory (15m/30s) + line of sight lost + crouching. 1% chance per 2s check, once per match (configurable)
+- Psychotic Break episode: 20-second state machine with 4 phases (buildup, crescendo, peak, climax). Screen darkens, edge shadows pulse with flicker frequency crescendo, footsteps circle with dynamic stereo panning (subtle to frantic to close + cut)
+- Psychotic Break audio: 3 scream variants (`shadow_scream_1/2/3.ogg`) played as 3D spatialized sounds at random positions. Phantom monster sounds reuse scream clips (lower volume, randomized pitch 0.5x-1.5x)
+- Psychotic Break mechanics: flashlight disabled via `FlashlightStateTracker` component, input fully locked during episode, stumble camera effect at end
+- Psychotic Break config: 5 config entries under section "6. Psychotic Break" (Enabled, TriggerChance=0.01, Duration=20s, OncePerMatch=true)
 
 ### Fixed
 
@@ -215,4 +220,3 @@ These were rapid hotfix commits resolving reference and dependency issues during
 ---
 
 *Maintained by [elytraking](https://github.com/grompen91-droid)*
-

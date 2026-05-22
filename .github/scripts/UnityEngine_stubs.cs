@@ -11,10 +11,14 @@ namespace UnityEngine
         public Coroutine StartCoroutine(IEnumerator routine) => null;
         public void StopAllCoroutines() { }
     }
-    public class Behaviour : Component { }
+    public class Behaviour : Component
+    {
+        public bool enabled { get; set; }
+    }
     public class Component : Object
     {
         public T GetComponent<T>() where T : class => null;
+        public T GetComponentInChildren<T>() where T : class => null;
         public GameObject gameObject { get; }
         public Transform transform { get; }
     }
@@ -31,6 +35,10 @@ namespace UnityEngine
         public Vector3 position { get; set; }
         public Vector3 forward { get; }
         public Vector3 right { get; }
+        public Vector3 localPosition { get; set; }
+        public Vector3 localEulerAngles { get; set; }
+        public void SetParent(Transform parent) { }
+        public void SetParent(Transform parent, bool worldPositionStays) { }
     }
     public class Object
     {
@@ -40,10 +48,27 @@ namespace UnityEngine
         public static void DontDestroyOnLoad(Object obj) { }
         public static implicit operator bool(Object exists) { return exists != null; }
     }
+    public struct Vector2
+    {
+        public float x, y;
+        public static Vector2 zero => new Vector2();
+        public static Vector2 one => new Vector2();
+        public Vector2(float x, float y) { this.x = x; this.y = y; }
+    }
+    public struct Color
+    {
+        public float r, g, b, a;
+        public static Color white => new Color();
+        public static Color black => new Color();
+        public static Color clear => new Color();
+        public Color(float r, float g, float b, float a) { this.r = r; this.g = g; this.b = b; this.a = a; }
+        public Color(float r, float g, float b) { this.r = r; this.g = g; this.b = b; this.a = 1f; }
+    }
     public struct Vector3
     {
         public float x, y, z;
         public Vector3 normalized => this;
+        public float magnitude => 0f;
         public static Vector3 forward => new Vector3();
         public static Vector3 right => new Vector3();
         public static Vector3 zero => new Vector3();
@@ -71,7 +96,9 @@ namespace UnityEngine
         public float minDistance { get; set; }
         public float maxDistance { get; set; }
         public float reverbZoneMix { get; set; }
+        public float panStereo { get; set; }
         public void Play() { }
+        public void Stop() { }
     }
     public class AudioClip : Object
     {
@@ -91,18 +118,100 @@ namespace UnityEngine
     {
         public static float deltaTime { get; }
         public static float time { get; }
+        public static float realtimeSinceStartup { get; }
     }
     public static class Random
     {
         public static float Range(float min, float max) => min;
         public static int Range(int min, int max) => min;
         public static float value { get; }
+        public static Vector3 insideUnitSphere => new Vector3();
     }
     public static class Mathf
     {
         public static float Lerp(float a, float b, float t) => a;
         public static float MoveTowards(float current, float target, float maxDelta) => current;
         public static float Clamp(float value, float min, float max) => value;
+        public static float Sin(float f) => 0f;
+        public static float Sqrt(float f) => 0f;
+        public static float Clamp01(float value) => value;
+    }
+    public class Texture2D : Object
+    {
+        public Texture2D(int width, int height, TextureFormat format, bool mipChain) { }
+        public void SetPixel(int x, int y, Color color) { }
+        public void Apply() { }
+    }
+    public enum TextureFormat { RGBA32 }
+    public enum RenderMode { ScreenSpaceOverlay }
+    public struct LayerMask
+    {
+        public static int GetMask(params string[] layerNames) => 0;
+    }
+    public class Light : Behaviour { }
+    public class Canvas : Behaviour
+    {
+        public RenderMode renderMode { get; set; }
+        public int sortingOrder { get; set; }
+    }
+    public static class Physics
+    {
+        public static bool Linecast(Vector3 start, Vector3 end, out RaycastHit hitInfo, int layerMask, QueryTriggerInteraction queryTriggerInteraction)
+        {
+            hitInfo = new RaycastHit();
+            return false;
+        }
+    }
+    public struct RaycastHit { }
+    public enum QueryTriggerInteraction { UseGlobal, Ignore, Collide }
+    public enum LogType { Error, Assert, Warning, Log, Exception }
+    public static class Application
+    {
+        public static string dataPath { get; }
+        public static string version { get; }
+        public static string unityVersion { get; }
+        public static RuntimePlatform platform { get; }
+#pragma warning disable 0067
+        public static event LogCallback logMessageReceivedThreaded;
+#pragma warning restore 0067
+    }
+    public delegate void LogCallback(string condition, string stackTrace, LogType type);
+    public enum RuntimePlatform { WindowsPlayer, OSXPlayer, LinuxPlayer }
+    public static class JsonUtility
+    {
+        public static string ToJson(object obj) => "";
+    }
+    public static class SystemInfo
+    {
+        public static string operatingSystem => "";
+        public static string processorType => "";
+        public static int processorCount => 0;
+        public static int systemMemorySize => 0;
+        public static string graphicsDeviceName => "";
+        public static int graphicsMemorySize => 0;
+        public static string graphicsDeviceVendor => "";
+        public static string deviceModel => "";
+        public static string deviceName => "";
+        public static string operatingSystemFamily => "";
+        public static int processorFrequency => 0;
+        public static string graphicsDeviceVersion => "";
+        public static int graphicsShaderLevel => 0;
+        public static string deviceType => "";
+    }
+    public struct Resolution
+    {
+        public int width;
+        public int height;
+        public int refreshRate;
+    }
+    public enum FullScreenMode { FullScreenWindow, ExclusiveFullScreen, Windowed, MaximizedWindow }
+    public static class Screen
+    {
+        public static int width => 0;
+        public static int height => 0;
+        public static Resolution currentResolution => new Resolution();
+        public static float dpi => 0f;
+        public static FullScreenMode fullScreenMode => FullScreenMode.FullScreenWindow;
     }
 }
 namespace UnityEngine.SceneManagement
@@ -125,11 +234,25 @@ namespace UnityEngine.Networking
 {
     public class UnityWebRequest : IDisposable
     {
+        public UnityWebRequest() { }
+        public UnityWebRequest(string url, string method) { }
+        public UploadHandlerRaw uploadHandler { get; set; }
+        public DownloadHandlerBuffer downloadHandler { get; set; }
+        public string method { get; set; }
         public Result result { get; }
         public string error { get; }
         public AsyncOperation SendWebRequest() => null;
+        public void SetRequestHeader(string name, string value) { }
         public void Dispose() { }
         public enum Result { Success }
+    }
+    public class UploadHandlerRaw
+    {
+        public UploadHandlerRaw(byte[] data) { }
+    }
+    public class DownloadHandlerBuffer
+    {
+        public string text { get; }
     }
     public class UnityWebRequestMultimedia
     {
@@ -140,6 +263,24 @@ namespace UnityEngine.Networking
         public static AudioClip GetContent(UnityWebRequest req) => null;
     }
 }
+namespace UnityEngine.UI
+{
+    public class RawImage : MonoBehaviour
+    {
+        public Color color { get; set; }
+        public RectTransform rectTransform { get; }
+        public Texture2D texture { get; set; }
+    }
+    public class RectTransform : Component
+    {
+        public Vector2 sizeDelta { get; set; }
+        public Vector2 anchoredPosition { get; set; }
+        public Vector2 localScale { get; set; }
+        public Vector2 anchorMin { get; set; }
+        public Vector2 anchorMax { get; set; }
+    }
+}
+
 namespace UnityEngine.AI
 {
     public class NavMeshAgent : Behaviour
@@ -149,7 +290,10 @@ namespace UnityEngine.AI
     }
 }
 
-public class EnemyHealth : MonoBehaviour { }
+public class EnemyHealth : MonoBehaviour
+{
+    public int CurrentHealth { get; }
+}
 public class EnemyParent : MonoBehaviour { }
 public class EnemyNavMeshAgent : MonoBehaviour
 {
@@ -170,6 +314,8 @@ public class PlayerController : MonoBehaviour
     public float EnergyCurrent;
     public float EnergyStart;
     public float SprintSpeedMultiplier;
+    public int Health { get; }
+    public float stamina { get; }
 }
 public static class SemiFunc
 {

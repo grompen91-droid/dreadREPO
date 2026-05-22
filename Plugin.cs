@@ -12,7 +12,7 @@ namespace Dread
     {
         public const string GUID = "elytraking.dread";
         public const string NAME = "Dread";
-        public const string VERSION = "1.5.1";
+        public const string VERSION = "1.6.0";
 
         internal static new ManualLogSource Logger = null!;
 
@@ -67,8 +67,12 @@ namespace Dread
             else Logger.LogError("Failed to add TensionSystem component.");
             if (CreateSystemHost("DreadErrorHost").AddComponent<ErrorReporterSystem>() != null) count++;
             else Logger.LogError("Failed to add ErrorReporterSystem component.");
+            if (CreateSystemHost("DreadPsychoticBreakHost").AddComponent<PsychoticBreakSystem>() != null) count++;
+            else Logger.LogError("Failed to add PsychoticBreakSystem component.");
+            if (CreateSystemHost("DreadTestCrashHost").AddComponent<TestCrashSystem>() != null) count++;
+            else Logger.LogError("Failed to add TestCrashSystem component.");
             if (count > 0)
-                Logger.LogInfo($"Systems initialized ({count}/4).");
+                Logger.LogInfo($"Systems initialized ({count}/6).");
             else
                 Logger.LogError("All systems failed to initialize.");
         }
@@ -79,7 +83,5 @@ namespace Dread
             DontDestroyOnLoad(go);
             return go;
         }
-        }
     }
 }
-
