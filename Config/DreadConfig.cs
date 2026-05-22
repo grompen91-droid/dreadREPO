@@ -16,6 +16,12 @@ namespace Dread.Config
         // QOL
         public static ConfigEntry<bool> CrouchSpeedBoostEnabled = null!;
 
+        // 5. Psychotic Break
+        public static ConfigEntry<bool> PsychoticBreakEnabled = null!;
+        public static ConfigEntry<float> PsychoticBreakTriggerChance = null!;
+        public static ConfigEntry<float> PsychoticBreakDuration = null!;
+        public static ConfigEntry<bool> PsychoticBreakOncePerMatch = null!;
+
         // Tension
         public static ConfigEntry<bool> FakeFootstepsEnabled = null!;
         public static ConfigEntry<bool> AdrenalineEnabled = null!;
@@ -51,6 +57,20 @@ namespace Dread.Config
 
             CrouchSpeedBoostEnabled = cfg.Bind("4. QOL", "CrouchSpeedBoost", true,
                 "Crouch movement is 30% faster.");
+
+            // 5. Psychotic Break
+            PsychoticBreakEnabled = cfg.Bind("5. Psychotic Break", "PsychoticBreakEnabled", true,
+                "Master toggle for the Psychotic Break system.");
+            PsychoticBreakTriggerChance = cfg.Bind("5. Psychotic Break", "PsychoticBreakTriggerChance", 0.01f,
+                new ConfigDescription(
+                    "Probability per 2s check (0-1). 0.01 = 1%.",
+                    new AcceptableValueRange<float>(0f, 1f)));
+            PsychoticBreakDuration = cfg.Bind("5. Psychotic Break", "PsychoticBreakDuration", 20f,
+                new ConfigDescription(
+                    "Episode length in seconds.",
+                    new AcceptableValueRange<float>(5f, 60f)));
+            PsychoticBreakOncePerMatch = cfg.Bind("5. Psychotic Break", "PsychoticBreakOncePerMatch", true,
+                "Limit to one episode per match.");
         }
     }
 }

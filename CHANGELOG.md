@@ -7,6 +7,21 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+![Status](https://img.shields.io/badge/status-stable-brightgreen?style=flat-square)
+![Type](https://img.shields.io/badge/type-feature-green?style=flat-square)
+
+> **Highlight:** Psychotic Break episode system. When you are solo, scared, and hiding, a terrifying 20-second episode can trigger complete with darkness, flickering shadows, circling footsteps, and a shadow scream.
+
+### Added
+
+- Psychotic Break: `PsychoticBreakSystem` MonoBehaviour triggers when solo + recent threat memory (15m/30s) + line of sight lost + crouching. 1% chance per 2s check, once per match (configurable)
+- Psychotic Break episode: 20-second state machine with 4 phases (buildup, crescendo, peak, climax). Screen darkens, edge shadows pulse with flicker frequency crescendo, footsteps circle with dynamic stereo panning (subtle to frantic to close + cut)
+- Psychotic Break audio: 3 scream variants (`shadow_scream_1/2/3.ogg`) played as 3D spatialized sounds at random positions. Phantom monster sounds reuse scream clips (lower volume, randomized pitch 0.5x-1.5x)
+- Psychotic Break mechanics: flashlight disabled via `FlashlightStateTracker` component, input fully locked during episode, stumble camera effect at end
+- Psychotic Break config: 5 config entries under section "5. Psychotic Break" (Enabled, TriggerChance=0.01, Duration=20s, OncePerMatch=true)
+
 ## [1.5.0] - 2026-05-21
 
 ![Status](https://img.shields.io/badge/status-stable-brightgreen?style=flat-square)
