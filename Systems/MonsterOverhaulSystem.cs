@@ -117,7 +117,10 @@ namespace Dread.Systems
             try
             {
                 float orig = t.Field<float>("playerOriginalCrouchSpeed").Value;
-                if (orig > 0f) t.Field<float>("playerOriginalCrouchSpeed").Value = orig * 1.3f;
+                if (orig > 0f)
+                    t.Field<float>("playerOriginalCrouchSpeed").Value = orig * 1.3f;
+                else
+                    t.Field<float>("playerOriginalCrouchSpeed").Value = __instance.CrouchSpeed;
             }
             catch
             {
