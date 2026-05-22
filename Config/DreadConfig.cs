@@ -33,6 +33,9 @@ namespace Dread.Config
         public static ConfigEntry<float> PsychoticBreakDuration = null!;
         public static ConfigEntry<bool> PsychoticBreakOncePerMatch = null!;
 
+        // 7. Testing
+        public static ConfigEntry<bool> TestCrashButton = null!;
+
         public static void Initialize(ConfigFile cfg)
         {
             if (_initialized) return;
@@ -81,6 +84,17 @@ namespace Dread.Config
             PsychoticBreakOncePerMatch = cfg.Bind("6. Psychotic Break", "PsychoticBreakOncePerMatch", true,
                 "Limit to one episode per match.");
 
+            TestCrashButton = cfg.Bind(
+                "7. Testing",
+                "Crash Game",
+                false,
+                new ConfigDescription(
+                    "Click to crash the game and verify error reporting works.",
+                    null,
+                    new ConfigurationManagerAttributes { ShowAsButton = true }
+                )
+            );
+
             ConfigEntryBase?[] allFields =
             [
                 AudioEnabled, AudioFrequency, AudioVolume,
@@ -89,6 +103,7 @@ namespace Dread.Config
                 FakeFootstepsEnabled, AdrenalineEnabled, LowStaminaSoundEnabled, PanicSprintEnabled,
                 ErrorReportingEnabled,
                 PsychoticBreakEnabled, PsychoticBreakTriggerChance, PsychoticBreakDuration, PsychoticBreakOncePerMatch,
+                TestCrashButton,
             ];
             for (int i = 0; i < allFields.Length; i++)
             {
@@ -107,5 +122,10 @@ namespace Dread.Config
             if (!_initialized)
                 Plugin.Logger.LogError("[Dread] DreadConfig accessed before Initialize() was called!");
         }
+    }
+
+    internal class ConfigurationManagerAttributes
+    {
+        public bool? ShowAsButton;
     }
 }

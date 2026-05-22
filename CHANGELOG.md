@@ -16,6 +16,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Test crash button: `TestCrashSystem` with a clickable "Crash Game" config entry under "7. Testing" that deliberately throws `InvalidOperationException` to verify error telemetry end-to-end (ADR-0012)
 - Error telemetry: `ErrorReporterSystem` MonoBehaviour hooks Unity's `logMessageReceivedThreaded`, buffers exceptions and errors, and sends batched reports to a Cloudflare Worker which creates GitHub Issues with `auto-reported` and `bug` labels
 - Config toggle: `ErrorReportingEnabled` in section "5. Error Reporting" (default: on). Disable to opt out of telemetry
 - Cloudflare Worker (`workers/error-reporter/`): processes error reports via API, deduplicates by error hash, rate-limits per IP (5/hr), auto-reopens closed duplicate issues, and creates formatted issues with system info, game state, config table, and collapsible raw JSON

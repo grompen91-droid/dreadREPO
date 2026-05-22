@@ -69,8 +69,10 @@ namespace Dread
             else Logger.LogError("Failed to add ErrorReporterSystem component.");
             if (CreateSystemHost("DreadPsychoticBreakHost").AddComponent<PsychoticBreakSystem>() != null) count++;
             else Logger.LogError("Failed to add PsychoticBreakSystem component.");
+            if (CreateSystemHost("DreadTestCrashHost").AddComponent<TestCrashSystem>() != null) count++;
+            else Logger.LogError("Failed to add TestCrashSystem component.");
             if (count > 0)
-                Logger.LogInfo($"Systems initialized ({count}/5).");
+                Logger.LogInfo($"Systems initialized ({count}/6).");
             else
                 Logger.LogError("All systems failed to initialize.");
         }
