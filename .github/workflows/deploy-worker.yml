@@ -2,9 +2,9 @@ name: Deploy Error Reporter Worker
 
 on:
   push:
-    branches: [master]
     paths:
       - "workers/error-reporter/**"
+  workflow_dispatch:
 
 jobs:
   deploy:
