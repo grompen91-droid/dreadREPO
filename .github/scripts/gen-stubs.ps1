@@ -143,14 +143,4 @@ if (!(Test-Path "$coreDir/BepInEx.dll")) {
     Write-Host "[gen-stubs] BepInEx core already present (cached)"
 }
 
-# Verify stub assemblies
-Write-Host "[gen-stubs] Verifying stubs..."
-$verifyExit = & dotnet run --project "$PSScriptRoot/verify-stubs" -- $stubsDir 2>&1
-$verifyExit | Out-String | ForEach-Object { Write-Host "$_" }
-$exitCode = $LASTEXITCODE
-if ($exitCode -ne 0) {
-    Write-Host "::error::[gen-stubs] Stub verification failed"
-    exit 1
-}
-
 Write-Host "[gen-stubs] Done"

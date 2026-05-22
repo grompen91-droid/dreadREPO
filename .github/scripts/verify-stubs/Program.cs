@@ -1,12 +1,16 @@
 using System.Reflection;
-using System.Reflection.PortableExecutable;
+using System.Runtime.InteropServices;
 
 var stubsDir = args.Length > 0 ? args[0] : ".github/stubs/refs";
-var gameTypes = new[] { "EnemyNavMeshAgent", "EnemyHealth", "EnemyDirector", "PlayerController", "SemiFunc" };
+var gameTypes = new[] { "EnemyNavMeshAgent", "EnemyHealth", "EnemyDirector", "EnemyParent", "PlayerController", "SemiFunc" };
 var failed = false;
 
-var resolver = new PathAssemblyResolver(Directory.GetFiles(stubsDir, "*.dll"));
-var mlc = new System.Reflection.Metadata.MetadataLoadContext(resolver);
+var runtimeDir = RuntimeEnvironment.GetRuntimeDirectory();
+var resolver = new PathAssemblyResolver(
+    Directory.GetFiles(stubsDir, "*.dll")
+        .Concat(Directory.GetFiles(runtimeDir, "*.dll"))
+);
+var mlc = new MetadataLoadContext(resolver);
 
 void CheckAssembly(string label, string dllPath, string[] shouldContain, string[] shouldNotContain)
 {
