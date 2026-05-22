@@ -103,8 +103,13 @@ namespace Dread.Systems
 
         private void PlayRandomSound()
         {
+            if (_mainCam == null)
+                _mainCam = Camera.main;
+            if (_mainCam == null)
+                return;
+
             var clip = PickWeightedClip();
-            var cam = _mainCam!;
+            var cam = _mainCam;
 
             var offset = new Vector3(
                 Random.Range(-1f, 1f),
