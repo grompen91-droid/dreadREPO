@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Dread.Config;
 using UnityEngine.AI;
+using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -90,10 +91,23 @@ namespace Dread.Systems
     //   DefaultAcceleration = Agent.acceleration cached at Awake
     // We multiply both the live agent value and the cached default so resets stay fast.
 
-    [HarmonyPatch(typeof(EnemyNavMeshAgent), "Awake")]
     internal static class EnemyNavMeshAgentAwakePatch
     {
-        [HarmonyPostfix]
+        private static MethodInfo? _original;
+
+        internal static void Apply(Harmony harmony)
+        {
+            _original = AccessTools.Method(typeof(EnemyNavMeshAgent), "Awake");
+            harmony.Patch(_original, postfix: new HarmonyMethod(typeof(EnemyNavMeshAgentAwakePatch), nameof(Postfix)));
+        }
+
+        internal static void Remove(Harmony harmony)
+        {
+            if (_original == null) return;
+            harmony.Unpatch(_original, AccessTools.Method(typeof(EnemyNavMeshAgentAwakePatch), nameof(Postfix)));
+            _original = null;
+        }
+
         private static void Postfix(EnemyNavMeshAgent __instance)
         {
             if (!DreadConfig.MonsterAggressionEnabled.Value) return;
@@ -120,10 +134,23 @@ namespace Dread.Systems
     // Boosts CrouchSpeed and the cached original so speed-resets also use the
     // boosted value (e.g. after tumbling).
 
-    [HarmonyPatch(typeof(PlayerController), "Awake")]
     internal static class PlayerControllerAwakePatch
     {
-        [HarmonyPostfix]
+        private static MethodInfo? _original;
+
+        internal static void Apply(Harmony harmony)
+        {
+            _original = AccessTools.Method(typeof(PlayerController), "Awake");
+            harmony.Patch(_original, postfix: new HarmonyMethod(typeof(PlayerControllerAwakePatch), nameof(Postfix)));
+        }
+
+        internal static void Remove(Harmony harmony)
+        {
+            if (_original == null) return;
+            harmony.Unpatch(_original, AccessTools.Method(typeof(PlayerControllerAwakePatch), nameof(Postfix)));
+            _original = null;
+        }
+
         private static void Postfix(PlayerController __instance)
         {
             if (!DreadConfig.CrouchSpeedBoostEnabled.Value) return;
@@ -150,10 +177,23 @@ namespace Dread.Systems
     // enemies further away. Kept at 1.5× — 3× caused too many simultaneous
     // investigate events which overwhelms Photon enemy-position sync on clients.
 
-    [HarmonyPatch(typeof(EnemyDirector), "SetInvestigate")]
     internal static class EnemyDirectorSetInvestigatePatch
     {
-        [HarmonyPrefix]
+        private static MethodInfo? _original;
+
+        internal static void Apply(Harmony harmony)
+        {
+            _original = AccessTools.Method(typeof(EnemyDirector), "SetInvestigate");
+            harmony.Patch(_original, prefix: new HarmonyMethod(typeof(EnemyDirectorSetInvestigatePatch), nameof(Prefix)));
+        }
+
+        internal static void Remove(Harmony harmony)
+        {
+            if (_original == null) return;
+            harmony.Unpatch(_original, AccessTools.Method(typeof(EnemyDirectorSetInvestigatePatch), nameof(Prefix)));
+            _original = null;
+        }
+
         private static void Prefix(ref float radius)
         {
             if (!DreadConfig.MonsterAggressionEnabled.Value) return;
