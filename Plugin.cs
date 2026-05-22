@@ -58,19 +58,24 @@ namespace Dread
 
         private void Start()
         {
-            var host = new GameObject("DreadHost");
-            DontDestroyOnLoad(host);
             int count = 0;
-            if (host.AddComponent<AudioDreadSystem>() != null) count++;
+            if (CreateSystemHost("DreadAudioHost").AddComponent<AudioDreadSystem>() != null) count++;
             else Logger.LogError("Failed to add AudioDreadSystem component.");
-            if (host.AddComponent<MonsterOverhaulSystem>() != null) count++;
+            if (CreateSystemHost("DreadMonsterHost").AddComponent<MonsterOverhaulSystem>() != null) count++;
             else Logger.LogError("Failed to add MonsterOverhaulSystem component.");
-            if (host.AddComponent<TensionSystem>() != null) count++;
+            if (CreateSystemHost("DreadTensionHost").AddComponent<TensionSystem>() != null) count++;
             else Logger.LogError("Failed to add TensionSystem component.");
             if (count > 0)
-                Logger.LogInfo($"Systems initialized ({count}/3) on DreadHost.");
+                Logger.LogInfo($"Systems initialized ({count}/3).");
             else
-                Logger.LogError("All systems failed to initialize on DreadHost.");
+                Logger.LogError("All systems failed to initialize.");
+        }
+
+        private static GameObject CreateSystemHost(string name)
+        {
+            var go = new GameObject(name);
+            DontDestroyOnLoad(go);
+            return go;
         }
     }
 }

@@ -17,6 +17,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Harmony patches: `EnemyNavMeshAgentAwakePatch` and `PlayerControllerAwakePatch` no longer corrupt cached default fields (`DefaultSpeed`, `DefaultAcceleration`, `playerOriginalCrouchSpeed`). Only live values are modified, preventing permanent state corruption on config toggle (Issue: #91)
+- Panic sprint: consolidated `_panicActive` and `_originalSprintMultiplier` into a single source of truth. Removed `_panicActive` boolean; state is now implied by `_originalSprintMultiplier >= 0`, eliminating desync across scene transitions, null player, and config toggles (Issue: #99)
+- System lifecycle: each MonoBehaviour system now has its own `DontDestroyOnLoad` GameObject instead of sharing a single `DreadHost`. Eliminates the single-point-of-failure across AudioDreadSystem, MonsterOverhaulSystem, and TensionSystem (Issue: #93)
 - Smoke test: removed `-nographics` flag from game launch. `Camera.main` returns null in headless mode, causing AudioDreadSystem and TensionSystem null-guards to skip all coroutine work. Tests now exercise the full initialization path (Issue: #74)
 - CD pipeline: `Dread.dll` now compiled with the correct bumped version instead of the stale pre-bump version. Build job downloads and applies the modified `Plugin.cs` from the version job artifact before compiling (Issue: #70)
 - FakeFootstepLoop: restructured with early-exit guards before wait, 60-90s post-cycle cooldown, 35% trigger chance. Effective interval reduced from ~22.5 min to ~3.6 min (Issue: #57)
