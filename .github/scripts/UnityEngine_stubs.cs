@@ -31,6 +31,9 @@ namespace UnityEngine
         public Vector3 position { get; set; }
         public Vector3 forward { get; }
         public Vector3 right { get; }
+        public Vector3 localPosition { get; set; }
+        public Vector3 localEulerAngles { get; set; }
+        public void SetParent(Transform parent) { }
     }
     public class Object
     {
@@ -39,6 +42,22 @@ namespace UnityEngine
         public static void Destroy(Object obj, float t = 0f) { }
         public static void DontDestroyOnLoad(Object obj) { }
         public static implicit operator bool(Object exists) { return exists != null; }
+    }
+    public struct Vector2
+    {
+        public float x, y;
+        public static Vector2 zero => new Vector2();
+        public static Vector2 one => new Vector2();
+        public Vector2(float x, float y) { this.x = x; this.y = y; }
+    }
+    public struct Color
+    {
+        public float r, g, b, a;
+        public static Color white => new Color();
+        public static Color black => new Color();
+        public static Color clear => new Color();
+        public Color(float r, float g, float b, float a) { this.r = r; this.g = g; this.b = b; this.a = a; }
+        public Color(float r, float g, float b) { this.r = r; this.g = g; this.b = b; this.a = 1f; }
     }
     public struct Vector3
     {
@@ -74,6 +93,7 @@ namespace UnityEngine
         public float reverbZoneMix { get; set; }
         public float panStereo { get; set; }
         public void Play() { }
+        public void Stop() { }
     }
     public class AudioClip : Object
     {
@@ -220,7 +240,17 @@ namespace UnityEngine.Networking
 }
 namespace UnityEngine.UI
 {
-    public class RawImage : MonoBehaviour { }
+    public class RawImage : MonoBehaviour
+    {
+        public Color color { get; set; }
+        public RectTransform rectTransform { get; }
+    }
+    public class RectTransform : Component
+    {
+        public Vector2 sizeDelta { get; set; }
+        public Vector2 anchoredPosition { get; set; }
+        public Vector2 localScale { get; set; }
+    }
 }
 
 namespace UnityEngine.AI
