@@ -53,8 +53,10 @@ graph TD
 ### Security Requirements
 | ID | Requirement | Implementation Constraint |
 |----|-------------|---------------------------|
-| SEC-001 | No secrets checked in or exposed | Token only uses `contents: read`, `metadata: read`, `packages: read` |
+| SEC-001 | No secrets checked in or exposed | Token uses `contents: read`, `packages: read` (valid GITHUB_TOKEN scopes only) |
 | SEC-002 | OAuth token scoped to pull_request event | Workflow cannot push or modify outside PR context |
+
+> **Note:** `metadata` is NOT a valid GITHUB_TOKEN permission scope. Setting `metadata: read` in the permissions block causes GitHub Actions to reject the workflow at YAML parse time (0s failure). The CI spec previously listed it as a permission — this was the root cause of the 0s CI failures on master between PR #138 and PR #143.
 
 ### Performance Requirements
 | ID | Metric | Target | Measurement Method |
@@ -104,7 +106,7 @@ summary_table: string   # Printed as markdown in the final step
 ### Environmental Constraints
 - **Runner Requirements**: Ubuntu (net48 build via Microsoft.NETFramework.ReferenceAssemblies NuGet package)
 - **Network Access**: GitHub Releases (BepInEx download), NuGet.org (package restore)
-- **Permissions**: `contents: read`, `metadata: read`, `packages: read` (no write)
+- **Permissions**: `contents: read`, `packages: read` (no write; `metadata` is not a valid scope)
 
 ## Error Handling Strategy
 
@@ -164,7 +166,7 @@ summary_table: string   # Printed as markdown in the final step
 - **Change Control**: Workflow + scripts versioned in repo
 
 ### Security Controls
-- **Access Control**: GITHUB_TOKEN scoped to `pull_request` event
+- **Access Control**: GITHUB_TOKEN scoped to `pull_request` event; permissions: `contents: read`, `packages: read`
 - **Secret Management**: No custom secrets required
 - **Vulnerability Scanning**: None (out of scope for this workflow)
 
@@ -212,6 +214,7 @@ summary_table: string   # Printed as markdown in the final step
 | 1.2 | 2026-05-22 | Analyze job now respects relevance gate (if: condition); summary treats "skipped" as success; MAUI cache expanded to full packs/ dir; gen-stubs parallelized empty stub compilation; PowerShell version guard for 5.1 compat | noxaur |
 | 1.3 | 2026-05-22 | Split into 4 jobs matching spec; hard fail on all checks; MSBuild log artifact on build failure; ubuntu-latest for build with net48 ref assemblies; relevance checks title + changed files | noxaur |
 | 1.4 | 2026-05-23 | Format check uses dotnet-format; anti-pattern checks added (BOM, line length, null-forgiving); relevance keywords include conventional commit types; docs/ path whitelist; stubs cache includes Dread.csproj | noxaur |
+| 1.5 | 2026-05-22 | Removed invalid `metadata: read` permission from workflow. `metadata` is not a valid GITHUB_TOKEN scope — setting it caused GitHub Actions to reject the workflow at YAML parse time, producing 0s failures on all branches. Fix applied via PR #143. | noxaur |
 
 ## Related Specifications
 
