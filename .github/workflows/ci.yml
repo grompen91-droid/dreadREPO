@@ -25,95 +25,65 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
-
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ hashFiles('**/*.csproj') }}-${{ runner.os }}
-          restore-keys: |
-            nuget-${{ runner.os }}
-
-      - name: Cache stubs
-        id: cache-stubs
-        uses: actions/cache@v4
-        with:
-          path: .github/_ci
-          key: stubs-${{ hashFiles('.github/scripts/gen-stubs.ps1') }}-${{ runner.os }}
-
-      - name: Generate stubs
-        if: steps.cache-stubs.outputs.cache-hit != 'true'
-        shell: pwsh
-        run: pwsh .github/scripts/gen-stubs.ps1
-
       - name: Build & verify
-        shell: pwsh
+        shell: bash
         run: |
-          $ErrorActionPreference = 'Stop'
-          $passed = $true
-          $refsDir = "${{ github.workspace }}/.github/_ci/refs"
+          set -e
+          passed=true
+          refsDir=".github/stubs/refs"
 
           # Build in background
-          $buildJob = Start-Job -ScriptBlock {
-            param($refs, $ws)
-            Set-Location $ws
-            $output = dotnet build Dread.csproj -c Release --nologo -p:GameDir="$refs" -p:BepInExDir="$refs" -p:DeployToProfile=false -p:DeployToDist=false 2>&1
-            $exitCode = $LASTEXITCODE
-            if ($exitCode -eq 0) { Write-Host "::notice::Build succeeded" }
-            else {
-              Write-Host "::error::Build failed (exit code $exitCode)"
-              $output | ForEach-Object { Write-Host "$_" }
-            }
-            return @{ output = "$output"; exitCode = $exitCode }
-          } -ArgumentList $refsDir, "${{ github.workspace }}"
+          dotnet build Dread.csproj -c Release --nologo \
+            -p:GameDir="$refsDir" \
+            -p:BepInExDir="$refsDir" \
+            -p:DeployToProfile=false \
+            -p:DeployToDist=false &
+          build_pid=$!
 
-          # Format check in background (SDK 8 has dotnet-format built in)
-          $formatJob = Start-Job -ScriptBlock {
-            param($ws)
-            Set-Location $ws
-            $output = dotnet format Dread.csproj --verify-no-changes 2>&1
-            $exitCode = $LASTEXITCODE
-            if ($exitCode -ne 0) {
-              Write-Host "::warning::Code formatting issues found"
-              $output | ForEach-Object { Write-Host "$_" }
-            } else {
-              Write-Host "::notice::All files are formatted correctly"
-            }
-            return @{ output = "$output"; exitCode = $exitCode }
-          } -ArgumentList "${{ github.workspace }}"
+          # Format check in background (SDK 8+ has dotnet-format built in)
+          dotnet format Dread.csproj --verify-no-changes 2>&1 || true &
+          format_pid=$!
 
           # Relevance check (inline, fast)
-          $title = "${{ github.event.pull_request.title }}"
-          $keywords = @('dread','audio','monster','tension','panic','sprint','adrenaline','footstep','breath','crouch','bepinex','harmony','config','stamina','enemy','plugin','fix','feat','refactor','docs','chore','ci','build','version','thunderstore')
-          $hasKeyword = ($keywords | Where-Object { "$title".ToLower() -match [regex]::Escape($_) }).Count -gt 0
-          if ($title -and -not $hasKeyword) {
-            Write-Host "::warning::PR title does not mention any project-relevant keywords"
-          }
+          title="${{ github.event.pull_request.title }}"
+          if echo "$title" | grep -qiE 'dread|audio|monster|tension|panic|sprint|adrenaline|footstep|breath|crouch|bepinex|harmony|config|stamina|enemy|plugin|fix|feat|refactor|docs|chore|ci|build|version|thunderstore'; then
+            echo "::notice::PR title is project-relevant"
+          elif [ -n "$title" ]; then
+            echo "::warning::PR title does not mention any project-relevant keywords"
+          fi
 
           # Anti-pattern check
-          $issues = 0
-          $nullForgiving = Select-String -Path *.cs -Pattern '\w+!' -SimpleMatch
-          if ($nullForgiving) {
-            Write-Host "::warning::Null-forgiving operator (!) usage found"
-            $nullForgiving | ForEach-Object { Write-Host "$_" }
-            $issues++
-          }
-          $hardcoded = Select-String -Path *.cs -Pattern '[A-Z]:\\'
-          if ($hardcoded) {
-            Write-Host "::warning::Hardcoded Windows paths found"
-            $hardcoded | ForEach-Object { Write-Host "$_" }
-            $issues++
-          }
-          if ($issues -eq 0) { Write-Host "::notice::No common issues detected" }
+          issues=0
+          if grep -rn '\w!' *.cs 2>/dev/null; then
+            echo "::warning::Null-forgiving operator (!) usage found"
+            issues=$((issues+1))
+          fi
+          if grep -rn '[A-Z]:\\' *.cs 2>/dev/null; then
+            echo "::warning::Hardcoded Windows paths found"
+            issues=$((issues+1))
+          fi
+          if [ "$issues" -eq 0 ]; then
+            echo "::notice::No common issues detected"
+          fi
 
-          # Wait for parallel jobs
-          $buildResult = Receive-Job -Job $buildJob -Wait -AutoRemoveJob
-          $formatResult = Receive-Job -Job $formatJob -Wait -AutoRemoveJob
+          # Wait for build
+          wait $build_pid
+          build_exit=$?
+          if [ $build_exit -ne 0 ]; then
+            echo "::error::Build failed"
+            passed=false
+          else
+            echo "::notice::Build succeeded"
+          fi
 
-          if ($buildResult.exitCode -ne 0) { $passed = $false }
-          if (-not $passed) { exit 1 }
-          Write-Host "::notice::All CI checks passed"
+          # Wait for format check
+          wait $format_pid
+          format_exit=$?
+          if [ $format_exit -ne 0 ]; then
+            echo "::warning::Code formatting issues found"
+          else
+            echo "::notice::All files are formatted correctly"
+          fi
+
+          $passed || exit 1
+          echo "::notice::All CI checks passed"

@@ -149,42 +149,21 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
-
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ hashFiles('**/*.csproj') }}-${{ runner.os }}
-          restore-keys: |
-            nuget-${{ runner.os }}
-
-      - name: Cache stubs
-        id: cache-stubs
-        uses: actions/cache@v4
-        with:
-          path: .github/_ci
-          key: stubs-${{ hashFiles('.github/scripts/gen-stubs.ps1') }}-${{ runner.os }}
-
-      - name: Generate stub assemblies
-        if: steps.cache-stubs.outputs.cache-hit != 'true'
-        shell: pwsh
-        run: pwsh .github/scripts/gen-stubs.ps1
-
       - name: Build
-        shell: pwsh
+        shell: bash
         run: |
-          $refsDir = "${{ github.workspace }}/.github/_ci/refs"
-          $output = dotnet build Dread.csproj -c Release --nologo -p:GameDir="$refsDir" -p:BepInExDir="$refsDir" -p:DeployToProfile=false -p:DeployToDist=false 2>&1
-          $exitCode = $LASTEXITCODE
-          if ($exitCode -ne 0) {
-            "$output" | Out-File -FilePath "$env:RUNNER_TEMP/build-output.txt" -Encoding utf8
-            Write-Error "Build failed (exit code $exitCode)"
+          refsDir=".github/stubs/refs"
+          output=$(dotnet build Dread.csproj -c Release --nologo \
+            -p:GameDir="$refsDir" \
+            -p:BepInExDir="$refsDir" \
+            -p:DeployToProfile=false \
+            -p:DeployToDist=false 2>&1)
+          exitCode=$?
+          if [ $exitCode -ne 0 ]; then
+            echo "$output"
+            echo "::error::Build failed (exit code $exitCode)"
             exit $exitCode
-          }
+          fi
 
       - name: Upload Dread.dll
         uses: actions/upload-artifact@v4
