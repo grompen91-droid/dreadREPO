@@ -236,84 +236,84 @@ namespace Dread.Systems
         [Serializable]
         private class ErrorPayload
         {
-            public string modVersion;
-            public string gameVersion;
-            public string unityVersion;
-            public ErrorReport[] reports;
+            public string ModVersion;
+            public string GameVersion;
+            public string UnityVersion;
+            public ErrorReport[] Reports;
         }
 
         [Serializable]
         private class ErrorReport
         {
-            public string hash;
-            public string timestamp;
-            public string type;
-            public string exceptionType;
-            public string message;
-            public string stackTrace;
-            public string scene;
-            public GameStateData gameState;
-            public SystemInfoData systemInfo;
-            public DisplayInfoData display;
-            public ConfigData config;
+            public string Hash;
+            public string Timestamp;
+            public string Type;
+            public string ExceptionType;
+            public string Message;
+            public string StackTrace;
+            public string Scene;
+            public GameStateData GameState;
+            public SystemInfoData SystemInfo;
+            public DisplayInfoData Display;
+            public ConfigData Config;
         }
 
         [Serializable]
         private class GameStateData
         {
-            public string sceneName;
-            public int enemiesAlive;
-            public int enemiesTotal;
-            public int enemiesNearby;
-            public int playerHp;
-            public int playerMaxHp;
-            public int playerStamina;
-            public Vector3 playerPosition;
-            public int playTimeSeconds;
+            public string SceneName;
+            public int EnemiesAlive;
+            public int EnemiesTotal;
+            public int EnemiesNearby;
+            public int PlayerHp;
+            public int PlayerMaxHp;
+            public int PlayerStamina;
+            public Vector3 PlayerPosition;
+            public int PlayTimeSeconds;
         }
 
         [Serializable]
         private class SystemInfoData
         {
-            public string os;
-            public string osFamily;
-            public string cpu;
-            public int cpuCores;
-            public int cpuFrequencyMHz;
-            public int memoryMB;
-            public string gpu;
-            public string gpuVendor;
-            public string gpuDriverVersion;
-            public int gpuShaderLevel;
-            public int vramMB;
-            public string deviceType;
-            public string deviceModel;
+            public string Os;
+            public string OsFamily;
+            public string Cpu;
+            public int CpuCores;
+            public int CpuFrequencyMHz;
+            public int MemoryMB;
+            public string Gpu;
+            public string GpuVendor;
+            public string GpuDriverVersion;
+            public int GpuShaderLevel;
+            public int VramMB;
+            public string DeviceType;
+            public string DeviceModel;
         }
 
         [Serializable]
         private class DisplayInfoData
         {
-            public int width;
-            public int height;
-            public int refreshRate;
-            public float dpi;
-            public string fullScreenMode;
+            public int Width;
+            public int Height;
+            public int RefreshRate;
+            public float Dpi;
+            public string FullScreenMode;
         }
 
         [Serializable]
         private class ConfigData
         {
-            public bool audioEnabled;
-            public float audioFrequency;
-            public float audioVolume;
-            public bool aggressionEnabled;
-            public bool aggressionAudioEnabled;
-            public bool fakeFootsteps;
-            public bool adrenaline;
-            public bool lowStaminaSound;
-            public bool panicSprint;
-            public bool crouchSpeedBoost;
-            public bool errorReportingEnabled;
+            public bool AudioEnabled;
+            public float AudioFrequency;
+            public float AudioVolume;
+            public bool AggressionEnabled;
+            public bool AggressionAudioEnabled;
+            public bool FakeFootsteps;
+            public bool Adrenaline;
+            public bool LowStaminaSound;
+            public bool PanicSprint;
+            public bool CrouchSpeedBoost;
+            public bool ErrorReportingEnabled;
         }
     }
 }
