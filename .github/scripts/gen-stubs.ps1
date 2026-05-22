@@ -67,8 +67,7 @@ if (Test-Path $dllPath) {
 }
 
 # Build the Assembly-CSharp stubs (game-specific types, depends on UnityEngine stubs)
-$acsDir = Split-Path $unityStubCs -Parent
-$acCsproj = Write-StubProject -Name "Assembly-CSharp" -SourceFile "$acsDir/Assembly-CSharp_stubs.cs" -Directory $stubsDir -References @("UnityEngine")
+$acCsproj = Write-StubProject -Name "Assembly-CSharp" -SourceFile "$PSScriptRoot/Assembly-CSharp_stubs.cs" -Directory $stubsDir -References @("UnityEngine")
 Write-Host "[gen-stubs] Compiling Assembly-CSharp stubs..."
 $output = dotnet build $acCsproj -c Release --nologo 2>&1
 $exitCode = $LASTEXITCODE
