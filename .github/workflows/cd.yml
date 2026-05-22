@@ -1,0 +1,347 @@
+name: CD
+
+on:
+  push:
+    tags:
+      - vmajor
+      - vminor
+      - vpatch
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  version:
+    name: Version Bump
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      new_version: ${{ steps.bump.outputs.new_version }}
+      release_tag: ${{ steps.bump.outputs.release_tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate tag and bump version
+        id: bump
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          Write-Host "Trigger tag: $tag"
+
+          if ($tag -notin @('vmajor', 'vminor', 'vpatch')) {
+            Write-Error "Invalid tag '$tag'. Must be one of: vmajor, vminor, vpatch"
+            exit 1
+          }
+
+          $manifest = Get-Content manifest.json -Raw | ConvertFrom-Json
+          $currentVersion = $manifest.version_number
+          Write-Host "Current version: $currentVersion"
+
+          $parts = $currentVersion -split '\.'
+          $major = [int]$parts[0]; $minor = [int]$parts[1]; $patch = [int]$parts[2]
+
+          switch ($tag) {
+            'vmajor' { $major++; $minor = 0; $patch = 0 }
+            'vminor' { $minor++; $patch = 0 }
+            'vpatch' { $patch++ }
+          }
+          $newVersion = "$major.$minor.$patch"
+          $releaseTag = "v$newVersion"
+          Write-Host "New version: $newVersion"
+          Write-Host "Release tag: $releaseTag"
+          echo "new_version=$newVersion" >> $env:GITHUB_OUTPUT
+          echo "release_tag=$releaseTag" >> $env:GITHUB_OUTPUT
+
+          $changelog = Get-Content CHANGELOG.md -Raw
+          if ($changelog -notmatch '## \[Unreleased\]') {
+            Write-Error "CHANGELOG.md is missing [Unreleased] section"
+            exit 1
+          }
+
+          $unreleasedMatch = [regex]::Match($changelog, '(?<=## \[Unreleased\]\n)(.*?)(?=\n---|\n## )', [System.Text.RegularExpressions.RegexOptions]::Singleline)
+          $releaseNotes = if ($unreleasedMatch.Success) { $unreleasedMatch.Groups[0].Value.Trim() } else { "" }
+          $releaseNotes = $releaseNotes -replace '^!\[.*?\]\(.*?\)\s*\n\s*', ''
+          $releaseNotes = $releaseNotes -replace '^!\[.*?\]\(.*?\)\s*\n\s*', ''
+          $releaseNotes = $releaseNotes.Trim()
+          if ([string]::IsNullOrWhiteSpace($releaseNotes)) { $releaseNotes = "Automated release v$newVersion" }
+
+          $releaseType = switch ($tag) { 'vmajor' { 'major' } 'vminor' { 'minor' } 'vpatch' { 'patch' } }
+          $badges = @(
+            "![Version](https://img.shields.io/badge/version-$newVersion-crimson?style=flat-square)",
+            "![Release](https://img.shields.io/badge/release-$releaseType-ff6b35?style=flat-square)"
+          )
+          $releaseBody = ($badges -join " ") + "`n`n" + $releaseNotes
+          Set-Content "$env:RUNNER_TEMP/release-body.md" $releaseBody
+
+          $manifest.version_number = $newVersion
+          $manifest | ConvertTo-Json -Depth 10 | Set-Content manifest.json
+
+          $pluginContent = Get-Content Plugin.cs -Raw
+          $pluginContent = $pluginContent -replace 'public const string VERSION = "[\d.]+"', "public const string VERSION = `"$newVersion`""
+          Set-Content Plugin.cs $pluginContent
+
+          $readme = Get-Content README.md -Raw
+          $readme = $readme -replace 'version-[\d.]+-crimson', "version-$newVersion-crimson"
+          $readme = $readme -replace 'status-(active|release)-brightgreen', "status-release-brightgreen"
+          Set-Content README.md $readme
+
+          $date = Get-Date -Format "yyyy-MM-dd"
+          $changelog = $changelog -replace '## \[Unreleased\]', "## [$newVersion] - $date"
+          $lines = $changelog -split "`n"
+          $insertAt = -1
+          for ($i = 0; $i -lt $lines.Count; $i++) {
+            if ($lines[$i] -match '^---') { $insertAt = $i + 1; break }
+          }
+          if ($insertAt -ge 0) {
+            $newLines = @()
+            $newLines += $lines[0..$insertAt]
+            $newLines += ""
+            $newLines += "## [Unreleased]"
+            $newLines += ""
+            for ($j = $insertAt + 1; $j -lt $lines.Count; $j++) { $newLines += $lines[$j] }
+            $newChangelog = $newLines -join "`n"
+          } else {
+            $newChangelog = "## [Unreleased]`n`n$changelog"
+          }
+          Set-Content CHANGELOG.md $newChangelog
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add manifest.json Plugin.cs CHANGELOG.md README.md
+          git commit -m "release: v${newVersion} bump"
+          echo "bump_commit_sha=$(git rev-parse HEAD)" >> $env:GITHUB_OUTPUT
+
+      - name: Upload modified files
+        uses: actions/upload-artifact@v4
+        with:
+          name: modified-files
+          path: |
+            manifest.json
+            Plugin.cs
+            CHANGELOG.md
+            README.md
+          retention-days: 1
+
+      - name: Upload release body
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-body
+          path: ${{ runner.temp }}/release-body.md
+          retention-days: 1
+
+  build:
+    name: Build
+    runs-on: windows-latest
+    timeout-minutes: 15
+    needs: [version]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            6.0.x
+            8.0.x
+
+      - name: Generate stub assemblies
+        shell: pwsh
+        run: .\.github\scripts\gen-stubs.ps1
+        env:
+          OutDir: ${{ github.workspace }}\.github\_ci
+
+      - name: Install net48 targeting pack
+        shell: pwsh
+        run: |
+          dotnet workload install maui-windows 2>$null
+          cd $env:RUNNER_TEMP
+          dotnet new console -n _getref -o _getref --force 2>$null
+          cd _getref
+          dotnet add package Microsoft.NETFramework.ReferenceAssemblies --version 1.0.3 2>$null
+          cd ..
+          Remove-Item -Recurse -Force _getref 2>$null
+
+      - name: Build
+        shell: pwsh
+        run: |
+          $refsDir = "${{ github.workspace }}\.github\_ci\refs"
+          $output = dotnet build Dread.csproj `
+            -c Release `
+            --nologo `
+            -p:GameDir="$refsDir" `
+            -p:BepInExDir="$refsDir" `
+            -p:DeployToProfile=false `
+            -p:DeployToDist=false `
+            2>&1
+          $exitCode = $LASTEXITCODE
+          if ($exitCode -ne 0) {
+            "$output" | Out-File -FilePath "$env:RUNNER_TEMP\build-output.txt" -Encoding utf8
+            Write-Error "Build failed (exit code $exitCode)"
+            exit $exitCode
+          }
+
+      - name: Upload Dread.dll
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dread-DLL
+          path: bin\Release\net48\Dread.dll
+          retention-days: 1
+
+  package:
+    name: Package
+    runs-on: windows-latest
+    timeout-minutes: 5
+    needs: [version, build]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Dread.dll
+        uses: actions/download-artifact@v4
+        with:
+          name: Dread-DLL
+          path: ${{ runner.temp }}\dll
+
+      - name: Download modified files
+        uses: actions/download-artifact@v4
+        with:
+          name: modified-files
+          path: ${{ runner.temp }}\modified
+
+      - name: Create Thunderstore package
+        shell: pwsh
+        run: |
+          $newVersion = "${{ needs.version.outputs.new_version }}"
+          $name = "elytraking-Dread"
+          $outDir = "${{ runner.temp }}\$name-$newVersion"
+          $zipPath = "${{ runner.temp }}\$name-$newVersion.zip"
+
+          New-Item -ItemType Directory -Force "$outDir\BepInEx\plugins\$name" | Out-Null
+
+          Copy-Item "${{ runner.temp }}\dll\Dread.dll" "$outDir\BepInEx\plugins\$name\"
+
+          if (Test-Path "audio") {
+            Copy-Item -Recurse "audio" "$outDir\BepInEx\plugins\$name\"
+          }
+
+          Copy-Item "${{ runner.temp }}\modified\manifest.json" $outDir
+
+          if (Test-Path "THUNDERSTORE_README.md") {
+            Copy-Item "THUNDERSTORE_README.md" "$outDir\README.md"
+          } else {
+            Copy-Item "${{ runner.temp }}\modified\README.md" $outDir
+          }
+
+          if (Test-Path "icon.png") {
+            Copy-Item "icon.png" $outDir
+          } else {
+            Write-Warning "icon.png missing"
+          }
+
+          Compress-Archive -Path "$outDir\*" -DestinationPath $zipPath -Force
+          Write-Host "Package created: $zipPath"
+
+      - name: Upload Thunderstore zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: thunderstore-zip
+          path: ${{ runner.temp }}\*.zip
+          retention-days: 1
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [version, package]
+
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: master
+
+      - name: Download Dread.dll
+        uses: actions/download-artifact@v4
+        with:
+          name: Dread-DLL
+          path: ${{ runner.temp }}/dll
+
+      - name: Download modified files
+        uses: actions/download-artifact@v4
+        with:
+          name: modified-files
+          path: ${{ runner.temp }}/modified
+
+      - name: Download release body
+        uses: actions/download-artifact@v4
+        with:
+          name: release-body
+          path: ${{ runner.temp }}/release-body
+
+      - name: Download Thunderstore zip
+        uses: actions/download-artifact@v4
+        with:
+          name: thunderstore-zip
+          path: ${{ runner.temp }}/zip
+
+      - name: Apply bump and push to master
+        shell: pwsh
+        run: |
+          $newVersion = "${{ needs.version.outputs.new_version }}"
+          $releaseTag = "${{ needs.version.outputs.release_tag }}"
+
+          Copy-Item "${{ runner.temp }}/modified/manifest.json" "manifest.json"
+          Copy-Item "${{ runner.temp }}/modified/Plugin.cs" "Plugin.cs"
+          Copy-Item "${{ runner.temp }}/modified/CHANGELOG.md" "CHANGELOG.md"
+          Copy-Item "${{ runner.temp }}/modified/README.md" "README.md"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add manifest.json Plugin.cs CHANGELOG.md README.md
+          git commit -m "release: v${newVersion} bump"
+
+          git push origin master
+
+          git tag "$releaseTag" HEAD
+          git push origin "$releaseTag"
+
+      - name: Create post-release issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          $newVersion = "${{ needs.version.outputs.new_version }}"
+          gh issue create `
+            --title "Update README for v$newVersion release" `
+            --body "The CD pipeline has released **v$newVersion**. Please update \`README.md\` to reflect any new features, configuration changes, installation instructions, or other documentation updates for this release. Review the [changelog](CHANGELOG.md) for what changed." `
+            --label documentation
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          $newVersion = "${{ needs.version.outputs.new_version }}"
+          $releaseTag = "${{ needs.version.outputs.release_tag }}"
+          $zipFile = Get-ChildItem "${{ runner.temp }}/zip/*.zip" | Select-Object -First 1
+
+          gh release create "$releaseTag" `
+            --title "v$newVersion" `
+            --notes-file "${{ runner.temp }}/release-body/release-body.md" `
+            "${{ runner.temp }}/dll/Dread.dll" `
+            "$($zipFile.FullName)"
