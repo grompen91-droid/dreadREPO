@@ -121,6 +121,7 @@ namespace Dread.Systems
         [HarmonyPrefix]
         private static void Prefix(ref float radius)
         {
+            if (!DreadConfig.MonsterAggressionEnabled.Value) return;
             if (radius < float.MaxValue)
                 radius *= 1.5f;
         }
