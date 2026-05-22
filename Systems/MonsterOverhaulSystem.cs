@@ -23,6 +23,7 @@ namespace Dread.Systems
 
         private void OnDestroy()
         {
+            StopAllCoroutines();
             SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 

@@ -32,6 +32,11 @@ namespace Dread.Systems
             StartCoroutine(LoadClips());
         }
 
+        private void OnDestroy()
+        {
+            StopAllCoroutines();
+        }
+
         private IEnumerator LoadClips()
         {
             var audioDir = Path.Combine(
