@@ -58,8 +58,14 @@ jobs:
           $releaseTag = "v$newVersion"
           Write-Host "New version: $newVersion"
           Write-Host "Release tag: $releaseTag"
-          echo "new_version=$newVersion" >> $env:GITHUB_OUTPUT
-          echo "release_tag=$releaseTag" >> $env:GITHUB_OUTPUT
+          $existing = git ls-remote --tags origin $releaseTag
+          if ($existing) {
+            Write-Error "Tag $releaseTag already exists on remote. Aborting."
+            exit 1
+          }
+
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "new_version=$newVersion"
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "release_tag=$releaseTag"
 
           $changelog = Get-Content CHANGELOG.md -Raw
           if ($changelog -notmatch '## \[Unreleased\]') {
@@ -113,12 +119,6 @@ jobs:
             $newChangelog = "## [Unreleased]`n`n$changelog"
           }
           Set-Content CHANGELOG.md $newChangelog
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add manifest.json Plugin.cs CHANGELOG.md README.md
-          git commit -m "release: v${newVersion} bump"
-          echo "bump_commit_sha=$(git rev-parse HEAD)" >> $env:GITHUB_OUTPUT
 
       - name: Upload modified files
         uses: actions/upload-artifact@v4
@@ -269,11 +269,11 @@ jobs:
     needs: [version, package]
 
     steps:
-      - name: Checkout master
+      - name: Checkout default branch
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: master
+          ref: ${{ github.event.repository.default_branch }}
 
       - name: Download Dread.dll
         uses: actions/download-artifact@v4
@@ -299,11 +299,12 @@ jobs:
           name: thunderstore-zip
           path: ${{ runner.temp }}/zip
 
-      - name: Apply bump and push to master
+      - name: Apply bump and push to default branch
         shell: pwsh
         run: |
           $newVersion = "${{ needs.version.outputs.new_version }}"
           $releaseTag = "${{ needs.version.outputs.release_tag }}"
+          $defaultBranch = "${{ github.event.repository.default_branch }}"
 
           Copy-Item "${{ runner.temp }}/modified/manifest.json" "manifest.json"
           Copy-Item "${{ runner.temp }}/modified/Plugin.cs" "Plugin.cs"
@@ -315,21 +316,18 @@ jobs:
           git add manifest.json Plugin.cs CHANGELOG.md README.md
           git commit -m "release: v${newVersion} bump"
 
-          git push origin master
+          git fetch origin $defaultBranch
+          $rebaseResult = 0
+          git rebase origin/$defaultBranch 2>&1 | ForEach-Object { Write-Host $_; if ($_ -match 'CONFLICT') { $rebaseResult = 1 } }
+          if ($rebaseResult -ne 0) {
+            Write-Error "Rebase failed due to conflicts. Manual intervention required."
+            exit 1
+          }
+
+          git push origin $defaultBranch
 
           git tag "$releaseTag" HEAD
           git push origin "$releaseTag"
-
-      - name: Create post-release issue
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: pwsh
-        run: |
-          $newVersion = "${{ needs.version.outputs.new_version }}"
-          gh issue create `
-            --title "Update README for v$newVersion release" `
-            --body "The CD pipeline has released **v$newVersion**. Please update \`README.md\` to reflect any new features, configuration changes, installation instructions, or other documentation updates for this release. Review the [changelog](CHANGELOG.md) for what changed." `
-            --label documentation
 
       - name: Create GitHub Release
         env:
@@ -345,3 +343,15 @@ jobs:
             --notes-file "${{ runner.temp }}/release-body/release-body.md" `
             "${{ runner.temp }}/dll/Dread.dll" `
             "$($zipFile.FullName)"
+
+      - name: Create post-release issue
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          $newVersion = "${{ needs.version.outputs.new_version }}"
+          gh issue create `
+            --title "Update README for v$newVersion release" `
+            --body "The CD pipeline has released **v$newVersion**. Please update \`README.md\` to reflect any new features, configuration changes, installation instructions, or other documentation updates for this release. Review the [changelog](CHANGELOG.md) for what changed." `
+            --label documentation
