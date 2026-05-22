@@ -112,8 +112,15 @@ namespace Dread.Systems
 
             __instance.CrouchSpeed *= 1.3f;
             var t = Traverse.Create(__instance);
-            float orig = t.Field<float>("playerOriginalCrouchSpeed").Value;
-            if (orig > 0f) t.Field<float>("playerOriginalCrouchSpeed").Value = orig * 1.3f;
+            try
+            {
+                float orig = t.Field<float>("playerOriginalCrouchSpeed").Value;
+                if (orig > 0f) t.Field<float>("playerOriginalCrouchSpeed").Value = orig * 1.3f;
+            }
+            catch
+            {
+                // silently skip if field doesn't exist
+            }
         }
     }
 
