@@ -5,6 +5,7 @@ using System.Reflection;
 using Dread.Config;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
 
 namespace Dread.Systems
 {
@@ -29,12 +30,19 @@ namespace Dread.Systems
 
         private void Start()
         {
+            SceneManager.sceneLoaded += OnSceneLoaded;
             StartCoroutine(LoadClips());
         }
 
         private void OnDestroy()
         {
             StopAllCoroutines();
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
+
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            _mainCam = Camera.main;
         }
 
         private IEnumerator LoadClips()
