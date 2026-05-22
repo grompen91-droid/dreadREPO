@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 concurrency:
   group: cd-${{ github.ref }}
@@ -63,8 +64,18 @@ jobs:
           }
 
           $unreleasedMatch = [regex]::Match($changelog, '(?<=## \[Unreleased\]\n)(.*?)(?=\n---|\n## )', [System.Text.RegularExpressions.RegexOptions]::Singleline)
-          $releaseBody = if ($unreleasedMatch.Success) { $unreleasedMatch.Groups[0].Value.Trim() } else { "" }
-          if ([string]::IsNullOrWhiteSpace($releaseBody)) { $releaseBody = "Automated release v$newVersion" }
+          $releaseNotes = if ($unreleasedMatch.Success) { $unreleasedMatch.Groups[0].Value.Trim() } else { "" }
+          $releaseNotes = $releaseNotes -replace '^!\[.*?\]\(.*?\)\s*\n\s*', ''
+          $releaseNotes = $releaseNotes -replace '^!\[.*?\]\(.*?\)\s*\n\s*', ''
+          $releaseNotes = $releaseNotes.Trim()
+          if ([string]::IsNullOrWhiteSpace($releaseNotes)) { $releaseNotes = "Automated release v$newVersion" }
+
+          $releaseType = switch ($tag) { 'vmajor' { 'major' } 'vminor' { 'minor' } 'vpatch' { 'patch' } }
+          $badges = @(
+            "![Version](https://img.shields.io/badge/version-$newVersion-crimson?style=flat-square)",
+            "![Release](https://img.shields.io/badge/release-$releaseType-ff6b35?style=flat-square)"
+          )
+          $releaseBody = ($badges -join " ") + "`n`n" + $releaseNotes
           Set-Content "$env:RUNNER_TEMP/release-body.md" $releaseBody
 
           $manifest.version_number = $newVersion
@@ -73,6 +84,11 @@ jobs:
           $pluginContent = Get-Content Plugin.cs -Raw
           $pluginContent = $pluginContent -replace 'public const string VERSION = "[\d.]+"', "public const string VERSION = `"$newVersion`""
           Set-Content Plugin.cs $pluginContent
+
+          $readme = Get-Content README.md -Raw
+          $readme = $readme -replace 'version-[\d.]+-crimson', "version-$newVersion-crimson"
+          $readme = $readme -replace 'status-(active|release)-brightgreen', "status-release-brightgreen"
+          Set-Content README.md $readme
 
           $date = Get-Date -Format "yyyy-MM-dd"
           $changelog = $changelog -replace '## \[Unreleased\]', "## [$newVersion] - $date"
@@ -96,7 +112,7 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add manifest.json Plugin.cs CHANGELOG.md
+          git add manifest.json Plugin.cs CHANGELOG.md README.md
           git commit -m "release: v${newVersion} bump"
           echo "bump_commit_sha=$(git rev-parse HEAD)" >> $env:GITHUB_OUTPUT
 
@@ -108,6 +124,7 @@ jobs:
             manifest.json
             Plugin.cs
             CHANGELOG.md
+            README.md
           retention-days: 1
 
       - name: Upload release body
@@ -142,19 +159,7 @@ jobs:
         env:
           OutDir: ${{ github.workspace }}\.github\_ci
 
-      - name: Cache MAUI workload
-        id: cache-maui
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ env.DOTNET_ROOT }}\sdk-manifests
-            ${{ env.DOTNET_ROOT }}\packs
-          key: maui-windows-${{ hashFiles('.github/scripts/gen-stubs.ps1', 'Dread.csproj') }}-${{ runner.os }}
-          restore-keys: |
-            maui-windows-${{ runner.os }}
-
       - name: Install net48 targeting pack
-        if: steps.cache-maui.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
           dotnet workload install maui-windows 2>$null
@@ -234,7 +239,7 @@ jobs:
           if (Test-Path "THUNDERSTORE_README.md") {
             Copy-Item "THUNDERSTORE_README.md" "$outDir\README.md"
           } else {
-            Copy-Item "README.md" $outDir
+            Copy-Item "${{ runner.temp }}\modified\README.md" $outDir
           }
 
           if (Test-Path "icon.png") {
@@ -298,10 +303,11 @@ jobs:
           Copy-Item "${{ runner.temp }}/modified/manifest.json" "manifest.json"
           Copy-Item "${{ runner.temp }}/modified/Plugin.cs" "Plugin.cs"
           Copy-Item "${{ runner.temp }}/modified/CHANGELOG.md" "CHANGELOG.md"
+          Copy-Item "${{ runner.temp }}/modified/README.md" "README.md"
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add manifest.json Plugin.cs CHANGELOG.md
+          git add manifest.json Plugin.cs CHANGELOG.md README.md
           git commit -m "release: v${newVersion} bump"
 
           git push origin master
@@ -309,6 +315,17 @@ jobs:
           $tag = "${{ github.ref_name }}"
           git tag -f $tag HEAD
           git push origin $tag -f
+
+      - name: Create post-release issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          $newVersion = "${{ needs.version.outputs.new_version }}"
+          gh issue create `
+            --title "Update README for v$newVersion release" `
+            --body "The CD pipeline has released **v$newVersion**. Please update \`README.md\` to reflect any new features, configuration changes, installation instructions, or other documentation updates for this release. Review the [changelog](CHANGELOG.md) for what changed." `
+            --label documentation
 
       - name: Create GitHub Release
         env:

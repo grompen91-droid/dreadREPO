@@ -100,6 +100,7 @@ ref_type: string          # must be "tag" (enforced by trigger filter)
 manifest.json: file       # Current version in manifest (source of truth for version)
 Plugin.cs: file           # Current version in C# constant
 CHANGELOG.md: file        # Source for release notes ([Unreleased] section)
+README.md: file           # Version badge updated alongside other files
 ```
 
 ### Outputs
@@ -113,7 +114,10 @@ release_tag: string       # The actual version tag (e.g., "v1.6.0"), NOT the tri
 Dread.dll: file           # Compiled mod DLL (bin/Release/net48/Dread.dll)
 
 # Commits
-version_bump_commit: sha  # Commit hash of the manifest.json + Plugin.cs + CHANGELOG.md bump (pushed to master)
+version_bump_commit: sha  # Commit hash of the manifest.json + Plugin.cs + CHANGELOG.md + README.md bump (pushed to master)
+
+# Issues
+readme_update_issue: url  # GitHub issue created prompting README documentation update for this release
 ```
 
 ### Secrets & Variables
