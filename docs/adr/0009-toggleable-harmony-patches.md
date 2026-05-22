@@ -30,7 +30,7 @@ Each patch class stores a private `MethodInfo? _original` field to track whether
 
 ### 2. Config-Gated Initial Application
 
-`Plugin.Awake()` reads each config toggle at startup and only calls `Apply()` for patches whose feature is enabled. If a feature is disabled at startup, the patch is never installed -- zero IL impact.
+`Plugin.Awake()` reads each config toggle at startup and only calls `Apply()` for patches whose feature is enabled. If a feature is disabled at startup, the patch is never installed: zero IL impact.
 
 ### 3. Runtime Toggle via SettingChanged Handler
 
@@ -46,11 +46,11 @@ This allows full lifecycle management without requiring a game restart.
 ## Consequences
 
 - Players can toggle monster aggression, crouch speed boost, and investigate radius at runtime with immediate effect
-- Zero IL impact when a feature is disabled at startup -- no Harmony overhead for unused patches
+- Zero IL impact when a feature is disabled at startup: no Harmony overhead for unused patches
 - No `[HarmonyPatch]` or `[HarmonyPostfix]` attributes remain; all patching is explicit and self-documenting
 - Slightly more verbose code per patch (Apply/Remove boilerplate) but each method is 4-6 lines
 - `MonsterAggressionEnabled` controls two patches (EnemyNavMeshAgentAwake and EnemyDirectorSetInvestigate); both are applied/removed together
-- If `AccessTools.Method` fails (e.g., the target class/method was removed in a game update), `Apply()` throws immediately at startup rather than failing silently in a Postfix -- faster detection of compatibility issues
+- If `AccessTools.Method` fails (e.g., the target class/method was removed in a game update), `Apply()` throws immediately at startup rather than failing silently in a Postfix: faster detection of compatibility issues
 
 ---
 
@@ -58,5 +58,5 @@ This allows full lifecycle management without requiring a game restart.
 
 - **Keep PatchAll with internal config guards**: patches would still be installed even when disabled, wasting CPU cycles on every enemy spawn
 - **Separate Harmony instances per patch**: unnecessary complexity; a single Harmony instance with selective Patch/Unpatch is cleaner
-- **HarmonyManipulation.PatchAll with filter delegate**: Harmony 2.x supports passing a predicate to `PatchAll()` to skip certain classes, but this doesn't support runtime toggling
+- **`Harmony.PatchAll` with filter delegate**: Harmony 2.x supports passing a predicate to `PatchAll()` to skip certain classes, but this doesn't support runtime toggling
 - **Two MonoBehaviours (Patcher + Unpatcher)**: adds game-object lifecycle management overhead for what is essentially a Harmony configuration concern
