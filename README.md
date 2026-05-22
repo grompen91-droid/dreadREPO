@@ -1,9 +1,10 @@
 # Dread
 
 > **Atmospheric horror overhaul for R.E.P.O.**  
-> Three runtime systems that layer ambient dread, scarier monsters, and a tension system that reads your proximity to danger in real time.
+> Five runtime systems that layer ambient dread, scarier monsters, a tension system that reads your proximity to danger in real time, and a psychotic break episode when you are alone and scared.
 
-![Version](https://img.shields.io/badge/version-1.5.0-crimson?style=flat-square)
+![Version](https://img.shields.io/badge/version-1.5.1-crimson?style=flat-square)
+![Status](https://img.shields.io/badge/status-release-brightgreen?style=flat-square)
 ![BepInEx](https://img.shields.io/badge/BepInEx-5.4.21-blueviolet?style=flat-square)
 ![Game](https://img.shields.io/badge/game-R.E.P.O.-orange?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
@@ -28,7 +29,7 @@
 
 ## Overview
 
-Dread is a BepInEx plugin that transforms R.E.P.O. into a genuinely unsettling experience at the IL level. It uses **Harmony 2 runtime patching** to intercept enemy spawn, movement, and detection methods, while three independent MonoBehaviour systems run on a persistent game object that survives scene transitions.
+Dread is a BepInEx plugin that transforms R.E.P.O. into a genuinely unsettling experience at the IL level. It uses **Harmony 2 runtime patching** to intercept enemy spawn, movement, and detection methods, while five independent MonoBehaviour systems run on a persistent game object that survives scene transitions.
 
 Every feature is independently toggleable via `BepInEx/config/elytraking.dread.cfg`. Players without Dread can join modded lobbies: monster changes are host-authoritative, while audio and tension effects are client-local.
 
@@ -46,9 +47,10 @@ Plugin.Start()
        +-- AudioDreadSystem       # coroutine: weighted ambient sounds
        +-- MonsterOverhaulSystem  # scan loop + 3 Harmony patches
        +-- TensionSystem          # 0.5s proximity scan drives 4 features
+       +-- PsychoticBreakSystem   # 2s trigger check: solo + threat memory + LoS loss + crouching -> 20s episode
 ```
 
-All three systems load their audio assets from a DLL-adjacent `audio/` folder via `UnityWebRequestMultimedia.GetAudioClip` with `AudioType.OGGVORBIS`. They are independent by design: a failure in one system does not affect the others.
+All five systems load their audio assets from a DLL-adjacent `audio/` folder via `UnityWebRequestMultimedia.GetAudioClip` with `AudioType.OGGVORBIS`. They are independent by design: a failure in one system does not affect the others.
 
 ---
 
@@ -64,6 +66,10 @@ A coroutine loop places rare, positional sounds in the world during runs. Every 
 | `footsteps.ogg` | 0.6 | Common | Steps from a direction nobody is in |
 | `breathing.ogg` | 0.3 | Uncommon | Close, slow breathing nearby |
 | `whisper.ogg` | 0.1 | Rare | A voice at the edge of hearing |
+| `shadow_scream_1.ogg` | -- | Psychotic Break | Close, guttural scream (variant 1) |
+| `shadow_scream_2.ogg` | -- | Psychotic Break | Close, guttural scream (variant 2) |
+| `shadow_scream_3.ogg` | -- | Psychotic Break | Close, guttural scream (variant 3) |
+| `phantom_footsteps.ogg` | -- | Psychotic Break | Footsteps circling the player |
 
 - Fully spatialized (`spatialBlend = 1.0`), linear rolloff, falloff from 1m to 25m
 - Each AudioSource self-destructs after `clip.length + 0.5s`
@@ -124,6 +130,23 @@ A single `Update()` loop scans for the nearest `EnemyHealth` every **0.5 seconds
 
 ---
 
+### Psychotic Break
+
+A 2-second trigger check fires when you are **solo** (no other alive player within 30m), have a **recent threat** (any enemy within 15m in the last 30 seconds), have **lost line of sight** to all enemies, and are **crouching**. On success (1% base chance, configurable), a **20-second episode** plays out in phases:
+
+| Time (approx) | Phase | Effects |
+|---------------|-------|---------|
+| 0s-3s | Buildup | Screen darkens, edge shadows begin flickering |
+| 3s-10s | Crescendo | Vignette flicker accelerates, footsteps begin circling (stereo panning) |
+| 10s-16s | Peak | Circling footsteps intensify, shadow scream audio plays (one of three variants), random phantom monster sounds |
+| 16s-20s | Climax | Footsteps close + fade, screen cuts, player stumbles (camera roll + dip) |
+
+During the episode, the **flashlight is disabled** and **all player input is locked** (movement, interaction, menus). The episode is **client-local**: other players in multiplayer see the flashlight flicker but not the overlay.
+
+See [Psychotic Break Configuration](#psychotic-break) for the toggle, trigger chance, and duration settings.
+
+---
+
 ### QOL
 
 | Feature | Value | Implementation |
@@ -157,6 +180,12 @@ FakeFootstepsEnabled = true
 
 [4. QOL]
 CrouchSpeedBoost = true
+
+[6. Psychotic Break]
+PsychoticBreakEnabled = true
+PsychoticBreakTriggerChance = 0.01     # 1% per 2s check
+PsychoticBreakDuration = 20            # episode length in seconds
+PsychoticBreakOncePerMatch = true
 ```
 
 </details>
@@ -173,6 +202,7 @@ R.E.P.O. uses Photon PUN for multiplayer. Dread's netcode approach is pragmatic:
 | Enemy audio overhaul | Local | Per client |
 | Ambient audio | Local | Per client |
 | Adrenaline, panic sprint, breath, footsteps | Local | Per client |
+| Psychotic Break episodes | Local | Per client |
 | Crouch speed boost | Local | Per client |
 
 Monster changes are **host-authoritative** because the Harmony patches run on the host's game instance, which owns the Photon `EnemyNavMeshAgent` sync. Ambient audio and tension features are entirely client-local and invisible to other players.
@@ -212,17 +242,22 @@ Dread/
   Plugin.cs                          # BepInEx entry: Awake (config + Harmony) / Start (systems)
   Dread.csproj                       # net48, references BepInEx/Harmony/Unity/Photon/Assembly-CSharp
   Config/
-    DreadConfig.cs                   # Static ConfigEntry bindings, 4 config sections
+    DreadConfig.cs                   # Static ConfigEntry bindings, 5 config sections
   Systems/
     AudioDreadSystem.cs              # Coroutine: weighted ambient at 60-180s intervals, pitch randomized
     MonsterOverhaulSystem.cs         # 3 Harmony patches + 4s audio scan loop
     TensionSystem.cs                 # 0.5s proximity scan + 4 subsystems
+    PsychoticBreakSystem.cs          # 2s trigger check + 20s episode state machine
   audio/
     scraping.ogg                     # Common ambient sound
     footsteps.ogg                    # Common ambient + fake footsteps
     breathing.ogg                    # Uncommon ambient + out-of-breath sound
     whisper.ogg                      # Rare ambient
     door_creak.ogg                   # Ambient variant
+    shadow_scream_1.ogg              # Psychotic Break scream variant 1
+    shadow_scream_2.ogg              # Psychotic Break scream variant 2
+    shadow_scream_3.ogg              # Psychotic Break scream variant 3
+    phantom_footsteps.ogg            # Psychotic Break circling footsteps
   build.ps1                          # PowerShell build + Thunderstore packaging
   manifest.json                      # Thunderstore package metadata
 ```
@@ -238,6 +273,7 @@ Dread/
 | **v1.4.0** | Major refactor: removed 3 broken systems, added weighted audio, marker components, shared proximity scan, first real assets |
 | **v1.4.1** | Thunderstore reupload, no functional changes |
 | **v1.5.0** | Pitch randomization across all audio systems, rarer ambient sounds (60-180s, reduced weights), rarer fake footsteps (3-6 min, 20%), state leak fixes, config bounds fixes |
+| **v1.5.1** | CD pipeline: `vmajor`/`vminor`/`vpatch` tags trigger version bumps, auto-generated GitHub Releases, changelog management |
 
 Full version history: [CHANGELOG.md](CHANGELOG.md)
 
@@ -272,6 +308,10 @@ BepInEx/
         scraping.ogg
         whisper.ogg
         door_creak.ogg
+        shadow_scream_1.ogg
+        shadow_scream_2.ogg
+        shadow_scream_3.ogg
+        phantom_footsteps.ogg
 ```
 
 ---
@@ -282,7 +322,7 @@ Requires .NET SDK 4.8 targeting pack and a local R.E.P.O. installation (for `Ass
 
 ### Testing
 
-This mod has no test suite. All testing is done manually in-game. The three-system architecture (independent MonoBehaviours on a `DontDestroyOnLoad` host) makes each system testable in isolation by disabling the others via config.
+This mod has no test suite. All testing is done manually in-game. The five-system architecture (independent MonoBehaviours on a `DontDestroyOnLoad` host) makes each system testable in isolation by disabling the others via config.
 
 ### Available Scripts
 
@@ -293,15 +333,16 @@ This mod has no test suite. All testing is done manually in-game. The three-syst
 | `dotnet build -c Release` | Release build only |
 
 ```powershell
-.\build.ps1 -Version "1.5.0"
+.\build.ps1 -Version "1.5.1"
 ```
 
 Output in `dist/`:
-- `elytraking-Dread-1.5.0/`: unpacked package folder
-- `elytraking-Dread-1.5.0.zip`: ready for Thunderstore upload
+- `elytraking-Dread-1.5.1/`: unpacked package folder
+- `elytraking-Dread-1.5.1.zip`: ready for Thunderstore upload
 
 ---
 
 ## License
 
 MIT
+

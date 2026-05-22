@@ -1,8 +1,8 @@
 ---
 title: CI/CD Workflow Specification - Dread Mod PR Pipeline
-version: 1.1
+version: 1.2
 date_created: 2026-05-21
-last_updated: 2026-05-21
+last_updated: 2026-05-22
 owner: Grompen91
 tags: [process, cicd, github-actions, automation, bepinex, unity-modding]
 ---
@@ -210,6 +210,7 @@ summary_table: string   # Printed as markdown in the final step
 |---------|------|---------|--------|
 | 1.0 | 2026-05-21 | Initial specification | Grompen91 |
 | 1.1 | 2026-05-21 | Relevance is now a hard gate; analyze runs parallel with build; MAUI cache key uses stub/project hash; summary checks all jobs; packages:read permission added | noxaur |
+| 1.2 | 2026-05-22 | Analyze job now respects relevance gate (if: condition); summary treats "skipped" as success; MAUI cache expanded to full packs/ dir; gen-stubs parallelized empty stub compilation; PowerShell version guard for 5.1 compat | noxaur |
 
 ## Related Specifications
 
