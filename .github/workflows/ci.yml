@@ -2,6 +2,8 @@ name: CI
 
 permissions:
   contents: read
+  metadata: read
+  packages: read
 
 on:
   pull_request:
@@ -31,11 +33,11 @@ jobs:
           title="${{ github.event.pull_request.title }}"
           passed="true"
 
-          if echo "$title" | grep -qiE 'dread|audio|monster|tension|panic|psychotic|telemetry|crash'; then
+          if echo "$title" | grep -qiE 'fix|feat|refactor|ci|build|docs|dread|audio|monster|tension|panic|psychotic|telemetry|crash'; then
             echo "::notice::PR title matches project keywords"
           else
             files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD 2>/dev/null || echo "")
-            if echo "$files" | grep -qiE '\.cs$|\.ps1$|\.yml$|\.md$|\.csproj$'; then
+            if echo "$files" | grep -qiE '\.(cs|ps1|yml|md|csproj)$|^docs/|^\.github/'; then
               echo "::notice::PR touches project files, relevance passed"
             else
               echo "::notice::PR does not appear project-relevant (skipping build/analyze)"
@@ -74,7 +76,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .github/stubs/refs
-          key: stubs-${{ hashFiles('.github/scripts/gen-stubs.ps1', '.github/scripts/UnityEngine_stubs.cs') }}
+          key: stubs-${{ hashFiles('.github/scripts/gen-stubs.ps1', '.github/scripts/UnityEngine_stubs.cs', 'Dread.csproj') }}
 
       - name: Generate stubs
         if: steps.cache-stubs.outputs.cache-hit != 'true'
@@ -121,8 +123,11 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Anti-pattern check
-        id: anti-pattern
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Code analysis
         shell: bash
         run: |
           has_issues=0
@@ -137,14 +142,6 @@ jobs:
             has_issues=1
           fi
 
-          exit $has_issues
-
-      - name: Format check
-        id: format
-        shell: bash
-        run: |
-          has_issues=0
-
           if grep -rnI '[[:blank:]]$' *.cs Systems/*.cs Config/*.cs 2>/dev/null; then
             echo "::error::Trailing whitespace found"
             has_issues=1
@@ -155,7 +152,21 @@ jobs:
             has_issues=1
           fi
 
+          if grep -rnP '.{121}' *.cs Systems/*.cs Config/*.cs 2>/dev/null; then
+            echo "::error::Lines exceeding 120 characters found"
+            has_issues=1
+          fi
+
+          if grep -rnl $'\xEF\xBB\xBF' *.cs Systems/*.cs Config/*.cs 2>/dev/null; then
+            echo "::error::BOM (byte order mark) found"
+            has_issues=1
+          fi
+
           exit $has_issues
+
+      - name: Format check
+        shell: bash
+        run: dotnet format --verify-no-changes --no-restore
 
   summary:
     name: Summary
