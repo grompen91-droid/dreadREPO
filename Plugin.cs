@@ -65,8 +65,10 @@ namespace Dread
             else Logger.LogError("Failed to add MonsterOverhaulSystem component.");
             if (CreateSystemHost("DreadTensionHost").AddComponent<TensionSystem>() != null) count++;
             else Logger.LogError("Failed to add TensionSystem component.");
+            if (CreateSystemHost("DreadErrorHost").AddComponent<ErrorReporterSystem>() != null) count++;
+            else Logger.LogError("Failed to add ErrorReporterSystem component.");
             if (count > 0)
-                Logger.LogInfo($"Systems initialized ({count}/3).");
+                Logger.LogInfo($"Systems initialized ({count}/4).");
             else
                 Logger.LogError("All systems failed to initialize.");
         }
@@ -76,6 +78,7 @@ namespace Dread
             var go = new GameObject(name);
             DontDestroyOnLoad(go);
             return go;
+        }
         }
     }
 }
