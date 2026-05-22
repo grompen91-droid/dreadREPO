@@ -1,0 +1,12 @@
+[general]
+repository = "https://thunderstore.io"
+
+[package]
+namespace = "elytraking"
+name = "Dread"
+
+[publish]
+communities = ["repo"]
+
+[publish.categories]
+repo = ["mods"]

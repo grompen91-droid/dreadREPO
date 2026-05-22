@@ -1,10 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
 using Dread.Config;
 using UnityEngine;
-using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
 
 namespace Dread.Systems
 {
@@ -29,39 +27,27 @@ namespace Dread.Systems
 
         private void Start()
         {
+            SceneManager.sceneLoaded += OnSceneLoaded;
             StartCoroutine(LoadClips());
+        }
+
+        private void OnDestroy()
+        {
+            StopAllCoroutines();
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
+
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            _mainCam = Camera.main;
         }
 
         private IEnumerator LoadClips()
         {
-            var audioDir = Path.Combine(
-                Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
-                "audio");
-
-            foreach (var name in ClipNames)
+            yield return AudioClipLoader.LoadClips(ClipNames, (name, clip) =>
             {
-                var path = Path.Combine(audioDir, name);
-                if (!File.Exists(path))
-                {
-                    Plugin.Logger.LogWarning($"[AudioDread] Missing audio file: {path}");
-                    continue;
-                }
-
-                using var req = UnityWebRequestMultimedia.GetAudioClip(
-                    "file:///" + path.Replace('\\', '/'), AudioType.OGGVORBIS);
-                yield return req.SendWebRequest();
-
-                if (req.result == UnityWebRequest.Result.Success)
-                {
-                    var clip = DownloadHandlerAudioClip.GetContent(req);
-                    clip.name = name;
-                    _clips.Add(clip);
-                }
-                else
-                {
-                    Plugin.Logger.LogWarning($"[AudioDread] Failed to load {name}: {req.error}");
-                }
-            }
+                if (clip != null) _clips.Add(clip);
+            });
 
             Plugin.Logger.LogInfo($"[AudioDread] Loaded {_clips.Count}/{ClipNames.Length} clips.");
             StartCoroutine(PlayLoop());
@@ -88,6 +74,7 @@ namespace Dread.Systems
 
         private AudioClip PickWeightedClip()
         {
+            if (_clips.Count == 0) return null;
             float total = 0f;
             foreach (var c in _clips)
                 total += ClipWeights.TryGetValue(c.name, out var w) ? w : 1.0f;
@@ -103,8 +90,14 @@ namespace Dread.Systems
 
         private void PlayRandomSound()
         {
+            if (_mainCam == null)
+                _mainCam = Camera.main;
+            if (_mainCam == null)
+                return;
+
             var clip = PickWeightedClip();
-            var cam = _mainCam!;
+            if (clip == null) return;
+            var cam = _mainCam;
 
             var offset = new Vector3(
                 Random.Range(-1f, 1f),
@@ -124,7 +117,10 @@ namespace Dread.Systems
             src.maxDistance = 25f;
             src.Play();
 
-            Destroy(host, clip.length + 0.5f);
+            if (clip != null)
+                Destroy(host, clip.length + 0.5f);
+            else
+                Destroy(host, 0.5f);
         }
     }
 }

@@ -4,6 +4,7 @@
 > Five runtime systems that layer ambient dread, scarier monsters, a tension system that reads your proximity to danger in real time, and a psychotic break episode when you are alone and scared.
 
 ![Version](https://img.shields.io/badge/version-1.6.0-crimson?style=flat-square)
+![Status](https://img.shields.io/badge/status-release-brightgreen?style=flat-square)
 ![BepInEx](https://img.shields.io/badge/BepInEx-5.4.21-blueviolet?style=flat-square)
 ![Game](https://img.shields.io/badge/game-R.E.P.O.-orange?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
@@ -180,7 +181,7 @@ FakeFootstepsEnabled = true
 [4. QOL]
 CrouchSpeedBoost = true
 
-[5. Psychotic Break]
+[6. Psychotic Break]
 PsychoticBreakEnabled = true
 PsychoticBreakTriggerChance = 0.01     # 1% per 2s check
 PsychoticBreakDuration = 20            # episode length in seconds
@@ -272,6 +273,7 @@ Dread/
 | **v1.4.0** | Major refactor: removed 3 broken systems, added weighted audio, marker components, shared proximity scan, first real assets |
 | **v1.4.1** | Thunderstore reupload, no functional changes |
 | **v1.5.0** | Pitch randomization across all audio systems, rarer ambient sounds (60-180s, reduced weights), rarer fake footsteps (3-6 min, 20%), state leak fixes, config bounds fixes |
+| **v1.5.1** | CD pipeline: `vmajor`/`vminor`/`vpatch` tags trigger version bumps, auto-generated GitHub Releases, changelog management |
 
 Full version history: [CHANGELOG.md](CHANGELOG.md)
 
@@ -331,15 +333,16 @@ This mod has no test suite. All testing is done manually in-game. The five-syste
 | `dotnet build -c Release` | Release build only |
 
 ```powershell
-.\build.ps1 -Version "1.5.0"
+.\build.ps1 -Version "1.5.1"
 ```
 
 Output in `dist/`:
-- `elytraking-Dread-1.5.0/`: unpacked package folder
-- `elytraking-Dread-1.5.0.zip`: ready for Thunderstore upload
+- `elytraking-Dread-1.5.1/`: unpacked package folder
+- `elytraking-Dread-1.5.1.zip`: ready for Thunderstore upload
 
 ---
 
 ## License
 
 MIT
+

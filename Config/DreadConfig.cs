@@ -13,14 +13,10 @@ namespace Dread.Config
         public static ConfigEntry<bool> MonsterAggressionEnabled = null!;
         public static ConfigEntry<bool> MonsterAudioEnabled = null!;
 
+        private static bool _initialized;
+
         // QOL
         public static ConfigEntry<bool> CrouchSpeedBoostEnabled = null!;
-
-        // 5. Psychotic Break
-        public static ConfigEntry<bool> PsychoticBreakEnabled = null!;
-        public static ConfigEntry<float> PsychoticBreakTriggerChance = null!;
-        public static ConfigEntry<float> PsychoticBreakDuration = null!;
-        public static ConfigEntry<bool> PsychoticBreakOncePerMatch = null!;
 
         // Tension
         public static ConfigEntry<bool> FakeFootstepsEnabled = null!;
@@ -28,8 +24,19 @@ namespace Dread.Config
         public static ConfigEntry<bool> LowStaminaSoundEnabled = null!;
         public static ConfigEntry<bool> PanicSprintEnabled = null!;
 
+        // 5. Error Reporting
+        public static ConfigEntry<bool> ErrorReportingEnabled = null!;
+
+        // 6. Psychotic Break
+        public static ConfigEntry<bool> PsychoticBreakEnabled = null!;
+        public static ConfigEntry<float> PsychoticBreakTriggerChance = null!;
+        public static ConfigEntry<float> PsychoticBreakDuration = null!;
+        public static ConfigEntry<bool> PsychoticBreakOncePerMatch = null!;
+
         public static void Initialize(ConfigFile cfg)
         {
+            if (_initialized) return;
+
             AudioEnabled = cfg.Bind("1. Audio Dread", "Enabled", true,
                 "Ambient horror sounds during runs.");
             AudioFrequency = cfg.Bind("1. Audio Dread", "Frequency", 1.0f,
@@ -58,19 +65,47 @@ namespace Dread.Config
             CrouchSpeedBoostEnabled = cfg.Bind("4. QOL", "CrouchSpeedBoost", true,
                 "Crouch movement is 30% faster.");
 
-            // 5. Psychotic Break
-            PsychoticBreakEnabled = cfg.Bind("5. Psychotic Break", "PsychoticBreakEnabled", true,
+            ErrorReportingEnabled = cfg.Bind("5. Error Reporting", "ErrorReportingEnabled", true,
+                "Send anonymous error reports to the developer when crashes occur. Helps fix bugs faster. Disable if you prefer no telemetry.");
+
+            PsychoticBreakEnabled = cfg.Bind("6. Psychotic Break", "PsychoticBreakEnabled", true,
                 "Master toggle for the Psychotic Break system.");
-            PsychoticBreakTriggerChance = cfg.Bind("5. Psychotic Break", "PsychoticBreakTriggerChance", 0.01f,
+            PsychoticBreakTriggerChance = cfg.Bind("6. Psychotic Break", "PsychoticBreakTriggerChance", 0.01f,
                 new ConfigDescription(
                     "Probability per 2s check (0-1). 0.01 = 1%.",
                     new AcceptableValueRange<float>(0f, 1f)));
-            PsychoticBreakDuration = cfg.Bind("5. Psychotic Break", "PsychoticBreakDuration", 20f,
+            PsychoticBreakDuration = cfg.Bind("6. Psychotic Break", "PsychoticBreakDuration", 20f,
                 new ConfigDescription(
                     "Episode length in seconds.",
                     new AcceptableValueRange<float>(5f, 60f)));
-            PsychoticBreakOncePerMatch = cfg.Bind("5. Psychotic Break", "PsychoticBreakOncePerMatch", true,
+            PsychoticBreakOncePerMatch = cfg.Bind("6. Psychotic Break", "PsychoticBreakOncePerMatch", true,
                 "Limit to one episode per match.");
+
+            ConfigEntryBase?[] allFields =
+            [
+                AudioEnabled, AudioFrequency, AudioVolume,
+                MonsterAggressionEnabled, MonsterAudioEnabled,
+                CrouchSpeedBoostEnabled,
+                FakeFootstepsEnabled, AdrenalineEnabled, LowStaminaSoundEnabled, PanicSprintEnabled,
+                ErrorReportingEnabled,
+                PsychoticBreakEnabled, PsychoticBreakTriggerChance, PsychoticBreakDuration, PsychoticBreakOncePerMatch,
+            ];
+            for (int i = 0; i < allFields.Length; i++)
+            {
+                if (allFields[i] == null)
+                {
+                    Plugin.Logger.LogError($"[Dread] Config field at index {i} is null after Initialize!");
+                }
+            }
+
+            _initialized = true;
+            Plugin.Logger.LogInfo("[Dread] Config initialized successfully.");
+        }
+
+        public static void EnsureInitialized()
+        {
+            if (!_initialized)
+                Plugin.Logger.LogError("[Dread] DreadConfig accessed before Initialize() was called!");
         }
     }
 }
