@@ -141,7 +141,7 @@ namespace Dread.Systems
             bool currentlySprinting = pc.sprinting;
 
             // Trigger each time player stops sprinting because energy ran out
-            if (_wasSprintingForBreath && !currentlySprinting && pc.EnergyCurrent <= 5f && _breathCooldown <= 0f)
+            if (_wasSprintingForBreath && !currentlySprinting && pc.EnergyCurrent <= pc.EnergyStart * 0.1f && _breathCooldown <= 0f)
             {
                 _breathCooldown = 60f;
 
