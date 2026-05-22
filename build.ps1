@@ -1,6 +1,11 @@
 param(
-    [string]$Version = "1.2.0"
+    [string]$Version = ""
 )
+
+if ([string]::IsNullOrEmpty($Version)) {
+    $Version = (Get-Content manifest.json -Raw | ConvertFrom-Json).version_number
+    Write-Host "No version specified, using manifest version: $Version"
+}
 
 $name = "elytraking-Dread"
 $outDir = "dist\$name-$Version"
@@ -22,7 +27,11 @@ if (Test-Path "audio") {
 }
 
 Copy-Item "manifest.json" $outDir
-Copy-Item "README.md" $outDir
+if (Test-Path "THUNDERSTORE_README.md") {
+    Copy-Item "THUNDERSTORE_README.md" "$outDir\README.md"
+} else {
+    Copy-Item "README.md" $outDir
+}
 
 if (-not (Test-Path "icon.png")) {
     Write-Warning "icon.png missing! Thunderstore requires a 256x256 PNG icon. Add icon.png to the project root before uploading."

@@ -1,11 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
 using Dread.Config;
 using HarmonyLib;
 using UnityEngine;
-using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
 namespace Dread.Systems
@@ -30,7 +27,6 @@ namespace Dread.Systems
 
         // Panic sprint state
         private bool _wasSprinting;
-        private bool _panicActive;
         private float _panicTimer;
         private float _panicCooldown;
         private float _originalSprintMultiplier = -1f;
@@ -54,6 +50,7 @@ namespace Dread.Systems
 
         private void OnDestroy()
         {
+            StopAllCoroutines();
             SceneManager.sceneLoaded -= OnSceneLoaded;
             RestoreDrain();
             RestoreSprintMultiplier();
@@ -63,9 +60,9 @@ namespace Dread.Systems
         {
             RestoreDrain();
             RestoreSprintMultiplier();
+            AudioClipLoader.ClearCache();
             _mainCam = Camera.main;
             _originalDrain = -1f;
-            _panicActive = false;
             _panicTimer = 0f;
             _panicCooldown = 0f;
             _originalSprintMultiplier = -1f;
@@ -107,7 +104,7 @@ namespace Dread.Systems
                 ? _originalDrain * Mathf.Lerp(0.30f, 1f, _nearestDist / ProximityRange)
                 : _originalDrain;
 
-            pc.EnergySprintDrain = Mathf.Lerp(pc.EnergySprintDrain, targetDrain, Time.deltaTime * 1.2f);
+            pc.EnergySprintDrain = Mathf.MoveTowards(pc.EnergySprintDrain, targetDrain, 0.5f * Time.deltaTime);
         }
 
         private void RestoreDrain()
@@ -122,7 +119,6 @@ namespace Dread.Systems
             {
                 Traverse.Create(PlayerController.instance).Field<float>("SprintSpeedMultiplier").Value = _originalSprintMultiplier;
                 _originalSprintMultiplier = -1f;
-                _panicActive = false;
             }
         }
 
@@ -130,9 +126,15 @@ namespace Dread.Systems
 
         private void UpdateLowStamina()
         {
+            if (!DreadConfig.LowStaminaSoundEnabled.Value || SemiFunc.MenuLevel())
+            {
+                _breathCooldown = 0f;
+                return;
+            }
+
             _breathCooldown -= Time.deltaTime;
 
-            if (!DreadConfig.LowStaminaSoundEnabled.Value || SemiFunc.MenuLevel() || _breathSource == null || _breathClips.Count == 0) return;
+            if (_breathSource == null || _breathClips.Count == 0) return;
 
             var pc = PlayerController.instance;
             if ((object)pc == null || pc.EnergyStart <= 0f) return;
@@ -140,7 +142,7 @@ namespace Dread.Systems
             bool currentlySprinting = pc.sprinting;
 
             // Trigger each time player stops sprinting because energy ran out
-            if (_wasSprintingForBreath && !currentlySprinting && pc.EnergyCurrent <= 5f && _breathCooldown <= 0f)
+            if (_wasSprintingForBreath && !currentlySprinting && pc.EnergyCurrent <= pc.EnergyStart * 0.1f && _breathCooldown <= 0f)
             {
                 _breathCooldown = 60f;
 
@@ -160,7 +162,7 @@ namespace Dread.Systems
         {
             if (!DreadConfig.PanicSprintEnabled.Value || SemiFunc.MenuLevel())
             {
-                if (_panicActive)
+                if (_originalSprintMultiplier >= 0f)
                     RestoreSprintMultiplier();
                 return;
             }
@@ -172,12 +174,11 @@ namespace Dread.Systems
 
             bool currentlySprinting = pc.sprinting;
 
-            if (_panicActive)
+            if (_originalSprintMultiplier >= 0f)
             {
                 _panicTimer -= Time.deltaTime;
                 if (_panicTimer <= 0f)
                 {
-                    _panicActive = false;
                     _panicCooldown = 20f;
                     if (_originalSprintMultiplier >= 0f)
                     {
@@ -191,7 +192,6 @@ namespace Dread.Systems
                 var tpc = Traverse.Create(pc);
                 _originalSprintMultiplier = tpc.Field<float>("SprintSpeedMultiplier").Value;
                 tpc.Field<float>("SprintSpeedMultiplier").Value = _originalSprintMultiplier * 1.25f;
-                _panicActive = true;
                 _panicTimer = 2f;
             }
 
@@ -206,9 +206,8 @@ namespace Dread.Systems
             var cam = _mainCam;
             if (cam == null) return float.MaxValue;
 
-            var enemies = FindObjectsOfType<EnemyHealth>();
             float nearest = float.MaxValue;
-            foreach (var e in enemies)
+            foreach (var e in FindObjectsOfType<EnemyHealth>())
             {
                 if (e == null) continue;
                 float d = Vector3.Distance(cam.transform.position, e.transform.position);
@@ -223,64 +222,42 @@ namespace Dread.Systems
 
         private IEnumerator LoadBreathClips()
         {
-            var audioDir = Path.Combine(
-                Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
-                "audio");
-
-            foreach (var name in BreathCandidates)
+            yield return AudioClipLoader.LoadClips(BreathCandidates, (name, clip) =>
             {
-                var path = Path.Combine(audioDir, name);
-                if (!File.Exists(path)) continue;
-
-                using var req = UnityWebRequestMultimedia.GetAudioClip(
-                    "file:///" + path.Replace('\\', '/'), AudioType.OGGVORBIS);
-                yield return req.SendWebRequest();
-
-                if (req.result == UnityWebRequest.Result.Success)
-                {
-                    _breathClips.Add(DownloadHandlerAudioClip.GetContent(req));
-                    Plugin.Logger.LogInfo($"[Dread] Breath clip loaded: {name}");
-                }
-                else
-                {
-                    Plugin.Logger.LogWarning($"[Dread] Breath clip failed {name}: {req.error}");
-                }
-            }
+                if (clip != null) _breathClips.Add(clip);
+            });
         }
 
         // ── Fake Footsteps ────────────────────────────────────────────────────
 
         private IEnumerator LoadFootstepClip()
         {
-            var audioDir = Path.Combine(
-                Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
-                "audio");
-            var path = Path.Combine(audioDir, "footsteps.ogg");
-            if (!File.Exists(path)) yield break;
-
-            using var req = UnityWebRequestMultimedia.GetAudioClip(
-                "file:///" + path.Replace('\\', '/'), AudioType.OGGVORBIS);
-            yield return req.SendWebRequest();
-
-            if (req.result == UnityWebRequest.Result.Success)
-                _footstepClip = DownloadHandlerAudioClip.GetContent(req);
+            AudioClip? clip = null;
+            yield return AudioClipLoader.LoadClip("footsteps.ogg", c => clip = c);
+            if (clip != null) _footstepClip = clip;
         }
 
         private IEnumerator FakeFootstepLoop()
         {
             while (true)
             {
-                yield return new WaitForSeconds(Random.Range(180f, 360f));
-
                 if (!DreadConfig.FakeFootstepsEnabled.Value || SemiFunc.MenuLevel() || _footstepClip == null)
+                {
+                    yield return new WaitForSeconds(1f);
                     continue;
+                }
 
-                if (Random.value > 0.2f) continue;
+                var cam = _mainCam;
+                if (cam == null)
+                {
+                    yield return new WaitForSeconds(1f);
+                    continue;
+                }
 
-                var cam = Camera.main;
-                if (cam == null) continue;
+                if (Random.value <= 0.35f)
+                    SpawnFakeFootstep(cam);
 
-                SpawnFakeFootstep(cam);
+                yield return new WaitForSeconds(Random.Range(60f, 90f));
             }
         }
 
@@ -303,7 +280,10 @@ namespace Dread.Systems
             src.maxDistance = 8f;
             src.Play();
 
-            Destroy(host, _footstepClip!.length + 0.5f);
+            if (_footstepClip != null)
+                Destroy(host, _footstepClip.length + 0.5f);
+            else
+                Destroy(host, 0.5f);
         }
     }
 }

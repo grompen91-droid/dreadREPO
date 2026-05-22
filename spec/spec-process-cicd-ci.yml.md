@@ -1,8 +1,8 @@
 ---
 title: CI/CD Workflow Specification - Dread Mod PR Pipeline
-version: 1.1
+version: 1.4
 date_created: 2026-05-21
-last_updated: 2026-05-21
+last_updated: 2026-05-23
 owner: Grompen91
 tags: [process, cicd, github-actions, automation, bepinex, unity-modding]
 ---
@@ -11,7 +11,7 @@ tags: [process, cicd, github-actions, automation, bepinex, unity-modding]
 
 **Purpose**: Verify pull requests for the Dread REPO mod compile correctly against stubbed game references, pass code analysis, and produce a printable summary.
 **Trigger Events**: PR opened, synchronized (new commits), reopened, edited
-**Target Environments**: Windows (build), Ubuntu (relevance, analysis, summary)
+**Target Environments**: Ubuntu (all jobs)
 
 ## Execution Flow Diagram
 
@@ -36,7 +36,7 @@ graph TD
 | Job Name | Purpose | Dependencies | Execution Context |
 |----------|---------|--------------|-------------------|
 | relevance | Validate PR title/body/files are project-relevant | None | ubuntu-latest, 5m timeout |
-| build | Compile Dread.dll against synthesized stub assemblies | relevance (passed) | windows-latest, 15m timeout |
+| build | Compile Dread.dll against synthesized stub assemblies | relevance (passed) | ubuntu-latest, 10m timeout |
 | analyze | Check formatting and common C# anti-patterns | relevance (passed, parallel with build) | ubuntu-latest, 5m timeout |
 | summary | Aggregate job results into a table; fail on any failure | relevance, build, analyze | ubuntu-latest, 3m timeout |
 
@@ -102,7 +102,7 @@ summary_table: string   # Printed as markdown in the final step
 - **Resource Limits**: Standard GitHub-hosted runner (2 vCPU, 7GB RAM for Windows)
 
 ### Environmental Constraints
-- **Runner Requirements**: Windows for build (NET48 targeting pack via MAUI workload), Linux for scripted jobs
+- **Runner Requirements**: Ubuntu (net48 build via Microsoft.NETFramework.ReferenceAssemblies NuGet package)
 - **Network Access**: GitHub Releases (BepInEx download), NuGet.org (package restore)
 - **Permissions**: `contents: read`, `metadata: read`, `packages: read` (no write)
 
@@ -125,14 +125,14 @@ summary_table: string   # Printed as markdown in the final step
 |------|----------|-------------------|
 | Relevance | Title + files contain project keywords | None (hard gate: build/analyze skipped if failed) |
 | Build | dotnet build exit code 0 | None |
-| Formatting | dotnet-format --verify-no-changes exit code 0 | None (summary exits 1 on failure) |
+| Formatting | dotnet-format --verify-no-changes exit code 0 (also checks trailing whitespace, tabs, line length, BOM, hardcoded paths, null-forgiving) | None (summary exits 1 on failure) |
 
 ## Monitoring & Observability
 
 ### Key Metrics
 - **Success Rate**: Target > 90% build pass rate
 - **Execution Time**: Build should complete in < 8 min typical
-- **Resource Usage**: MAUI workload cache hit rate (target > 50%)
+- **Resource Usage**: nuget package cache hit rate (target > 50%)
 
 ### Alerting
 
@@ -180,8 +180,7 @@ summary_table: string   # Printed as markdown in the final step
 | Consecutive pushes to same PR | Previous run cancelled; new run starts | Observability |
 | BepInEx download fails | gen-stubs emits warning; build attempts without BepInEx | Log inspection |
 | Stub compilation fails | Build job aborts; upload-log artifact missing | Log inspection |
-| Build succeeds before MAUI workload install | Cache-hit shortens runtime | Cache hit log |
-| MAUI cache stale after stub change | Cache key (gen-stubs.ps1 + csproj hash) differs; fresh install | Update gen-stubs.ps1, verify cache miss |
+| Stub cache miss after csproj change | Cache key (gen-stubs.ps1 + stubs + csproj) differs; fresh stub gen | Update csproj, verify cache miss |
 
 ## Validation Criteria
 
@@ -193,7 +192,7 @@ summary_table: string   # Printed as markdown in the final step
 
 ### Performance Benchmarks
 - **PERF-001**: Full pipeline (relevance + build + analysis + summary) completes in < 12 min
-- **PERF-002**: MAUI workload install (cache miss) takes < 3 min
+- **PERF-002**: Stub generation (cache miss) takes < 3 min
 
 ## Change Management
 
@@ -210,6 +209,9 @@ summary_table: string   # Printed as markdown in the final step
 |---------|------|---------|--------|
 | 1.0 | 2026-05-21 | Initial specification | Grompen91 |
 | 1.1 | 2026-05-21 | Relevance is now a hard gate; analyze runs parallel with build; MAUI cache key uses stub/project hash; summary checks all jobs; packages:read permission added | noxaur |
+| 1.2 | 2026-05-22 | Analyze job now respects relevance gate (if: condition); summary treats "skipped" as success; MAUI cache expanded to full packs/ dir; gen-stubs parallelized empty stub compilation; PowerShell version guard for 5.1 compat | noxaur |
+| 1.3 | 2026-05-22 | Split into 4 jobs matching spec; hard fail on all checks; MSBuild log artifact on build failure; ubuntu-latest for build with net48 ref assemblies; relevance checks title + changed files | noxaur |
+| 1.4 | 2026-05-23 | Format check uses dotnet-format; anti-pattern checks added (BOM, line length, null-forgiving); relevance keywords include conventional commit types; docs/ path whitelist; stubs cache includes Dread.csproj | noxaur |
 
 ## Related Specifications
 

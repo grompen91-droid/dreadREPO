@@ -57,12 +57,30 @@ manifest.json format:
 
 ## Changelog Convention
 
-- Maintain `CHANGELOG.md` in the project root
+- Maintain `[Unreleased]` section in `CHANGELOG.md` with all unreleased changes
+- CD pipeline reads `[Unreleased]` for release notes, renames it to the new version, and recreates an empty `[Unreleased]` header
+- Workflow fails if `[Unreleased]` section is missing when a release tag is pushed
 - Use detailed markdown with special formatting (badges, collapsible sections, tables, blockquotes)
 - Never use em dash (--) in any file, ever. Use a colon, comma, or rewrite the sentence instead
 - Each version entry must include: version header, release date, and categorized changes (Added, Changed, Fixed, Removed)
 - Add a `> **Highlight:**` blockquote for notable releases
 - Use collapsible `<details>` blocks for long technical notes
+
+## CD Pipeline
+
+The CD pipeline (`.github/workflows/cd.yml`) handles version bumps, builds, packaging, release, and Thunderstore publishing.
+
+Trigger a release by pushing one of these tags:
+- `vmajor` -- bumps major version (X.0.0)
+- `vminor` -- bumps minor version (X.Y.0)
+- `vpatch` -- bumps patch version (X.Y.Z)
+
+```powershell
+git tag vpatch
+git push origin vpatch
+```
+
+The pipeline produces a version-specific tag (e.g., `v1.6.1`) and creates a GitHub Release with the DLL and Thunderstore zip attached. Thunderstore publish requires the `TCLI_AUTH_TOKEN` secret.
 
 ## GitHub Workflow
 

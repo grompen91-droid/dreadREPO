@@ -1,0 +1,38 @@
+name: Deploy Error Reporter Worker
+
+concurrency:
+  group: deploy-worker
+  cancel-in-progress: true
+
+on:
+  push:
+    paths:
+      - "workers/error-reporter/**"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: workers/error-reporter
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: workers/error-reporter/package-lock.json
+
+      - name: Deploy to Cloudflare Workers
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Set GitHub TOKEN secret
+        run: npx wrangler secret put TOKEN <<< "$TOKEN"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TOKEN: ${{ secrets.TOKEN }}
