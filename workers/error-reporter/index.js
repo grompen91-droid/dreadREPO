@@ -194,7 +194,7 @@ async function handleReport(request, env) {
       const searchQuery = searchTerms.map(t => encodeURIComponent(t)).join('+');
       const searchResult = await gh(
         `https://api.github.com/search/issues?q=${searchQuery}&per_page=1`,
-        env.GITHUB_TOKEN
+        env.TOKEN
       );
 
       if (searchResult.total_count > 0 && searchResult.items.length > 0) {
@@ -204,7 +204,7 @@ async function handleReport(request, env) {
         if (issue.state === 'closed') {
           await gh(
             `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/issues/${issueNumber}`,
-            env.GITHUB_TOKEN,
+            env.TOKEN,
             'PATCH',
             { state: 'open' }
           );
@@ -214,7 +214,7 @@ async function handleReport(request, env) {
         if (!checkLimit(commentBuckets, commentKey, MAX_COMMENTS_PER_ISSUE)) {
           await gh(
             `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/issues/${issueNumber}/comments`,
-            env.GITHUB_TOKEN,
+            env.TOKEN,
             'POST',
             {
               body: [
@@ -239,7 +239,7 @@ async function handleReport(request, env) {
         const body = buildIssueBody(report, payload);
         const created = await gh(
           `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/issues`,
-          env.GITHUB_TOKEN,
+          env.TOKEN,
           'POST',
           { title, body, labels: ['auto-reported', 'bug'] }
         );
