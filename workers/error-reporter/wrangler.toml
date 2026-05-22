@@ -7,4 +7,4 @@ GITHUB_OWNER = "grompen91-droid"
 GITHUB_REPO = "dreadREPO"
 
 [[secrets]]
-name = "CF_API_TOKEN"
+name = "GITHUB_TOKEN"

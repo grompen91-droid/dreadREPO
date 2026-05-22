@@ -2,6 +2,9 @@ const HOURLY_WINDOW = 3600000;
 const MAX_REQUESTS_PER_IP = 5;
 const MAX_COMMENTS_PER_ISSUE = 5;
 
+// Per-isolate rate limiting. Provides burst protection but not global
+// enforcement across Cloudflare edge nodes. Acceptable for low-volume
+// mod error reporting. Upgrade to KV/Durable Objects if scale requires it.
 const ipBuckets = new Map();
 const commentBuckets = new Map();
 
@@ -59,12 +62,12 @@ function buildIssueBody(report, payload) {
   lines.push('');
   lines.push('| Field | Value |');
   lines.push('|-------|-------|');
-  lines.push(`| Mod Version | ${escapeMd(payload.ModVersion)} |`);
-  lines.push(`| Game Version | ${escapeMd(payload.GameVersion || 'N/A')} |`);
-  lines.push(`| Unity Version | ${escapeMd(payload.UnityVersion || 'N/A')} |`);
-  lines.push(`| Scene | ${escapeMd(report.Scene || 'N/A')} |`);
-  lines.push(`| Timestamp | ${escapeMd(report.Timestamp || 'N/A')} |`);
-  lines.push(`| Type | ${escapeMd(report.Type || 'exception')} |`);
+  lines.push(`| Mod Version | ${escapeTableCell(payload.ModVersion || 'N/A')} |`);
+  lines.push(`| Game Version | ${escapeTableCell(payload.GameVersion || 'N/A')} |`);
+  lines.push(`| Unity Version | ${escapeTableCell(payload.UnityVersion || 'N/A')} |`);
+  lines.push(`| Scene | ${escapeTableCell(report.Scene || 'N/A')} |`);
+  lines.push(`| Timestamp | ${escapeTableCell(report.Timestamp || 'N/A')} |`);
+  lines.push(`| Type | ${escapeTableCell(report.Type || 'exception')} |`);
   lines.push('');
 
   lines.push('## Error Details');
@@ -90,11 +93,11 @@ function buildIssueBody(report, payload) {
     lines.push('');
     lines.push('| Component | Details |');
     lines.push('|-----------|---------|');
-    if (systemInfo.Os) lines.push(`| OS | ${escapeMd(systemInfo.Os)} |`);
-    if (systemInfo.Cpu) lines.push(`| CPU | ${escapeMd(systemInfo.Cpu)} |`);
-    if (systemInfo.RamMB) lines.push(`| RAM | ${escapeMd(String(systemInfo.RamMB))} MB |`);
-    if (systemInfo.Gpu) lines.push(`| GPU | ${escapeMd(systemInfo.Gpu)} |`);
-    if (systemInfo.VramMB) lines.push(`| VRAM | ${escapeMd(String(systemInfo.VramMB))} MB |`);
+    if (systemInfo.Os) lines.push(`| OS | ${escapeTableCell(systemInfo.Os)} |`);
+    if (systemInfo.Cpu) lines.push(`| CPU | ${escapeTableCell(systemInfo.Cpu)} |`);
+    if (systemInfo.RamMB) lines.push(`| RAM | ${escapeTableCell(String(systemInfo.RamMB))} MB |`);
+    if (systemInfo.Gpu) lines.push(`| GPU | ${escapeTableCell(systemInfo.Gpu)} |`);
+    if (systemInfo.VramMB) lines.push(`| VRAM | ${escapeTableCell(String(systemInfo.VramMB))} MB |`);
     lines.push('');
   }
 
@@ -104,8 +107,8 @@ function buildIssueBody(report, payload) {
     lines.push('');
     lines.push('| Setting | Value |');
     lines.push('|---------|-------|');
-    if (display.Width) lines.push(`| Resolution | ${escapeMd(String(display.Width))}x${escapeMd(String(display.Height || ''))} |`);
-    if (display.RefreshRate) lines.push(`| Refresh Rate | ${escapeMd(String(display.RefreshRate))} Hz |`);
+    if (display.Width) lines.push(`| Resolution | ${escapeTableCell(String(display.Width))}x${escapeTableCell(String(display.Height || ''))} |`);
+    if (display.RefreshRate) lines.push(`| Refresh Rate | ${escapeTableCell(String(display.RefreshRate))} Hz |`);
     lines.push('');
   }
 
@@ -116,7 +119,7 @@ function buildIssueBody(report, payload) {
     lines.push('| Property | Value |');
     lines.push('|----------|-------|');
     for (const [key, value] of Object.entries(gameState)) {
-      lines.push(`| ${escapeMd(key)} | ${escapeMd(String(value))} |`);
+      lines.push(`| ${escapeTableCell(key)} | ${escapeTableCell(String(value))} |`);
     }
     lines.push('');
   }
@@ -128,7 +131,7 @@ function buildIssueBody(report, payload) {
     lines.push('| Setting | Value |');
     lines.push('|---------|-------|');
     for (const [key, value] of Object.entries(config)) {
-      lines.push(`| ${escapeMd(key)} | ${escapeMd(String(value))} |`);
+      lines.push(`| ${escapeTableCell(key)} | ${escapeTableCell(String(value))} |`);
     }
   } else {
     lines.push('## Configuration');
@@ -152,8 +155,8 @@ function buildIssueBody(report, payload) {
   return lines.join('\n');
 }
 
-function escapeMd(str) {
-  return String(str).replace(/\|/g, '\\|');
+function escapeTableCell(str) {
+  return String(str).replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\n/g, ' ');
 }
 
 async function handleReport(request, env) {
@@ -191,7 +194,7 @@ async function handleReport(request, env) {
       const searchQuery = searchTerms.map(t => encodeURIComponent(t)).join('+');
       const searchResult = await gh(
         `https://api.github.com/search/issues?q=${searchQuery}&per_page=1`,
-        env.CF_API_TOKEN
+        env.GITHUB_TOKEN
       );
 
       if (searchResult.total_count > 0 && searchResult.items.length > 0) {
@@ -201,9 +204,9 @@ async function handleReport(request, env) {
         if (issue.state === 'closed') {
           await gh(
             `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/issues/${issueNumber}`,
-            env.CF_API_TOKEN,
+            env.GITHUB_TOKEN,
             'PATCH',
-            { state: 'open', state_reason: 'reopened' }
+            { state: 'open' }
           );
         }
 
@@ -211,7 +214,7 @@ async function handleReport(request, env) {
         if (!checkLimit(commentBuckets, commentKey, MAX_COMMENTS_PER_ISSUE)) {
           await gh(
             `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/issues/${issueNumber}/comments`,
-            env.CF_API_TOKEN,
+            env.GITHUB_TOKEN,
             'POST',
             {
               body: [
@@ -236,7 +239,7 @@ async function handleReport(request, env) {
         const body = buildIssueBody(report, payload);
         const created = await gh(
           `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/issues`,
-          env.CF_API_TOKEN,
+          env.GITHUB_TOKEN,
           'POST',
           { title, body, labels: ['auto-reported', 'bug'] }
         );
@@ -267,6 +270,9 @@ export default {
       return handleReport(request, env);
     }
 
-    return text('Not Found', 404);
+    return new Response(JSON.stringify({ error: 'not_found' }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders() }
+    });
   },
 };
