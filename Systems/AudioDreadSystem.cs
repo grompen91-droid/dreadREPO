@@ -16,14 +16,13 @@ namespace Dread.Systems
 
         private static readonly string[] ClipNames =
         {
-            "scraping.ogg", "footsteps.ogg", "breathing.ogg", "whisper.ogg"
+            "scraping.ogg", "breathing.ogg", "whisper.ogg"
         };
 
         // Weight per clip name — lower = rarer. Unlisted clips default to 1.0.
         private static readonly Dictionary<string, float> ClipWeights = new()
         {
             { "scraping.ogg",   0.6f },
-            { "footsteps.ogg",  0.6f },
             { "breathing.ogg",  0.3f },
             { "whisper.ogg",    0.1f },
         };
