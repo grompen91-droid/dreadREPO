@@ -189,7 +189,8 @@ namespace Dread.Systems
             else if (!_wasSprinting && currentlySprinting && _nearestDist < ProximityRange && _panicCooldown <= 0f)
             {
                 var tpc = Traverse.Create(pc);
-                _originalSprintMultiplier = tpc.Field<float>("SprintSpeedMultiplier").Value;
+                if (_originalSprintMultiplier < 0f)
+                    _originalSprintMultiplier = tpc.Field<float>("SprintSpeedMultiplier").Value;
                 tpc.Field<float>("SprintSpeedMultiplier").Value = _originalSprintMultiplier * 1.25f;
                 _panicActive = true;
                 _panicTimer = 2f;
