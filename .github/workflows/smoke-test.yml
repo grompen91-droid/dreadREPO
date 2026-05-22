@@ -1,0 +1,113 @@
+name: Smoke Test
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  smoke:
+    name: Smoke Test
+    runs-on: [self-hosted, Windows, repo-game]
+    timeout-minutes: 10
+
+    env:
+      GAME_DIR: C:\Program Files (x86)\Steam\steamapps\common\REPO
+      PLUGIN_DIR: C:\Program Files (x86)\Steam\steamapps\common\REPO\BepInEx\plugins\elytraking-Dread
+      LOG_FILE: C:\Program Files (x86)\Steam\steamapps\common\REPO\BepInEx\LogOutput.log
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Build Dread against game DLLs
+        shell: pwsh
+        run: |
+          $gameDir = "$env:GAME_DIR\REPO_Data\Managed"
+          $bepinexDir = "$env:GAME_DIR\BepInEx"
+          dotnet build Dread.csproj -c Release --nologo `
+            -p:GameDir="$gameDir" `
+            -p:BepInExDir="$bepinexDir" `
+            -p:DeployToProfile=false `
+            -p:DeployToDist=false
+          if ($LASTEXITCODE -ne 0) { Write-Error "Build failed"; exit 1 }
+
+      - name: Install Dread to game
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force "$env:PLUGIN_DIR" | Out-Null
+          New-Item -ItemType Directory -Force "$env:PLUGIN_DIR\audio" | Out-Null
+          Copy-Item "bin\Release\net48\Dread.dll" -Destination "$env:PLUGIN_DIR" -Force
+          Copy-Item "audio\*" -Destination "$env:PLUGIN_DIR\audio" -Force
+          Write-Host "Installed to $env:PLUGIN_DIR"
+
+      - name: Clear previous log
+        shell: pwsh
+        run: |
+          if (Test-Path "$env:LOG_FILE") { Remove-Item "$env:LOG_FILE" -Force }
+
+      - name: Launch game and collect BepInEx log
+        shell: pwsh
+        run: |
+          $exe = "$env:GAME_DIR\REPO.exe"
+          Write-Host "Launching $exe -batchmode -nographics"
+          $proc = Start-Process $exe -ArgumentList "-batchmode","-nographics" -PassThru
+
+          $deadline = (Get-Date).AddSeconds(30)
+          while ((Get-Date) -lt $deadline) {
+            Start-Sleep -Seconds 2
+            if (Test-Path "$env:LOG_FILE") {
+              $content = Get-Content "$env:LOG_FILE" -Raw -ErrorAction SilentlyContinue
+              if ($content -match 'elytraking\.dread') { break }
+            }
+          }
+
+          if (-not $proc.HasExited) {
+            Stop-Process -Id $proc.Id -Force
+            Write-Host "Game killed after log collection"
+          }
+
+      - name: Check log for Dread errors
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "$env:LOG_FILE")) {
+            Write-Error "BepInEx log missing -- game did not start or BepInEx not installed"
+            exit 1
+          }
+
+          $log = Get-Content "$env:LOG_FILE"
+
+          $dreadErrors = $log | Where-Object {
+            $_ -match '\[(Error|Fatal)\]' -and $_ -match 'elytraking\.dread'
+          }
+          if ($dreadErrors.Count -gt 0) {
+            Write-Error "Dread errors found:"
+            $dreadErrors | ForEach-Object { Write-Error "  $_" }
+            exit 1
+          }
+
+          $loadLine = $log | Where-Object { $_ -match 'elytraking\.dread' } | Select-Object -First 1
+          if (-not $loadLine) {
+            Write-Error "No elytraking.dread entries -- mod did not load"
+            exit 1
+          }
+
+          Write-Host "Smoke test passed."
+          Write-Host "First Dread log entry: $loadLine"
+
+      - name: Upload BepInEx log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bepinex-log-${{ github.run_id }}
+          path: ${{ env.LOG_FILE }}
+          if-no-files-found: warn
