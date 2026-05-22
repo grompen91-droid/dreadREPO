@@ -253,7 +253,13 @@ $emptyAssemblies = @(
 
 foreach ($name in $emptyAssemblies) {
     $csproj = Write-StubProject -Name $name -SourceFile $emptyStubCs -Directory $stubsDir
-    dotnet build $csproj -c Release --nologo --no-restore 2>&1 | Out-Null
+    $output = dotnet build $csproj -c Release --nologo 2>&1
+    $exitCode = $LASTEXITCODE
+    if ($exitCode -ne 0) {
+        $output | Out-String | ForEach-Object { Write-Host "$_" }
+        Write-Host "::error::[gen-stubs] Failed to compile $name (exit $exitCode)"
+        exit 1
+    }
     if ($LASTEXITCODE -ne 0) {
         Write-Host "::error::[gen-stubs] Failed to compile $name (exit $LASTEXITCODE)"
         exit 1
