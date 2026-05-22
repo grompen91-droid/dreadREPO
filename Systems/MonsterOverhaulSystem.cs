@@ -125,6 +125,7 @@ namespace Dread.Systems
             }
             catch
             {
+                // silently skip if fields don't exist
             }
         }
     }
@@ -166,6 +167,7 @@ namespace Dread.Systems
             }
             catch
             {
+                // silently skip if field doesn't exist
             }
         }
     }
