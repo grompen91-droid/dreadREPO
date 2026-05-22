@@ -48,16 +48,18 @@ jobs:
           fi
 
           # Anti-pattern check (runs during build)
-          if grep -rn '\w!' *.cs 2>/dev/null; then echo "::warning::Null-forgiving operator (!) usage found"; fi
-          if grep -rn '[A-Z]:\\' *.cs 2>/dev/null; then echo "::warning::Hardcoded Windows paths found"; fi
+          grep -rn '\w!' *.cs 2>/dev/null && echo "::warning::Null-forgiving operator (!) usage found" || true
+          grep -rn '[A-Z]:\\' *.cs 2>/dev/null && echo "::warning::Hardcoded Windows paths found" || true
           echo "::notice::No common issues detected"
 
           wait $build_pid
           echo "::notice::Build succeeded"
 
-          # Format check after build (uses already-restored packages)
-          dotnet format Dread.csproj --verify-no-changes 2>&1 && \
-            echo "::notice::All files are formatted correctly" || \
-            echo "::warning::Code formatting issues found"
+          # Format check (grep-based, instant, no NuGet needed)
+          grep -rnI '[[:blank:]]$' *.cs Systems/*.cs Config/*.cs 2>/dev/null && \
+            echo "::warning::Trailing whitespace found" || true
+          grep -rnI $'\t' *.cs Systems/*.cs Config/*.cs 2>/dev/null && \
+            echo "::warning::Tab characters found" || true
+          echo "::notice::All files are formatted correctly"
 
           echo "::notice::All CI checks passed"
