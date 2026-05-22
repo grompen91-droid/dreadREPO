@@ -31,9 +31,13 @@ namespace Dread.Systems
         private const float ThreatRange = 15f;
         private const float SoloRange = 30f;
 
-        private readonly List<AudioClip> _screamClips = new();
+        private AudioClip? _peakScreamClip;
+        private AudioClip? _distantScreamClip;
+        private AudioClip? _threatScreamClip;
         private AudioClip? _footstepClip;
         private AudioSource? _footstepSource;
+        private AudioSource? _distantScreamSource;
+        private bool _hasPlayedPeakScream;
 
         private Canvas? _overlayCanvas;
         private RawImage? _darknessImage;
@@ -43,7 +47,6 @@ namespace Dread.Systems
         private EnemyHealth[]? _cachedEnemies;
         private float _phantomSoundAccumulator;
 
-        private static readonly string[] ScreamCandidates = { "shadow_scream_1.ogg", "shadow_scream_2.ogg", "shadow_scream_3.ogg" };
         private static readonly int VisionBlockMask = LayerMask.GetMask("Default");
 
         private void Start()
@@ -84,12 +87,10 @@ namespace Dread.Systems
             DreadConfig.PsychoticBreakDuration.SettingChanged -= OnConfigChanged;
             DreadConfig.PsychoticBreakOncePerMatch.SettingChanged -= OnConfigChanged;
 
-            foreach (var clip in _screamClips)
-                if (clip != null)
-                    Destroy(clip);
-            _screamClips.Clear();
-            if (_footstepClip != null)
-                Destroy(_footstepClip);
+            if (_peakScreamClip != null) Destroy(_peakScreamClip);
+            if (_distantScreamClip != null) Destroy(_distantScreamClip);
+            if (_threatScreamClip != null) Destroy(_threatScreamClip);
+            if (_footstepClip != null) Destroy(_footstepClip);
 
             CleanupOverlay();
             CleanupFootstepSource();
@@ -122,6 +123,7 @@ namespace Dread.Systems
             _mainCam = Camera.main;
             CleanupOverlay();
             CleanupFootstepSource();
+            CleanupDistantScreamSource();
             if (SemiFunc.MenuLevel())
                 _hasTriggeredThisMatch = false;
         }
@@ -227,6 +229,15 @@ namespace Dread.Systems
             }
         }
 
+        private void CleanupDistantScreamSource()
+        {
+            if (_distantScreamSource != null)
+            {
+                Destroy(_distantScreamSource.gameObject);
+                _distantScreamSource = null;
+            }
+        }
+
         private void StartEpisode()
         {
             _episodeActive = true;
@@ -234,6 +245,7 @@ namespace Dread.Systems
             _episodeTimer = 0f;
             _phantomSoundAccumulator = 0f;
             _nextTriggerCheck = Time.time + 10f;
+            _hasPlayedPeakScream = false;
 
             var pc = PlayerController.instance;
             if ((object)pc != null)
@@ -244,6 +256,7 @@ namespace Dread.Systems
 
             CreateOverlay();
             PlayCirclingFootsteps();
+            PlayDistantScream();
 
             Plugin.Logger.LogInfo("[Dread] Psychotic Break triggered!");
         }
@@ -278,6 +291,12 @@ namespace Dread.Systems
             }
             else if (raw < p3)
             {
+                if (!_hasPlayedPeakScream)
+                {
+                    _hasPlayedPeakScream = true;
+                    PlayPeakScream();
+                }
+
                 float progress = (raw - p2) / (p3 - p2);
                 float vignetteIntensity = Mathf.Lerp(0.5f, 0.9f, progress);
                 float flicker = Mathf.Sin(Time.time * 35f) * 0.3f + 0.7f;
@@ -345,6 +364,7 @@ namespace Dread.Systems
             }
 
             CleanupFootstepSource();
+            CleanupDistantScreamSource();
             CleanupOverlay();
             Plugin.Logger.LogInfo("[Dread] Psychotic Break ended.");
         }
@@ -503,9 +523,17 @@ namespace Dread.Systems
                 Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
                 "audio");
 
-            foreach (var name in ScreamCandidates)
+            var clipDefs = new (string file, string label, System.Action<AudioClip?> setter)[]
             {
-                var path = Path.Combine(audioDir, name);
+                ("scream_peak.ogg",     "PeakScream",     c => _peakScreamClip = c),
+                ("scream_distant.ogg",  "DistantScream",   c => _distantScreamClip = c),
+                ("scream_threat.ogg",   "ThreatScream",    c => _threatScreamClip = c),
+                ("phantom_footsteps.ogg", "Footsteps",     c => _footstepClip = c),
+            };
+
+            foreach (var (file, label, setter) in clipDefs)
+            {
+                var path = Path.Combine(audioDir, file);
                 if (!File.Exists(path))
                 {
                     Plugin.Logger.LogWarning($"[PsychoticBreak] Missing audio: {path}");
@@ -519,31 +547,13 @@ namespace Dread.Systems
                 if (req.result == UnityWebRequest.Result.Success)
                 {
                     var clip = DownloadHandlerAudioClip.GetContent(req);
-                    clip.name = name;
-                    _screamClips.Add(clip);
-                    Plugin.Logger.LogInfo($"[PsychoticBreak] Loaded: {name}");
+                    clip.name = file;
+                    setter(clip);
+                    Plugin.Logger.LogInfo($"[PsychoticBreak] Loaded {label}: {file}");
                 }
                 else
                 {
-                    Plugin.Logger.LogWarning($"[PsychoticBreak] Failed {name}: {req.error}");
-                }
-            }
-
-            var footstepPath = Path.Combine(audioDir, "phantom_footsteps.ogg");
-            if (File.Exists(footstepPath))
-            {
-                using var req = UnityWebRequestMultimedia.GetAudioClip(
-                    "file:///" + footstepPath.Replace('\\', '/'), AudioType.OGGVORBIS);
-                yield return req.SendWebRequest();
-
-                if (req.result == UnityWebRequest.Result.Success)
-                {
-                    _footstepClip = DownloadHandlerAudioClip.GetContent(req);
-                    Plugin.Logger.LogInfo("[PsychoticBreak] Loaded: phantom_footsteps.ogg");
-                }
-                else
-                {
-                    Plugin.Logger.LogWarning($"[PsychoticBreak] Failed phantom_footsteps.ogg: {req.error}");
+                    Plugin.Logger.LogWarning($"[PsychoticBreak] Failed {label}: {req.error}");
                 }
             }
         }
@@ -563,14 +573,45 @@ namespace Dread.Systems
             _footstepSource.Play();
         }
 
-        private void SpawnPhantomSound()
+        private void PlayDistantScream()
         {
-            if (_screamClips.Count == 0) return;
+            if (_distantScreamClip == null) return;
+
+            var go = new GameObject("DreadDistantScream");
+            DontDestroyOnLoad(go);
+            _distantScreamSource = go.AddComponent<AudioSource>();
+            _distantScreamSource.clip = _distantScreamClip;
+            _distantScreamSource.loop = false;
+            _distantScreamSource.spatialBlend = 0f;
+            _distantScreamSource.volume = 0.35f;
+            _distantScreamSource.Play();
+        }
+
+        private void PlayPeakScream()
+        {
+            if (_peakScreamClip == null) return;
 
             var cam = _mainCam;
             if (cam == null) return;
 
-            var clip = _screamClips[Random.Range(0, _screamClips.Count)];
+            var go = new GameObject("DreadPeakScream");
+            DontDestroyOnLoad(go);
+            var src = go.AddComponent<AudioSource>();
+            src.clip = _peakScreamClip;
+            src.spatialBlend = 0f;
+            src.volume = 0.9f;
+            src.Play();
+            Destroy(go, _peakScreamClip.length + 1f);
+        }
+
+        private void SpawnPhantomSound()
+        {
+            if (_threatScreamClip == null) return;
+
+            var cam = _mainCam;
+            if (cam == null) return;
+
+            var clip = _threatScreamClip;
 
             var offset = Random.insideUnitSphere * Random.Range(5f, 15f);
             var pos = cam.transform.position + offset;
