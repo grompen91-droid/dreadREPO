@@ -21,6 +21,9 @@ namespace Dread.Systems
         private const int MaxStackTraceLength = 3000;
         private const int MaxMessageLength = 500;
         private const float ProximityRange = 15f;
+        private const int MaxPendingLogs = 100;
+        private const int HashPrefixLength = 16;
+        private const int PlayerMaxHp = 100;
         private readonly Queue<RawLogEntry> _pendingLogs = new Queue<RawLogEntry>(32);
 
         private class RawLogEntry
@@ -54,7 +57,7 @@ namespace Dread.Systems
 
             lock (_pendingLogs)
             {
-                if (_pendingLogs.Count < 100)
+                if (_pendingLogs.Count < MaxPendingLogs)
                     _pendingLogs.Enqueue(new RawLogEntry
                     {
                         Message = logString,
@@ -168,7 +171,7 @@ namespace Dread.Systems
             var sb = new StringBuilder();
             foreach (var b in bytes)
                 sb.Append(b.ToString("x2"));
-            return sb.ToString().Substring(0, 16);
+            return sb.ToString().Substring(0, HashPrefixLength);
         }
 
         private static string ParseExceptionType(string logString)
@@ -199,11 +202,11 @@ namespace Dread.Systems
                 state.EnemiesAlive = alive;
                 state.EnemiesNearby = nearby;
 
-                var pc = FindObjectOfType<PlayerController>();
+                var pc = player;
                 if (pc != null)
                 {
                     state.PlayerHp = (int)(pc.Health * 100f);
-                    state.PlayerMaxHp = 100;
+                    state.PlayerMaxHp = PlayerMaxHp;
                     state.PlayerStamina = (int)(pc.stamina * 100f);
                     state.PlayerPosition = pc.transform.position;
                 }
