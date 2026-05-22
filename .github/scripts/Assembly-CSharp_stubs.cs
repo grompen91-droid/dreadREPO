@@ -25,7 +25,7 @@ public class PlayerController : MonoBehaviour
     public float EnergyCurrent;
     public float EnergyStart;
     public float SprintSpeedMultiplier;
-    public int Health { get; }
+    public float Health { get; }
     public float stamina { get; }
 }
 public static class SemiFunc
