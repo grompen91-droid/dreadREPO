@@ -31,6 +31,7 @@ function Write-StubProject {
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>$Name</AssemblyName>
+    <AssemblyVersion>0.0.0.0</AssemblyVersion>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <Configurations>Release</Configurations>
