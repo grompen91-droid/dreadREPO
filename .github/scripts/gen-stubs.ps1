@@ -31,6 +31,7 @@ function Write-StubProject {
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>$Name</AssemblyName>
+    <AssemblyVersion>0.0.0.0</AssemblyVersion>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <Configurations>Release</Configurations>
@@ -105,10 +106,9 @@ $emptyAssemblies = @(
     'UnityEngine.UI',
     'UnityEngine.PhysicsModule',
     'UnityEngine.ImageConversionModule',
-    'UnityEngine.AnimationModule',
+
     'UnityEngine.AIModule',
     'UnityEngine.UIModule',
-    'UnityEngine.UnityWebRequestAudioModule',
     'PhotonUnityNetworking',
     'Photon3Unity3D'
 )
@@ -155,6 +155,22 @@ if (!(Test-Path "$coreDir/BepInEx.dll")) {
     }
 } else {
     Write-Host "[gen-stubs] BepInEx core already present (cached)"
+}
+
+# Build UnityWebRequestAudioModule stubs (contains UnityWebRequestMultimedia, depends on UnityEngine + UnityWebRequestModule)
+$uwraCsproj = Write-StubProject -Name "UnityEngine.UnityWebRequestAudioModule" -SourceFile "$PSScriptRoot/UnityEngine.UnityWebRequestAudioModule_stubs.cs" -Directory $stubsDir -References @("UnityEngine", "UnityEngine.UnityWebRequestModule")
+Write-Host "[gen-stubs] Compiling UnityEngine.UnityWebRequestAudioModule stubs..."
+$output = dotnet build $uwraCsproj -c Release --nologo 2>&1
+$exitCode = $LASTEXITCODE
+$output | Out-String | ForEach-Object { Write-Host "$_" }
+if ($exitCode -ne 0) {
+    Write-Host "::error::[gen-stubs] Failed to compile UnityEngine.UnityWebRequestAudioModule stubs (exit $exitCode)"
+    exit 1
+}
+$uwraDllPath = "$stubsDir/UnityEngine.UnityWebRequestAudioModule.dll"
+if (Test-Path $uwraDllPath) {
+    $size = (Get-Item $uwraDllPath).Length / 1KB
+    Write-Host "[gen-stubs] Created UnityEngine.UnityWebRequestAudioModule.dll ($size KB)"
 }
 
 Write-Host "[gen-stubs] Done"

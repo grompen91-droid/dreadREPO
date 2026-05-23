@@ -25,13 +25,5 @@ namespace UnityEngine.Networking
     {
         public string text { get; }
     }
-    public class UnityWebRequestMultimedia
-    {
-        public static UnityWebRequest GetAudioClip(string url, AudioType audioType) => null;
-    }
-    public class DownloadHandlerAudioClip
-    {
-        public static AudioClip GetContent(UnityWebRequest req) => null;
-    }
     public class UnityWebRequestAsyncOperation : AsyncOperation { }
 }
