@@ -46,6 +46,7 @@ namespace Dread.Systems
 
         private EnemyHealth[]? _cachedEnemies;
         private float _phantomSoundAccumulator;
+        private bool _sceneLoaded;
 
         private static readonly int VisionBlockMask = Physics.DefaultRaycastLayers;
 
@@ -107,6 +108,7 @@ namespace Dread.Systems
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
+            _sceneLoaded = true;
             if (_episodeActive)
             {
                 var pc = PlayerController.instance;
@@ -523,6 +525,7 @@ namespace Dread.Systems
 
         private IEnumerator LoadAudioClips()
         {
+            yield return new WaitUntil(() => _sceneLoaded);
             var audioDir = Path.Combine(
                 Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
                 "audio");
@@ -557,7 +560,8 @@ namespace Dread.Systems
                 }
                 else
                 {
-                    Plugin.Logger.LogWarning($"[PsychoticBreak] Failed {label}: {req.error}");
+                    var errorMsg = req.error ?? req.downloadHandler?.error ?? "unknown error";
+                    Plugin.Logger.LogWarning($"[PsychoticBreak] Failed {label}: {errorMsg}");
                 }
             }
         }
@@ -636,8 +640,4 @@ namespace Dread.Systems
         }
     }
 
-    internal class FlashlightStateTracker : MonoBehaviour
-    {
-        public Light? Flashlight;
-    }
 }
