@@ -266,39 +266,6 @@ namespace UnityEngine.SceneManagement
     }
     public enum LoadSceneMode { Single, Additive }
 }
-namespace UnityEngine.Networking
-{
-    public class UnityWebRequest : IDisposable
-    {
-        public UnityWebRequest() { }
-        public UnityWebRequest(string url, string method) { }
-        public UploadHandlerRaw uploadHandler { get; set; }
-        public DownloadHandlerBuffer downloadHandler { get; set; }
-        public string method { get; set; }
-        public Result result { get; }
-        public string error { get; }
-        public AsyncOperation SendWebRequest() => null;
-        public void SetRequestHeader(string name, string value) { }
-        public void Dispose() { }
-        public enum Result { Success }
-    }
-    public class UploadHandlerRaw
-    {
-        public UploadHandlerRaw(byte[] data) { }
-    }
-    public class DownloadHandlerBuffer
-    {
-        public string text { get; }
-    }
-    public class UnityWebRequestMultimedia
-    {
-        public static UnityWebRequest GetAudioClip(string url, AudioType audioType) => null;
-    }
-    public class DownloadHandlerAudioClip
-    {
-        public static AudioClip GetContent(UnityWebRequest req) => null;
-    }
-}
 namespace UnityEngine.UI
 {
     public class RawImage : MonoBehaviour

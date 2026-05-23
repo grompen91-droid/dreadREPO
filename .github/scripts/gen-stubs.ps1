@@ -82,6 +82,22 @@ if (Test-Path $acDllPath) {
     Write-Host "[gen-stubs] Created Assembly-CSharp.dll ($size KB)"
 }
 
+# Build UnityWebRequestModule stubs (contains UnityWebRequestAsyncOperation, depends on UnityEngine)
+$uwrCsproj = Write-StubProject -Name "UnityEngine.UnityWebRequestModule" -SourceFile "$PSScriptRoot/UnityEngine.UnityWebRequestModule_stubs.cs" -Directory $stubsDir -References @("UnityEngine")
+Write-Host "[gen-stubs] Compiling UnityEngine.UnityWebRequestModule stubs..."
+$output = dotnet build $uwrCsproj -c Release --nologo 2>&1
+$exitCode = $LASTEXITCODE
+$output | Out-String | ForEach-Object { Write-Host "$_" }
+if ($exitCode -ne 0) {
+    Write-Host "::error::[gen-stubs] Failed to compile UnityEngine.UnityWebRequestModule stubs (exit $exitCode)"
+    exit 1
+}
+$uwrDllPath = "$stubsDir/UnityEngine.UnityWebRequestModule.dll"
+if (Test-Path $uwrDllPath) {
+    $size = (Get-Item $uwrDllPath).Length / 1KB
+    Write-Host "[gen-stubs] Created UnityEngine.UnityWebRequestModule.dll ($size KB)"
+}
+
 # Generate empty stub assemblies (no MSBuild restore needed, fast sequential builds)
 $emptyAssemblies = @(
     'UnityEngine.CoreModule',
@@ -92,7 +108,6 @@ $emptyAssemblies = @(
     'UnityEngine.AnimationModule',
     'UnityEngine.AIModule',
     'UnityEngine.UIModule',
-    'UnityEngine.UnityWebRequestModule',
     'UnityEngine.UnityWebRequestAudioModule',
     'PhotonUnityNetworking',
     'Photon3Unity3D'
