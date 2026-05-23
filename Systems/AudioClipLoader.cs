@@ -50,7 +50,8 @@ namespace Dread.Systems
             }
             else
             {
-                Plugin.Logger.LogWarning($"[AudioClipLoader] Failed to load {fileName}: {req.error}");
+                var errorMsg = string.IsNullOrEmpty(req.error) ? "no error details" : req.error;
+                Plugin.Logger.LogWarning($"[AudioClipLoader] Failed to load {fileName}: {errorMsg}");
                 onLoaded(null);
             }
         }

@@ -59,6 +59,7 @@ namespace Dread
 
         private void Start()
         {
+            typeof(UnityEngine.UI.RawImage).ToString();
             int count = 0;
             if (CreateSystemHost("DreadAudioHost").AddComponent<AudioDreadSystem>() != null) count++;
             else Logger.LogError("Failed to add AudioDreadSystem component.");
