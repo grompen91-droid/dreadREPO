@@ -50,7 +50,7 @@ namespace Dread.Systems
             }
             else
             {
-                var errorMsg = req.error ?? req.downloadHandler?.error ?? "unknown error";
+                var errorMsg = string.IsNullOrEmpty(req.error) ? "no error details" : req.error;
                 Plugin.Logger.LogWarning($"[AudioClipLoader] Failed to load {fileName}: {errorMsg}");
                 onLoaded(null);
             }

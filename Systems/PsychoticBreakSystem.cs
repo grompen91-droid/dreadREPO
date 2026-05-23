@@ -525,7 +525,7 @@ namespace Dread.Systems
 
         private IEnumerator LoadAudioClips()
         {
-            yield return new WaitUntil(() => _sceneLoaded);
+            while (!_sceneLoaded) yield return null;
             var audioDir = Path.Combine(
                 Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
                 "audio");
@@ -560,7 +560,7 @@ namespace Dread.Systems
                 }
                 else
                 {
-                    var errorMsg = req.error ?? req.downloadHandler?.error ?? "unknown error";
+                    var errorMsg = string.IsNullOrEmpty(req.error) ? "no error details" : req.error;
                     Plugin.Logger.LogWarning($"[PsychoticBreak] Failed {label}: {errorMsg}");
                 }
             }
