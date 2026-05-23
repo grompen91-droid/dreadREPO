@@ -36,6 +36,10 @@ namespace Dread.Config
         // 7. Testing
         public static ConfigEntry<bool> TestCrashButton = null!;
 
+        // 8. Debug Server
+        public static ConfigEntry<bool> DebugServerEnabled = null!;
+        public static ConfigEntry<int> DebugServerPort = null!;
+
         public static void Initialize(ConfigFile cfg)
         {
             if (_initialized) return;
@@ -96,6 +100,13 @@ namespace Dread.Config
                 )
             );
 
+            DebugServerEnabled = cfg.Bind("8. Debug Server", "DebugServerEnabled", false,
+                "Enable the TCP debug server for AI-assisted debugging (localhost only).");
+            DebugServerPort = cfg.Bind("8. Debug Server", "DebugServerPort", 15432,
+                new ConfigDescription(
+                    "Port for the debug server. Falls back to +1 if unavailable.",
+                    new AcceptableValueRange<int>(1024, 65535)));
+
             ConfigEntryBase?[] allFields =
             [
                 AudioEnabled, AudioFrequency, AudioVolume,
@@ -105,6 +116,7 @@ namespace Dread.Config
                 ErrorReportingEnabled,
                 PsychoticBreakEnabled, PsychoticBreakTriggerChance, PsychoticBreakDuration, PsychoticBreakOncePerMatch,
                 TestCrashButton,
+                DebugServerEnabled, DebugServerPort,
             ];
             for (int i = 0; i < allFields.Length; i++)
             {

@@ -15,12 +15,14 @@ namespace Dread
         public const string VERSION = "1.5.2";
 
         internal static new ManualLogSource Logger = null!;
+        internal static Harmony HarmonyInstance { get; private set; } = null!;
 
         private readonly Harmony _harmony = new(GUID);
 
         private void Awake()
         {
             Logger = base.Logger;
+            HarmonyInstance = _harmony;
             DreadConfig.Initialize(Config);
 
             if (DreadConfig.MonsterAggressionEnabled.Value)
@@ -71,8 +73,10 @@ namespace Dread
             else Logger.LogError("Failed to add PsychoticBreakSystem component.");
             if (CreateSystemHost("DreadTestCrashHost").AddComponent<TestCrashSystem>() != null) count++;
             else Logger.LogError("Failed to add TestCrashSystem component.");
+            if (CreateSystemHost("DreadDebugHost").AddComponent<DebugServerSystem>() != null) count++;
+            else Logger.LogError("Failed to add DebugServerSystem component.");
             if (count > 0)
-                Logger.LogInfo($"Systems initialized ({count}/6).");
+                Logger.LogInfo($"Systems initialized ({count})");
             else
                 Logger.LogError("All systems failed to initialize.");
         }
