@@ -84,8 +84,8 @@ else
     })
     {
         var asm = mlc.LoadFromAssemblyPath(dll);
-        var refs = asm.GetReferencedAssemblies().Select(r => r.Name).ToHashSet();
-        if (!refs.Contains(expectedRef))
+        var asmRefs = asm.GetReferencedAssemblies().Select(r => r.Name).ToHashSet();
+        if (!asmRefs.Contains(expectedRef))
         {
             Console.WriteLine($"::error::{label}.dll does not reference {expectedRef}.dll");
             failed = true;

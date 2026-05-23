@@ -106,7 +106,7 @@ $emptyAssemblies = @(
     'UnityEngine.UI',
     'UnityEngine.PhysicsModule',
     'UnityEngine.ImageConversionModule',
-    'UnityEngine.AnimationModule',
+
     'UnityEngine.AIModule',
     'UnityEngine.UIModule',
     'PhotonUnityNetworking',

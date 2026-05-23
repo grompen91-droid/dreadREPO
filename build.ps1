@@ -22,6 +22,7 @@ $buildArgs = @(
     "build", "Dread.csproj", "-c", "Release", "--nologo", "-v", "quiet"
 )
 if ($stubsExist) {
+    Write-Warning "Building against generated stubs in $stubsDir. For production builds, delete stubs to use real game assemblies."
     $buildArgs += "-p:GameDir=$stubsDir", "-p:BepInExDir=$stubsDir", "-p:DeployToProfile=false", "-p:DeployToDist=false"
 }
 dotnet @buildArgs
