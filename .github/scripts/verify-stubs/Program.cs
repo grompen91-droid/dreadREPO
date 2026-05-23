@@ -44,15 +44,26 @@ void CheckAssembly(string label, string dllPath, string[] shouldContain, string[
 var unityDll = Path.Combine(stubsDir, "UnityEngine.dll");
 var acsDll = Path.Combine(stubsDir, "Assembly-CSharp.dll");
 var uwrDll = Path.Combine(stubsDir, "UnityEngine.UnityWebRequestModule.dll");
+var uwraDll = Path.Combine(stubsDir, "UnityEngine.UnityWebRequestAudioModule.dll");
 
-if (!File.Exists(unityDll)) { Console.WriteLine($"::error::UnityEngine.dll not found at {unityDll}"); failed = true; }
-else if (!File.Exists(acsDll)) { Console.WriteLine($"::error::Assembly-CSharp.dll not found at {acsDll}"); failed = true; }
-else if (!File.Exists(uwrDll)) { Console.WriteLine($"::error::UnityEngine.UnityWebRequestModule.dll not found at {uwrDll}"); failed = true; }
+var missing = new[] {
+    ("UnityEngine.dll", unityDll),
+    ("Assembly-CSharp.dll", acsDll),
+    ("UnityEngine.UnityWebRequestModule.dll", uwrDll),
+    ("UnityEngine.UnityWebRequestAudioModule.dll", uwraDll),
+}.Where(p => !File.Exists(p.Item2)).Select(p => p.Item1).ToList();
+
+if (missing.Count > 0)
+{
+    foreach (var name in missing) Console.WriteLine($"::error::{name} not found at expected path");
+    failed = true;
+}
 else
 {
     CheckAssembly("UnityEngine.dll", unityDll, shouldContain: Array.Empty<string>(), shouldNotContain: gameTypes);
     CheckAssembly("Assembly-CSharp.dll", acsDll, shouldContain: gameTypes, shouldNotContain: Array.Empty<string>());
-    CheckAssembly("UnityEngine.UnityWebRequestModule.dll", uwrDll, shouldContain: new[] { "UnityWebRequestAsyncOperation", "UnityWebRequest" }, shouldNotContain: gameTypes);
+    CheckAssembly("UnityEngine.UnityWebRequestModule.dll", uwrDll, shouldContain: new[] { "UnityWebRequestAsyncOperation", "UnityWebRequest" }, shouldNotContain: new[] { "UnityWebRequestMultimedia", "DownloadHandlerAudioClip" }.Concat(gameTypes).ToArray());
+    CheckAssembly("UnityEngine.UnityWebRequestAudioModule.dll", uwraDll, shouldContain: new[] { "UnityWebRequestMultimedia", "DownloadHandlerAudioClip" }, shouldNotContain: gameTypes);
 
     var acsAsm = mlc.LoadFromAssemblyPath(acsDll);
     var refs = acsAsm.GetReferencedAssemblies().Select(r => r.Name).ToHashSet();
@@ -66,16 +77,23 @@ else
         Console.WriteLine("[verify] Assembly-CSharp references UnityEngine: OK");
     }
 
-    var uwrAsm = mlc.LoadFromAssemblyPath(uwrDll);
-    var uwrRefs = uwrAsm.GetReferencedAssemblies().Select(r => r.Name).ToHashSet();
-    if (!uwrRefs.Contains("UnityEngine"))
+    foreach (var (label, dll, expectedRef) in new[] {
+        ("UnityWebRequestModule", uwrDll, "UnityEngine"),
+        ("UnityWebRequestAudioModule", uwraDll, "UnityEngine"),
+        ("UnityWebRequestAudioModule", uwraDll, "UnityEngine.UnityWebRequestModule"),
+    })
     {
-        Console.WriteLine("::error::UnityEngine.UnityWebRequestModule.dll does not reference UnityEngine.dll");
-        failed = true;
-    }
-    else
-    {
-        Console.WriteLine("[verify] UnityWebRequestModule references UnityEngine: OK");
+        var asm = mlc.LoadFromAssemblyPath(dll);
+        var refs = asm.GetReferencedAssemblies().Select(r => r.Name).ToHashSet();
+        if (!refs.Contains(expectedRef))
+        {
+            Console.WriteLine($"::error::{label}.dll does not reference {expectedRef}.dll");
+            failed = true;
+        }
+        else
+        {
+            Console.WriteLine($"[verify] {label} references {expectedRef}: OK");
+        }
     }
 }
 
