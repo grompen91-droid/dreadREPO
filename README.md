@@ -1,7 +1,7 @@
 # Dread
 
 > **Atmospheric horror overhaul for R.E.P.O.**  
-> Five runtime systems that layer ambient dread, scarier monsters, a tension system that reads your proximity to danger in real time, and a psychotic break episode when you are alone and scared.
+> Seven runtime systems that layer ambient dread, scarier monsters, a tension system that reads your proximity to danger in real time, a psychotic break episode when you are alone and scared, and automatic error reporting.
 
 ![Version](https://img.shields.io/badge/version-1.5.2-crimson?style=flat-square)
 ![Status](https://img.shields.io/badge/status-release-brightgreen?style=flat-square)
@@ -29,7 +29,7 @@
 
 ## Overview
 
-Dread is a BepInEx plugin that transforms R.E.P.O. into a genuinely unsettling experience at the IL level. It uses **Harmony 2 runtime patching** to intercept enemy spawn, movement, and detection methods, while five independent MonoBehaviour systems run on a persistent game object that survives scene transitions.
+Dread is a BepInEx plugin that transforms R.E.P.O. into a genuinely unsettling experience at the IL level. It uses **Harmony 2 runtime patching** to intercept enemy spawn, movement, and detection methods, while seven independent MonoBehaviour systems run on persistent game objects that survive scene transitions.
 
 Every feature is independently toggleable via `BepInEx/config/elytraking.dread.cfg`. Players without Dread can join modded lobbies: monster changes are host-authoritative, while audio and tension effects are client-local.
 
@@ -39,18 +39,22 @@ Every feature is independently toggleable via `BepInEx/config/elytraking.dread.c
 
 ```
 Plugin.Awake()
-  +-- Harmony.PatchAll()          # patches enemy/player methods at runtime
-  +-- ConfigFile binding          # creates elytraking.dread.cfg
+  +-- LoggingService.Initialize()      # level-gated logging
+  +-- DreadConfig.Initialize()          # 9 config sections
+  +-- Harmony patch application         # conditional patches
   |
 Plugin.Start()
-  +-- DontDestroyOnLoad("DreadHost")
-       +-- AudioDreadSystem       # coroutine: weighted ambient sounds
-       +-- MonsterOverhaulSystem  # scan loop + 3 Harmony patches
-       +-- TensionSystem          # 0.5s proximity scan drives 4 features
-       +-- PsychoticBreakSystem   # 2s trigger check: solo + threat memory + LoS loss + crouching -> 20s episode
+  +-- DontDestroyOnLoad host GameObjects (7 systems)
+       +-- AudioDreadSystem            # coroutine: weighted ambient sounds
+       +-- MonsterOverhaulSystem       # scan loop + 3 Harmony patches
+       +-- TensionSystem               # 0.5s proximity scan drives 4 features
+       +-- PsychoticBreakSystem        # 2s trigger check: solo+threat+LoS+crouching -> 20s episode
+       +-- ErrorReporterSystem         # hooks Unity log, buffers, sends to Cloudflare worker
+       +-- TestCrashSystem             # config button to trigger intentional crash
+       +-- DebugServerSystem           # TCP debug server for AI agents (default off)
 ```
 
-All five systems load their audio assets from a DLL-adjacent `audio/` folder via `UnityWebRequestMultimedia.GetAudioClip` with `AudioType.OGGVORBIS`. They are independent by design: a failure in one system does not affect the others.
+All seven systems load their audio assets from a DLL-adjacent `audio/` folder via `UnityWebRequestMultimedia.GetAudioClip` with `AudioType.OGGVORBIS`. They are independent by design: a failure in one system does not affect the others.
 
 ---
 
@@ -137,13 +141,33 @@ A 2-second trigger check fires when you are **solo** (no other alive player with
 | Time (approx) | Phase | Effects |
 |---------------|-------|---------|
 | 0s-3s | Buildup | Screen darkens, edge shadows begin flickering |
-| 3s-10s | Crescendo | Vignette flicker accelerates, footsteps begin circling (stereo panning) |
-| 10s-16s | Peak | Circling footsteps intensify, shadow scream audio plays (one of three variants), random phantom monster sounds |
-| 16s-20s | Climax | Footsteps close + fade, screen cuts, player stumbles (camera roll + dip) |
+| 3s-10s | Crescendo | Vignette flicker accelerates, footsteps begin circling (stereo panning), distant scream |
+| 10s-16s | Peak | Circling footsteps intensify, peak scream audio plays, random phantom threat sounds |
+| 16s-20s | Climax | Footsteps close + fade, screen cuts, camera stumble (roll + dip) |
 
 During the episode, the **flashlight is disabled** and **all player input is locked** (movement, interaction, menus). The episode is **client-local**: other players in multiplayer see the flashlight flicker but not the overlay.
 
 See [Psychotic Break Configuration](#psychotic-break) for the toggle, trigger chance, and duration settings.
+
+---
+
+### Error Reporting
+
+An automatic telemetry system that hooks into Unity's `Debug.LogError` and `Debug.LogException` via Harmony prefix patches, buffers crash reports, and sends them to a Cloudflare Workers endpoint. Every report includes:
+
+| Data | Details |
+|------|---------|
+| Crash fingerprint | SHA-256 prefix hash of stack trace + message for deduplication |
+| Exception info | Type, message, truncated stack trace (3000 chars) |
+| Game state | Scene name, enemies alive/nearby/total, player HP/stamina, play time |
+| System info | OS, CPU, GPU, RAM, VRAM, driver version, device model |
+| Display info | Resolution, refresh rate, DPI, fullscreen mode |
+| Config snapshot | All Dread config values at time of crash |
+
+- Reports buffer in-memory and flush every 5 minutes or on scene change (max 50 per batch)
+- Disabled entirely when the `ErrorReportingEnabled` config is false
+- Opt-in by default (can be disabled in config)
+- Includes a **Test Crash** button (section 7) to verify the pipeline works end-to-end
 
 ---
 
@@ -181,11 +205,24 @@ FakeFootstepsEnabled = true
 [4. QOL]
 CrouchSpeedBoost = true
 
+[5. Error Reporting]
+ErrorReportingEnabled = true     # send anonymous crash telemetry
+
 [6. Psychotic Break]
 PsychoticBreakEnabled = true
 PsychoticBreakTriggerChance = 0.01     # 1% per 2s check
 PsychoticBreakDuration = 20            # episode length in seconds
 PsychoticBreakOncePerMatch = true
+
+[7. Testing]
+Crash Game = false                   # set to true to trigger intentional crash (button)
+
+[8. Debug Server]
+DebugServerEnabled = false           # TCP debug server for AI agents (default off)
+DebugServerPort = 15432              # port, falls back to +1 if unavailable
+
+[9. Logging]
+LogLevel = Debug                     # None | Error | Debug | Verbose
 ```
 
 </details>
@@ -232,6 +269,9 @@ The `audio/` folder includes `door_creak.ogg` which is shipped but not currently
 | Game engine | Unity (via `Assembly-CSharp.dll`) |
 | Networking | Photon PUN (`PhotonUnityNetworking`, `Photon3Unity3D`) |
 | Audio | OGG Vorbis, loaded via `UnityWebRequestMultimedia` |
+| Error reporting | Cloudflare Workers |
+| Debug server | TCP socket (JSON-over-line protocol) |
+| AI agent bridge | MCP server (TypeScript, @modelcontextprotocol/sdk) |
 
 ---
 
@@ -239,25 +279,39 @@ The `audio/` folder includes `door_creak.ogg` which is shipped but not currently
 
 ```
 Dread/
-  Plugin.cs                          # BepInEx entry: Awake (config + Harmony) / Start (systems)
+  Plugin.cs                          # BepInEx entry: Awake (config + Harmony + LoggingService) / Start (7 systems)
   Dread.csproj                       # net48, references BepInEx/Harmony/Unity/Photon/Assembly-CSharp
   Config/
-    DreadConfig.cs                   # Static ConfigEntry bindings, 5 config sections
+    DreadConfig.cs                   # Static ConfigEntry bindings, 9 config sections
   Systems/
+    LoggingService.cs                # Level-gated logging (None/Error/Debug/Verbose) + ASCII art
     AudioDreadSystem.cs              # Coroutine: weighted ambient at 60-180s intervals, pitch randomized
     MonsterOverhaulSystem.cs         # 3 Harmony patches + 4s audio scan loop
     TensionSystem.cs                 # 0.5s proximity scan + 4 subsystems
     PsychoticBreakSystem.cs          # 2s trigger check + 20s episode state machine
+    ErrorReporterSystem.cs           # Unity log hooks + buffered telemetry to Cloudflare
+    TestCrashSystem.cs               # Config button to trigger intentional crash
+    DebugServerSystem.cs             # TCP debug server for AI agents (default off)
+    FlashlightStateTracker.cs        # Helper: stores flashlight reference during Psychotic Break
   audio/
     scraping.ogg                     # Common ambient sound
-    footsteps.ogg                    # Common ambient + fake footsteps
+    footsteps.ogg                    # Common ambient + fake footsteps + psychotic break
     breathing.ogg                    # Uncommon ambient + out-of-breath sound
+    breath2.ogg                      # Out-of-breath variant
+    breath3.ogg                      # Out-of-breath variant
     whisper.ogg                      # Rare ambient
     door_creak.ogg                   # Ambient variant
-    shadow_scream_1.ogg              # Psychotic Break scream variant 1
-    shadow_scream_2.ogg              # Psychotic Break scream variant 2
-    shadow_scream_3.ogg              # Psychotic Break scream variant 3
-    phantom_footsteps.ogg            # Psychotic Break circling footsteps
+    scream_peak.ogg                  # Psychotic Break peak scream
+    scream_distant.ogg               # Psychotic Break distant scream
+    scream_threat.ogg                # Psychotic Break phantom threat sound
+  dread-mcp-server/                  # MCP server for AI-assisted debugging
+    src/                             # TypeScript source
+    package.json                     # @modelcontextprotocol/sdk + zod
+    tsconfig.json
+  workers/
+    error-reporter/                  # Cloudflare Worker for crash telemetry ingestion
+      wrangler.toml
+      index.js
   build.ps1                          # PowerShell build + Thunderstore packaging
   manifest.json                      # Thunderstore package metadata
 ```
@@ -268,12 +322,13 @@ Dread/
 
 | Version | Highlights |
 |---------|------------|
-| **v1.0.0** | Initial release: 6 systems designed via dnSpy binary analysis |
-| **v1.3.x** | Rapid fixes: REPOLib GUID, HarmonyLib imports, Photon paths |
-| **v1.4.0** | Major refactor: removed 3 broken systems, added weighted audio, marker components, shared proximity scan, first real assets |
-| **v1.4.1** | Thunderstore reupload, no functional changes |
-| **v1.5.0** | Pitch randomization across all audio systems, rarer ambient sounds (60-180s, reduced weights), rarer fake footsteps (3-6 min, 20%), state leak fixes, config bounds fixes |
+| **v1.5.2** | Debug server, MCP server, configurable logging system, stub fixes, Psychotic Break instantiation fix, audio loading fix, cross-platform build |
 | **v1.5.1** | CD pipeline: `vmajor`/`vminor`/`vpatch` tags trigger version bumps, auto-generated GitHub Releases, changelog management |
+| **v1.5.0** | Pitch randomization across all audio systems, rarer ambient sounds (60-180s, reduced weights), rarer fake footsteps (3-6 min, 20%), state leak fixes, config bounds fixes |
+| **v1.4.1** | Thunderstore reupload, no functional changes |
+| **v1.4.0** | Major refactor: removed 3 broken systems, added weighted audio, marker components, shared proximity scan, first real assets |
+| **v1.3.x** | Rapid fixes: REPOLib GUID, HarmonyLib imports, Photon paths |
+| **v1.0.0** | Initial release: 6 systems designed via dnSpy binary analysis |
 
 Full version history: [CHANGELOG.md](CHANGELOG.md)
 
@@ -304,14 +359,15 @@ BepInEx/
       Dread.dll
       audio/
         breathing.ogg
+        breath2.ogg
+        breath3.ogg
         footsteps.ogg
         scraping.ogg
         whisper.ogg
         door_creak.ogg
-        shadow_scream_1.ogg
-        shadow_scream_2.ogg
-        shadow_scream_3.ogg
-        phantom_footsteps.ogg
+        scream_peak.ogg
+        scream_distant.ogg
+        scream_threat.ogg
 ```
 
 ---
@@ -322,7 +378,16 @@ Requires .NET SDK 4.8 targeting pack and a local R.E.P.O. installation (for `Ass
 
 ### Testing
 
-This mod has no test suite. All testing is done manually in-game. The five-system architecture (independent MonoBehaviours on a `DontDestroyOnLoad` host) makes each system testable in isolation by disabling the others via config.
+This mod has no test suite. All testing is done manually in-game. The seven-system architecture (independent MonoBehaviours on `DontDestroyOnLoad` hosts) makes each system testable in isolation by disabling the others via config.
+
+### MCP Server
+
+The `dread-mcp-server/` directory contains a TypeScript MCP server for AI-assisted debugging. Build with:
+
+```bash
+cd dread-mcp-server
+npm run build
+```
 
 ### Available Scripts
 
@@ -333,18 +398,15 @@ This mod has no test suite. All testing is done manually in-game. The five-syste
 | `dotnet build -c Release` | Release build only |
 
 ```powershell
-.\build.ps1 -Version "1.5.1"
+.\build.ps1 -Version "1.5.2"
 ```
 
 Output in `dist/`:
-- `elytraking-Dread-1.5.1/`: unpacked package folder
-- `elytraking-Dread-1.5.1.zip`: ready for Thunderstore upload
+- `elytraking-Dread-1.5.2/`: unpacked package folder
+- `elytraking-Dread-1.5.2.zip`: ready for Thunderstore upload
 
 ---
 
 ## License
 
 MIT
-
-
-

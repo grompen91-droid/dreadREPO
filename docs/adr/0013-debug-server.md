@@ -131,6 +131,70 @@ The system registers a custom `ILogListener` on BepInEx's `Logger.Listeners` to 
 
 ---
 
+## MCP Server Companion
+
+The DebugServerSystem (C#, TCP) is paired with a TypeScript MCP server that bridges AI agent protocols to the raw TCP interface.
+
+### dread-mcp-server (TypeScript)
+
+- **Runtime:** Node.js (>=18) using `@modelcontextprotocol/sdk` with stdio transport
+- **Role:** Sits on the other side of the TCP connection from `DebugServerSystem`, translating MCP tool calls (JSON-RPC over stdin/stdout) into TCP JSON commands
+- **7 tools:** `dread_ping`, `dread_get_state`, `dread_get_config`, `dread_set_config`, `dread_get_patches`, `dread_get_logs`, `dread_shutdown`
+- **Configuration** via environment variables: `DREAD_HOST` (default `127.0.0.1`), `DREAD_PORT` (default `15432`), `DREAD_TIMEOUT` (default `15000ms`)
+- **Input handling:** Zod schema validation for each tool, strict mode to reject unknown fields
+- **Response format:** `TextContent` with `"json"` or `"text"` format option
+- **Error handling:** Socket errors, timeouts, and parse failures all surfaced as MCP error responses
+- **No state:** Stateless per-request translation layer -- every tool call opens a fresh TCP connection, sends one command, reads one response, and closes
+
+**Architecture:**
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  AI Agent                                                       │
+│  (Claude, Cline, etc.)                                          │
+└─────────────┬────────────────────────────────────────────────────┘
+              │ MCP (JSON-RPC over stdin/stdout)
+              ▼
+┌──────────────────────────────────────────────────────────────────┐
+│  dread-mcp-server (TypeScript, Node.js)                         │
+│  @modelcontextprotocol/sdk                                      │
+│  • Translates MCP tool calls → TCP JSON commands                │
+│  • Stateless per-request translation                             │
+└─────────────┬────────────────────────────────────────────────────┘
+              │ TCP (newline-delimited JSON, 127.0.0.1:PORT)
+              ▼
+┌──────────────────────────────────────────────────────────────────┐
+│  Unity Game Process                                              │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │ DebugServerSystem (C#)                                   │   │
+│  │  ┌───────────────────┐  Queue<Cmd>  ┌───────────────┐   │   │
+│  │  │ Background Thread │─────────────▶│ Update() drain │   │   │
+│  │  │ (TcpListener)     │              │ (main thread)  │   │   │
+│  │  └───────────────────┘              └───────┬───────┘   │   │
+│  │                                              │           │   │
+│  │                                     ┌────────▼────────┐  │   │
+│  │                                     │ Dread Systems   │  │   │
+│  │                                     │ Harmony API     │  │   │
+│  │                                     │ Unity API       │  │   │
+│  │                                     └─────────────────┘  │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### Why MCP (Not Direct TCP)
+
+| Approach | Pros | Cons |
+|----------|------|------|
+| **MCP (this ADR)** | Standard AI agent protocol, tool discovery, schema validation | Requires Node.js runtime |
+| **Direct TCP from agent** | No extra dependency | No schema, no discovery, every agent implements a custom protocol |
+
+### Why stdio transport (Not HTTP)
+
+- MCP stdio is designed for local daemon integration -- the MCP server is launched by the AI agent's MCP client, not as a standalone HTTP server
+- Simpler lifecycle: starts with the agent, pipes stdin/stdout, shuts down when the agent exits
+
+---
+
 ## Consequences
 
 - **Positive:** AI agents can fully inspect and control the mod at runtime via a structured protocol.

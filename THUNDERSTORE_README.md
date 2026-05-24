@@ -1,6 +1,6 @@
 # Dread
 
-Atmospheric horror overhaul for R.E.P.O. Five systems that layer ambient dread, scarier monsters, real-time proximity tension, psychotic episodes, and automated error reporting.
+Atmospheric horror overhaul for R.E.P.O. Seven runtime systems that layer ambient dread, scarier monsters, real-time proximity tension, psychotic episodes, automated error reporting, and AI-assisted debugging.
 
 ## Features
 
@@ -70,6 +70,13 @@ OncePerMatch = true
 
 [7. Testing]
 EnableTestCrashButton = false
+
+[8. Debug Server]
+DebugServerEnabled = false
+DebugServerPort = 15432
+
+[9. Logging]
+LogLevel = Debug
 ```
 
 ## Compatibility

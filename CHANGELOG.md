@@ -31,10 +31,21 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 - Debug server: `DebugServerSystem` -- TCP server on `127.0.0.1` for AI-assisted debugging. Supports 7 commands (`ping`, `get_state`, `get_config`, `set_config`, `get_patches`, `get_logs`, `shutdown`) via newline-delimited JSON. Config entries under "8. Debug Server" (`DebugServerEnabled`, `DebugServerPort`). Default disabled. (ADR-0013)
+- Configurable logging: `LoggingService` static wrapper with `LogLevel` enum (None/Error/Debug/Verbose), level-gated log methods, Verbose prefixing, and ASCII art on mod injection. Config entry under "9. Logging" (`LogLevel`, default Debug). All ~110 existing `Plugin.Logger.Log*` calls migrated to `LoggingService.Log*`. (ADR-0014)
+- MCP server: `dread-mcp-server` TypeScript MCP server using `@modelcontextprotocol/sdk` wrapping the debug TCP protocol as 7 MCP tools (`dread_ping`, `dread_get_state`, `dread_get_config`, `dread_set_config`, `dread_get_patches`, `dread_get_logs`, `dread_shutdown`) via stdio transport. Config via env vars (`DREAD_HOST`, `DREAD_PORT`, `DREAD_TIMEOUT`). Supports `json` and `text` response formats. (ADR-0013)
+- `FlashlightStateTracker.cs`: standalone MonoBehaviour extracted from nested class in PsychoticBreakSystem to fix Unity type registration failure preventing AddComponent. (PR #158)
+- `breath2.ogg`, `breath3.ogg`: audio files for TensionSystem breath variant loading (referenced since v1.4.0 but missing)
 
 ### Changed
-- CD pipeline: fixed Thunderstore publish — `tcli` 0.2.2 does not support `--file` with `--package-version` (mutually exclusive flags)
+- CD pipeline: fixed Thunderstore publish -- `tcli` 0.2.2 does not support `--file` with `--package-version` (mutually exclusive flags)
 - THUNDERSTORE_README.md: updated with Psychotic Break, error telemetry, and CD pipeline documentation
+- Code review: 33 logging fixes applied across `DebugServerSystem`, `MonsterOverhaulSystem`, `AudioDreadSystem`, `PsychoticBreakSystem`, `TensionSystem`, `ErrorReporterSystem`, and `dread-mcp-server/src/index.ts`. Fixes include hot-path guard additions, log level demotions (Info to Verbose), prefix consistency, dead code removal, and lifecycle logging gaps.
+
+### Fixed
+- PsychoticBreakSystem instantiation: extracted nested `FlashlightStateTracker` to standalone file and added `typeof(UnityEngine.UI.RawImage).ToString()` in Plugin.cs to force Unity.UI assembly load before AddComponent calls (PR #158)
+- Audio clip loading: UnityWebRequest audio loads now check `downloadHandler.error` when `req.error` is null, and audio decompression deferred to after first scene load (PR #158)
+- CI build post-merge: removed stale `Application.logMessageReceivedThreaded` from ErrorReporterSystem, fixed `EventHandler` type for `ConfigEntry.SettingChanged`, qualified `LogLevel` to resolve ambiguity, replaced null-forgiving operators with null guards, added `JsonUtility.FromJson` to stubs (PR #161)
+- `build.ps1`: cross-platform compatibility -- auto-detects stub assemblies and passes required MSBuild overrides for Linux/macOS builds without manual flags (PR #146)
 
 ## [1.5.1] - 2026-05-21
 
