@@ -161,14 +161,12 @@ Returns:
   {
     "version": string,       // Mod version
     "scene": string,         // Current scene name
-    "inLevel": boolean,      // Whether in an active level
-    "enemies": number,       // Enemy count in scene
-    "nearestEnemy": number,  // Distance to nearest enemy
+    "enemyCount": number,     // Enemy count in scene
+    "nearestEnemyDist": number, // Distance to nearest enemy
     "playerHp": number,      // Current player HP
     "playerStamina": number, // Current player stamina
-    "playerPos": { x, y, z }, // Player position
-    "episodeActive": boolean, // Is episode active
-    "episodeTimer": number    // Episode elapsed time
+    "playerHp": number,      // Current player HP
+    "playerStamina": number  // Current player stamina
   }
 
 Examples:
@@ -197,21 +195,15 @@ Error Handling:
           "# Dread Mod State",
           "",
           `- **Scene**: ${d.scene ?? "unknown"}`,
-          `- **In Level**: ${d.inLevel ?? false}`,
           `- **Version**: ${d.version ?? "unknown"}`,
           "",
           "## Enemies",
-          `- **Count**: ${d.enemies ?? 0}`,
-          `- **Nearest**: ${d.nearestEnemy != null ? `${d.nearestEnemy}m` : "N/A"}`,
+          `- **Count**: ${d.enemyCount ?? 0}`,
+          `- **Nearest**: ${d.nearestEnemyDist != null ? `${d.nearestEnemyDist}m` : "N/A"}`,
           "",
           "## Player",
           `- **HP**: ${d.playerHp ?? "N/A"}`,
           `- **Stamina**: ${d.playerStamina ?? "N/A"}`,
-          ...(d.playerPos ? [`- **Position**: (${(d.playerPos as Record<string, unknown>).x ?? "?"}, ${(d.playerPos as Record<string, unknown>).y ?? "?"}, ${(d.playerPos as Record<string, unknown>).z ?? "?"})`] : []),
-          "",
-          "## Episode",
-          `- **Active**: ${d.episodeActive ?? false}`,
-          `- **Timer**: ${d.episodeTimer ?? 0}s`,
         ].join("\n");
         return { content: [{ type: "text", text: lines }] };
       }
@@ -409,8 +401,6 @@ server.registerTool(
     description: `Retrieve recent BepInEx log entries buffered by the Dread debug server (up to 200 entries).
 
 Args:
-  - level (string, optional): Filter by log level ('Info', 'Warning', 'Error', 'Debug', 'Fatal', 'Message'). If omitted, returns all levels.
-  - limit (number, optional): Maximum number of entries to return (default: 50, max: 200)
   - response_format ('json' | 'text'): Output format (default: 'json')
 
 Returns:
@@ -418,16 +408,13 @@ Returns:
   For text format: Human-readable formatted log lines
 
 Examples:
-  - Use when: "Show me recent error logs"
   - Use when: "Did the tension system initialize correctly?"
   - Use when: "What is the most recent log entry?"
 
 Error Handling:
-  - Returns empty array if no logs match the filter
+  - Returns empty array if server returns no logs
   - Returns error if server not reachable`,
     inputSchema: z.object({
-      level: z.enum(["Info", "Warning", "Error", "Debug", "Fatal", "Message"]).optional().describe("Filter by log level"),
-      limit: z.number().int().min(1).max(200).default(50).describe("Maximum entries to return (1-200)"),
       response_format: z.enum(["json", "text"]).default("json").describe("Output format"),
     }).strict(),
     annotations: {
@@ -437,13 +424,13 @@ Error Handling:
       openWorldHint: false,
     },
   },
-  async ({ level, limit, response_format }) => {
-    return toolCall("get_logs", { level, limit }, (response) => {
+  async ({ response_format }) => {
+    return toolCall("get_logs", {}, (response) => {
       const entries = response.data as Array<Record<string, unknown>> ?? [];
 
       if (response_format === "text") {
         if (entries.length === 0) {
-          return { content: [{ type: "text", text: level ? `No '${level}' log entries found.` : "No log entries found." }] };
+          return { content: [{ type: "text", text: "No log entries found." }] };
         }
         const lines = [`# Recent Dread Mod Logs (${entries.length} entries)`, ""];
         for (const entry of entries) {
