@@ -19,7 +19,7 @@ namespace Dread
         internal static Harmony HarmonyInstance { get; private set; } = null!;
 
         private readonly Harmony _harmony = new(GUID);
-        private EventHandler<EventArgs>? _logLevelHandler;
+        private EventHandler? _logLevelHandler;
 
         private void Awake()
         {

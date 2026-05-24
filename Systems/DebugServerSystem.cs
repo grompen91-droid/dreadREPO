@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using BepInEx.Configuration;
 using BepInEx.Logging;
 using Dread.Config;
 using HarmonyLib;
@@ -49,7 +50,7 @@ namespace Dread.Systems
         private class DebugLogListener : ILogListener
         {
             private readonly DebugServerSystem _owner;
-            public LogLevel LogLevelFilter => LogLevel.All;
+            public BepInEx.Logging.LogLevel LogLevelFilter => BepInEx.Logging.LogLevel.All;
             public DebugLogListener(DebugServerSystem owner) => _owner = owner;
 
             public void LogEvent(object sender, LogEventArgs e)
@@ -139,7 +140,8 @@ namespace Dread.Systems
             {
                 try
                 {
-                    using var client = _listener!.AcceptTcpClient();
+                    if (_listener == null) break;
+                    using var client = _listener.AcceptTcpClient();
                     client.ReceiveTimeout = ReadTimeoutMs;
                     using var stream = client.GetStream();
                     using var reader = new StreamReader(stream, Encoding.UTF8);
@@ -328,11 +330,11 @@ namespace Dread.Systems
             return new StateResponse
             {
                 version = Plugin.VERSION,
-                scene,
-                enemyCount,
-                nearestEnemyDist,
-                playerHp,
-                playerStamina,
+                scene = scene,
+                enemyCount = enemyCount,
+                nearestEnemyDist = nearestEnemyDist,
+                playerHp = playerHp,
+                playerStamina = playerStamina,
                 debugServerPort = _boundPort,
                 isEnabled = DreadConfig.DebugServerEnabled.Value
             };
