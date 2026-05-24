@@ -35,6 +35,7 @@ namespace Dread.Systems
 
         private void OnEnable()
         {
+            LoggingService.LogVerbose("[ErrorReporter] Awake starting...");
             Application.logMessageReceivedThreaded += HandleLog;
             SceneManager.sceneLoaded += OnSceneLoaded;
             _lastFlushTime = Time.realtimeSinceStartup;
@@ -135,6 +136,7 @@ namespace Dread.Systems
 
         private IEnumerator SendBatch(List<ErrorReport> batch)
         {
+            LoggingService.LogVerbose("[ErrorReporter] Sending report...");
             var payload = new ErrorPayload
             {
                 ModVersion = Plugin.VERSION,
@@ -155,11 +157,11 @@ namespace Dread.Systems
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                Plugin.Logger.LogWarning($"Error report failed: {request.error}");
+                LoggingService.LogWarning($"Error report failed: {request.error}");
             }
             else
             {
-                Plugin.Logger.LogInfo($"Sent {batch.Count} error report(s)");
+                LoggingService.LogInfo($"Sent {batch.Count} error report(s)");
             }
         }
 
@@ -215,7 +217,7 @@ namespace Dread.Systems
                     state.PlayerPosition = pc.transform.position;
                 }
             }
-            catch { Plugin.Logger.LogWarning("Failed to capture game state for error report"); }
+            catch { LoggingService.LogWarning("Failed to capture game state for error report"); }
 
             state.PlayTimeSeconds = (int)Time.realtimeSinceStartup;
             return state;

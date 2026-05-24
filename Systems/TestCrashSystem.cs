@@ -8,6 +8,7 @@ namespace Dread.Systems
     {
         private void Update()
         {
+            LoggingService.LogVerbose("[TestCrash] Checking crash input...");
             if (!DreadConfig.TestCrashButton.Value)
                 return;
 

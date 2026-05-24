@@ -27,6 +27,7 @@ namespace Dread.Systems
 
         private void Start()
         {
+            LoggingService.LogVerbose("[AudioDread] Awake starting...");
             SceneManager.sceneLoaded += OnSceneLoaded;
             StartCoroutine(LoadClips());
         }
@@ -49,7 +50,7 @@ namespace Dread.Systems
                 if (clip != null) _clips.Add(clip);
             });
 
-            Plugin.Logger.LogInfo($"[AudioDread] Loaded {_clips.Count}/{ClipNames.Length} clips.");
+            LoggingService.LogInfo($"[AudioDread] Loaded {_clips.Count}/{ClipNames.Length} clips.");
             StartCoroutine(PlayLoop());
         }
 
@@ -59,6 +60,8 @@ namespace Dread.Systems
             {
                 var baseDelay = Random.Range(60f, 180f) / DreadConfig.AudioFrequency.Value;
                 yield return new WaitForSeconds(baseDelay);
+
+                LoggingService.LogVerbose("[AudioDread] Checking audio play...");
 
                 if (!DreadConfig.AudioEnabled.Value || SemiFunc.MenuLevel() || _clips.Count == 0)
                     continue;

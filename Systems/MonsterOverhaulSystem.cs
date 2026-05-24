@@ -18,6 +18,7 @@ namespace Dread.Systems
 
         private void Start()
         {
+            LoggingService.LogVerbose("[MonsterOverhaul] Awake starting...");
             SceneManager.sceneLoaded += OnSceneLoaded;
             var sceneName = SceneManager.GetActiveScene().name;
             _inLevel = !sceneName.Contains("Menu") && !sceneName.Contains("Main");
@@ -45,7 +46,9 @@ namespace Dread.Systems
 
                 if (!DreadConfig.MonsterAudioEnabled.Value || !_inLevel) continue;
 
-                foreach (var e in FindObjectsOfType<EnemyHealth>())
+                var enemies = FindObjectsOfType<EnemyHealth>();
+                LoggingService.LogVerbose($"[MonsterOverhaul] Processing {enemies.Length} enemies...");
+                foreach (var e in enemies)
                 {
                     if (e == null) continue;
                     if (e.GetComponent<DreadAudioTweaked>() != null) continue;
