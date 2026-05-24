@@ -29,6 +29,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ![Status](https://img.shields.io/badge/status-development-yellow?style=flat-square)
 
+### Added
+- Debug server: `DebugServerSystem` -- TCP server on `127.0.0.1` for AI-assisted debugging. Supports 7 commands (`ping`, `get_state`, `get_config`, `set_config`, `get_patches`, `get_logs`, `shutdown`) via newline-delimited JSON. Config entries under "8. Debug Server" (`DebugServerEnabled`, `DebugServerPort`). Default disabled. (ADR-0013)
+
 ### Changed
 - CD pipeline: fixed Thunderstore publish — `tcli` 0.2.2 does not support `--file` with `--package-version` (mutually exclusive flags)
 - THUNDERSTORE_README.md: updated with Psychotic Break, error telemetry, and CD pipeline documentation
