@@ -2,12 +2,22 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { TextContent } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import * as net from "node:net";
 
 const DEBUG_SERVER_HOST = process.env.DREAD_HOST ?? "127.0.0.1";
 const DEBUG_SERVER_PORT = parseInt(process.env.DREAD_PORT ?? "15432", 10);
 const COMMAND_TIMEOUT = parseInt(process.env.DREAD_TIMEOUT ?? "15000", 10);
+
+if (isNaN(DEBUG_SERVER_PORT) || DEBUG_SERVER_PORT < 1 || DEBUG_SERVER_PORT > 65535) {
+  console.error(`Invalid DREAD_PORT: must be 1-65535, got "${process.env.DREAD_PORT ?? ""}"`);
+  process.exit(1);
+}
+if (isNaN(COMMAND_TIMEOUT) || COMMAND_TIMEOUT < 100) {
+  console.error(`Invalid DREAD_TIMEOUT: must be at least 100ms, got "${process.env.DREAD_TIMEOUT ?? ""}"`);
+  process.exit(1);
+}
 
 interface DreadResponse {
   id: number;
@@ -21,10 +31,9 @@ async function sendCommand(cmd: string, data?: unknown): Promise<DreadResponse> 
   return new Promise((resolve, reject) => {
     const socket = new net.Socket();
     let buffer = "";
-    let timedOut = false;
+    let resolved = false;
 
     const timer = setTimeout(() => {
-      timedOut = true;
       socket.destroy();
       reject(new Error(`Command timed out after ${COMMAND_TIMEOUT}ms`));
     }, COMMAND_TIMEOUT);
@@ -39,11 +48,12 @@ async function sendCommand(cmd: string, data?: unknown): Promise<DreadResponse> 
     });
 
     socket.on("data", (chunk) => {
-      if (timedOut) return;
+      if (resolved) return;
       buffer += chunk.toString("utf-8");
 
       const idx = buffer.indexOf("\n");
       if (idx !== -1) {
+        resolved = true;
         const line = buffer.slice(0, idx);
         clearTimeout(timer);
         socket.destroy();
@@ -57,23 +67,36 @@ async function sendCommand(cmd: string, data?: unknown): Promise<DreadResponse> 
     });
 
     socket.on("error", (err) => {
+      if (resolved) return;
+      resolved = true;
       clearTimeout(timer);
-      if (timedOut) return;
       reject(new Error(`Connection failed: ${err.message}. Is the Dread debug server running on ${DEBUG_SERVER_HOST}:${DEBUG_SERVER_PORT}?`));
     });
 
     socket.on("close", () => {
-      clearTimeout(timer);
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timer);
+        reject(new Error("Connection closed without receiving a response"));
+      }
     });
   });
 }
 
-function formatResponse(response: DreadResponse): string {
-  if (!response.ok) {
-    const code = response.code ? ` (code ${response.code})` : "";
-    return `Error${code}: ${response.error ?? "Unknown error"}`;
+async function toolCall(
+  cmd: string,
+  data: unknown,
+  handler: (response: DreadResponse) => { content: TextContent[] }
+): Promise<{ content: TextContent[]; isError?: boolean }> {
+  try {
+    const response = await sendCommand(cmd, data);
+    if (!response.ok) {
+      return { isError: true, content: [{ type: "text", text: `Error: ${response.error}` }] };
+    }
+    return handler(response);
+  } catch (error) {
+    return { isError: true, content: [{ type: "text", text: error instanceof Error ? error.message : String(error) }] };
   }
-  return JSON.stringify(response.data, null, 2);
 }
 
 const server = new McpServer({
@@ -107,20 +130,14 @@ Error Handling:
     },
   },
   async () => {
-    try {
-      const response = await sendCommand("ping");
+    return toolCall("ping", {}, (response) => {
       const data = response.data as Record<string, unknown> | undefined;
       const version = data?.version ?? "unknown";
       const port = data?.port ?? DEBUG_SERVER_PORT;
       return {
         content: [{ type: "text", text: `Dread debug server is alive (version ${version}, port ${port})` }],
       };
-    } catch (error) {
-      return {
-        isError: true,
-        content: [{ type: "text", text: error instanceof Error ? error.message : String(error) }],
-      };
-    }
+    });
   },
 );
 
@@ -173,12 +190,7 @@ Error Handling:
     },
   },
   async ({ response_format }) => {
-    try {
-      const response = await sendCommand("get_state");
-      if (!response.ok) {
-        return { isError: true, content: [{ type: "text", text: `Error: ${response.error}` }] };
-      }
-
+    return toolCall("get_state", {}, (response) => {
       if (response_format === "text") {
         const d = response.data as Record<string, unknown> ?? {};
         const lines = [
@@ -195,6 +207,7 @@ Error Handling:
           "## Player",
           `- **HP**: ${d.playerHp ?? "N/A"}`,
           `- **Stamina**: ${d.playerStamina ?? "N/A"}`,
+          ...(d.playerPos ? [`- **Position**: (${(d.playerPos as Record<string, unknown>).x ?? "?"}, ${(d.playerPos as Record<string, unknown>).y ?? "?"}, ${(d.playerPos as Record<string, unknown>).z ?? "?"})`] : []),
           "",
           "## Episode",
           `- **Active**: ${d.episodeActive ?? false}`,
@@ -206,12 +219,7 @@ Error Handling:
       return {
         content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }],
       };
-    } catch (error) {
-      return {
-        isError: true,
-        content: [{ type: "text", text: error instanceof Error ? error.message : String(error) }],
-      };
-    }
+    });
   },
 );
 
@@ -249,15 +257,10 @@ Error Handling:
     },
   },
   async ({ response_format, section }) => {
-    try {
-      const response = await sendCommand("get_config");
-      if (!response.ok) {
-        return { isError: true, content: [{ type: "text", text: `Error: ${response.error}` }] };
-      }
-
+    return toolCall("get_config", {}, (response) => {
       const config = response.data as Record<string, Record<string, unknown>> ?? {};
       const sections = section
-        ? Object.fromEntries(Object.entries(config).filter(([k]) => k === section))
+        ? Object.fromEntries(Object.entries(config).filter(([k]) => k.toLowerCase() === section.toLowerCase()))
         : config;
 
       if (Object.keys(sections).length === 0) {
@@ -283,12 +286,7 @@ Error Handling:
       return {
         content: [{ type: "text", text: JSON.stringify(sections, null, 2) }],
       };
-    } catch (error) {
-      return {
-        isError: true,
-        content: [{ type: "text", text: error instanceof Error ? error.message : String(error) }],
-      };
-    }
+    });
   },
 );
 
@@ -329,12 +327,7 @@ Error Handling:
     },
   },
   async ({ section, key, value, response_format }) => {
-    try {
-      const response = await sendCommand("set_config", { section, key, value });
-      if (!response.ok) {
-        return { isError: true, content: [{ type: "text", text: `Error: ${response.error}` }] };
-      }
-
+    return toolCall("set_config", { section, key, value }, (response) => {
       const msg = `Config updated: ${section}.${key} = ${value}`;
       if (response_format === "text") {
         return { content: [{ type: "text", text: msg }] };
@@ -342,12 +335,7 @@ Error Handling:
       return {
         content: [{ type: "text", text: JSON.stringify({ updated: true, section, key, value }) }],
       };
-    } catch (error) {
-      return {
-        isError: true,
-        content: [{ type: "text", text: error instanceof Error ? error.message : String(error) }],
-      };
-    }
+    });
   },
 );
 
@@ -384,12 +372,7 @@ Error Handling:
     },
   },
   async ({ response_format }) => {
-    try {
-      const response = await sendCommand("get_patches");
-      if (!response.ok) {
-        return { isError: true, content: [{ type: "text", text: `Error: ${response.error}` }] };
-      }
-
+    return toolCall("get_patches", {}, (response) => {
       const patches = response.data as Array<Record<string, unknown>> ?? [];
 
       if (response_format === "text") {
@@ -415,12 +398,7 @@ Error Handling:
       return {
         content: [{ type: "text", text: JSON.stringify(patches, null, 2) }],
       };
-    } catch (error) {
-      return {
-        isError: true,
-        content: [{ type: "text", text: error instanceof Error ? error.message : String(error) }],
-      };
-    }
+    });
   },
 );
 
@@ -460,15 +438,7 @@ Error Handling:
     },
   },
   async ({ level, limit, response_format }) => {
-    try {
-      const data: Record<string, unknown> = {};
-      if (level) data.level = level;
-      if (limit) data.limit = limit;
-      const response = await sendCommand("get_logs", data);
-      if (!response.ok) {
-        return { isError: true, content: [{ type: "text", text: `Error: ${response.error}` }] };
-      }
-
+    return toolCall("get_logs", { level, limit }, (response) => {
       const entries = response.data as Array<Record<string, unknown>> ?? [];
 
       if (response_format === "text") {
@@ -488,12 +458,7 @@ Error Handling:
       return {
         content: [{ type: "text", text: JSON.stringify(entries, null, 2) }],
       };
-    } catch (error) {
-      return {
-        isError: true,
-        content: [{ type: "text", text: error instanceof Error ? error.message : String(error) }],
-      };
-    }
+    });
   },
 );
 
@@ -523,18 +488,9 @@ Error Handling:
     },
   },
   async () => {
-    try {
-      const response = await sendCommand("shutdown");
-      if (!response.ok) {
-        return { isError: true, content: [{ type: "text", text: `Error: ${response.error}` }] };
-      }
+    return toolCall("shutdown", {}, () => {
       return { content: [{ type: "text", text: "Debug server shut down gracefully." }] };
-    } catch (error) {
-      return {
-        isError: true,
-        content: [{ type: "text", text: error instanceof Error ? error.message : String(error) }],
-      };
-    }
+    });
   },
 );
 
