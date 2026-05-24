@@ -212,6 +212,7 @@ namespace UnityEngine
     public static class JsonUtility
     {
         public static string ToJson(object obj) => "";
+        public static T FromJson<T>(string json) => default!;
     }
     public static class SystemInfo
     {

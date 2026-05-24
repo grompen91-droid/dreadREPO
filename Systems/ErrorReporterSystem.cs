@@ -39,7 +39,6 @@ namespace Dread.Systems
         private void OnEnable()
         {
             LoggingService.LogVerbose("[ErrorReporter] Awake starting...");
-            Application.logMessageReceivedThreaded += HandleLog;
             SceneManager.sceneLoaded += OnSceneLoaded;
             _lastFlushTime = Time.realtimeSinceStartup;
         }

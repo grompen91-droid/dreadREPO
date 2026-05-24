@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using BepInEx.Configuration;
 using BepInEx.Logging;
 using Dread.Config;
 using HarmonyLib;
@@ -49,7 +50,7 @@ namespace Dread.Systems
         private class DebugLogListener : ILogListener
         {
             private readonly DebugServerSystem _owner;
-            public LogLevel LogLevelFilter => LogLevel.All;
+            public BepInEx.Logging.LogLevel LogLevelFilter => BepInEx.Logging.LogLevel.All;
             public DebugLogListener(DebugServerSystem owner) => _owner = owner;
 
             public void LogEvent(object sender, LogEventArgs e)
@@ -139,7 +140,8 @@ namespace Dread.Systems
             {
                 try
                 {
-                    using var client = _listener!.AcceptTcpClient();
+                    if (_listener == null) break;
+                    using var client = _listener.AcceptTcpClient();
                     client.ReceiveTimeout = ReadTimeoutMs;
                     using var stream = client.GetStream();
                     using var reader = new StreamReader(stream, Encoding.UTF8);
@@ -255,30 +257,30 @@ namespace Dread.Systems
                     return MakeResponse(req.id, true, CaptureConfig());
 
                 case "set_config":
-                {
-                    SetConfigRequest setReq;
-                    try { setReq = JsonUtility.FromJson<SetConfigRequest>(rawJson); }
-                    catch { return MakeResponse(req.id, false, "invalid JSON", -3); }
+                    {
+                        SetConfigRequest setReq;
+                        try { setReq = JsonUtility.FromJson<SetConfigRequest>(rawJson); }
+                        catch { return MakeResponse(req.id, false, "invalid JSON", -3); }
 
-                    if (setReq.data?.section == null || setReq.data?.key == null || setReq.data?.value == null)
-                        return MakeResponse(req.id, false, "Missing section, key, or value", -3);
+                        if (setReq.data?.section == null || setReq.data?.key == null || setReq.data?.value == null)
+                            return MakeResponse(req.id, false, "Missing section, key, or value", -3);
 
-                    var result = SetConfigValue(setReq.data.section, setReq.data.key, setReq.data.value);
-                    if (result != null)
-                        return MakeResponse(req.id, false, result, -3);
-                    return MakeResponse(req.id, true, "ok");
-                }
+                        var result = SetConfigValue(setReq.data.section, setReq.data.key, setReq.data.value);
+                        if (result != null)
+                            return MakeResponse(req.id, false, result, -3);
+                        return MakeResponse(req.id, true, "ok");
+                    }
 
                 case "get_patches":
                     return MakeResponse(req.id, true, GetHarmonyPatches());
 
                 case "get_logs":
-                {
-                    lock (_logLock)
                     {
-                        return MakeResponse(req.id, true, new LogsResponse { logs = _logBuffer.ToArray() });
+                        lock (_logLock)
+                        {
+                            return MakeResponse(req.id, true, new LogsResponse { logs = _logBuffer.ToArray() });
+                        }
                     }
-                }
 
                 case "shutdown":
                     Plugin.Logger.LogInfo("[Dread DebugServer] Shutdown requested via debug command");
@@ -328,11 +330,11 @@ namespace Dread.Systems
             return new StateResponse
             {
                 version = Plugin.VERSION,
-                scene,
-                enemyCount,
-                nearestEnemyDist,
-                playerHp,
-                playerStamina,
+                scene = scene,
+                enemyCount = enemyCount,
+                nearestEnemyDist = nearestEnemyDist,
+                playerHp = playerHp,
+                playerStamina = playerStamina,
                 debugServerPort = _boundPort,
                 isEnabled = DreadConfig.DebugServerEnabled.Value
             };
