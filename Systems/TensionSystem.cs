@@ -35,6 +35,7 @@ namespace Dread.Systems
 
         private void Start()
         {
+            LoggingService.LogVerbose("[Tension] Awake starting...");
             SceneManager.sceneLoaded += OnSceneLoaded;
             _mainCam = Camera.main;
 
@@ -88,6 +89,7 @@ namespace Dread.Systems
 
         private void UpdateAdrenaline()
         {
+            LoggingService.LogVerbose("[Tension] Checking adrenaline...");
             if (!DreadConfig.AdrenalineEnabled.Value || SemiFunc.MenuLevel())
             {
                 RestoreDrain();
@@ -127,6 +129,7 @@ namespace Dread.Systems
 
         private void UpdateLowStamina()
         {
+            LoggingService.LogVerbose("[Tension] Checking low stamina...");
             if (!DreadConfig.LowStaminaSoundEnabled.Value || SemiFunc.MenuLevel())
             {
                 _breathCooldown = 0f;
@@ -162,6 +165,7 @@ namespace Dread.Systems
 
         private void UpdatePanicSprint()
         {
+            LoggingService.LogVerbose("[Tension] Checking panic sprint...");
             if (!DreadConfig.PanicSprintEnabled.Value || SemiFunc.MenuLevel())
             {
                 if (_originalSprintMultiplier >= 0f)
@@ -256,6 +260,7 @@ namespace Dread.Systems
                     continue;
                 }
 
+                LoggingService.LogVerbose("[Tension] Checking fake footsteps...");
                 if (Random.value <= 0.35f)
                     SpawnFakeFootstep(cam);
 

@@ -3,6 +3,7 @@ using BepInEx.Logging;
 using Dread.Config;
 using Dread.Systems;
 using HarmonyLib;
+using System;
 using UnityEngine;
 
 namespace Dread
@@ -18,12 +19,18 @@ namespace Dread
         internal static Harmony HarmonyInstance { get; private set; } = null!;
 
         private readonly Harmony _harmony = new(GUID);
+        private EventHandler<EventArgs>? _logLevelHandler;
 
         private void Awake()
         {
             Logger = base.Logger;
             HarmonyInstance = _harmony;
             DreadConfig.Initialize(Config);
+
+            LoggingService.Initialize(DreadConfig.LogLevelEntry.Value);
+
+            _logLevelHandler = (_, _) => LoggingService.SetLevel(DreadConfig.LogLevelEntry.Value);
+            DreadConfig.LogLevelEntry.SettingChanged += _logLevelHandler;
 
             if (DreadConfig.MonsterAggressionEnabled.Value)
             {
@@ -56,7 +63,8 @@ namespace Dread
                     PlayerControllerAwakePatch.Remove(_harmony);
             };
 
-            Logger.LogInfo($"{NAME} v{VERSION} loaded.");
+            LoggingService.PrintAsciiArt();
+            LoggingService.LogInfo($"{NAME} v{VERSION} loaded.");
         }
 
         private void Start()
@@ -64,23 +72,29 @@ namespace Dread
             typeof(UnityEngine.UI.RawImage).ToString();
             int count = 0;
             if (CreateSystemHost("DreadAudioHost").AddComponent<AudioDreadSystem>() != null) count++;
-            else Logger.LogError("Failed to add AudioDreadSystem component.");
+            else LoggingService.LogError("Failed to add AudioDreadSystem component.");
             if (CreateSystemHost("DreadMonsterHost").AddComponent<MonsterOverhaulSystem>() != null) count++;
-            else Logger.LogError("Failed to add MonsterOverhaulSystem component.");
+            else LoggingService.LogError("Failed to add MonsterOverhaulSystem component.");
             if (CreateSystemHost("DreadTensionHost").AddComponent<TensionSystem>() != null) count++;
-            else Logger.LogError("Failed to add TensionSystem component.");
+            else LoggingService.LogError("Failed to add TensionSystem component.");
             if (CreateSystemHost("DreadErrorHost").AddComponent<ErrorReporterSystem>() != null) count++;
-            else Logger.LogError("Failed to add ErrorReporterSystem component.");
+            else LoggingService.LogError("Failed to add ErrorReporterSystem component.");
             if (CreateSystemHost("DreadPsychoticBreakHost").AddComponent<PsychoticBreakSystem>() != null) count++;
-            else Logger.LogError("Failed to add PsychoticBreakSystem component.");
+            else LoggingService.LogError("Failed to add PsychoticBreakSystem component.");
             if (CreateSystemHost("DreadTestCrashHost").AddComponent<TestCrashSystem>() != null) count++;
-            else Logger.LogError("Failed to add TestCrashSystem component.");
+            else LoggingService.LogError("Failed to add TestCrashSystem component.");
             if (CreateSystemHost("DreadDebugHost").AddComponent<DebugServerSystem>() != null) count++;
-            else Logger.LogError("Failed to add DebugServerSystem component.");
+            else LoggingService.LogError("Failed to add DebugServerSystem component.");
             if (count > 0)
-                Logger.LogInfo($"Systems initialized ({count})");
+                LoggingService.LogInfo($"Systems initialized ({count})");
             else
-                Logger.LogError("All systems failed to initialize.");
+                LoggingService.LogError("All systems failed to initialize.");
+        }
+
+        private void OnDestroy()
+        {
+            if (_logLevelHandler != null)
+                DreadConfig.LogLevelEntry.SettingChanged -= _logLevelHandler;
         }
 
         private static GameObject CreateSystemHost(string name)

@@ -52,6 +52,7 @@ namespace Dread.Systems
 
         private void Start()
         {
+            LoggingService.LogVerbose("[PsychoticBreak] Awake starting...");
             SceneManager.sceneLoaded += OnSceneLoaded;
             _mainCam = Camera.main;
 
@@ -171,6 +172,7 @@ namespace Dread.Systems
 
         private bool CanTrigger()
         {
+            LoggingService.LogVerbose("[PsychoticBreak] Checking trigger condition...");
             var pc = PlayerController.instance;
             if ((object)pc == null) return false;
 
@@ -264,7 +266,7 @@ namespace Dread.Systems
             PlayCirclingFootsteps();
             PlayDistantScream();
 
-            Plugin.Logger.LogInfo("[Dread] Psychotic Break triggered!");
+            LoggingService.LogInfo("[Dread] Psychotic Break triggered!");
         }
 
         private void UpdateEpisode()
@@ -357,6 +359,7 @@ namespace Dread.Systems
 
         private void EndEpisode()
         {
+            LoggingService.LogVerbose("[PsychoticBreak] Episode ending...");
             _episodeActive = false;
             SetDarknessAlpha(0f);
             SetVignetteAlpha(0f);
@@ -372,7 +375,7 @@ namespace Dread.Systems
             CleanupFootstepSource();
             CleanupDistantScreamSource();
             CleanupOverlay();
-            Plugin.Logger.LogInfo("[Dread] Psychotic Break ended.");
+            LoggingService.LogInfo("[Dread] Psychotic Break ended.");
         }
 
         private IEnumerator DoStumble()
@@ -505,7 +508,7 @@ namespace Dread.Systems
             try { Traverse.Create(pc).Field<bool>("InteractDisabled").Value = true; any = true; }
             catch { }
             if (!any)
-                Plugin.Logger.LogWarning("[Dread] LockInput: no matching field found on PlayerController");
+                LoggingService.LogWarning("[Dread] LockInput: no matching field found on PlayerController");
         }
 
         private static void UnlockInput(PlayerController pc)
@@ -520,7 +523,7 @@ namespace Dread.Systems
             try { Traverse.Create(pc).Field<bool>("InteractDisabled").Value = false; any = true; }
             catch { }
             if (!any)
-                Plugin.Logger.LogWarning("[Dread] UnlockInput: no matching field found on PlayerController");
+                LoggingService.LogWarning("[Dread] UnlockInput: no matching field found on PlayerController");
         }
 
         private IEnumerator LoadAudioClips()
@@ -543,7 +546,7 @@ namespace Dread.Systems
                 var path = Path.Combine(audioDir, file);
                 if (!File.Exists(path))
                 {
-                    Plugin.Logger.LogWarning($"[PsychoticBreak] Missing audio: {path}");
+                    LoggingService.LogWarning($"[PsychoticBreak] Missing audio: {path}");
                     continue;
                 }
 
@@ -556,12 +559,12 @@ namespace Dread.Systems
                     var clip = DownloadHandlerAudioClip.GetContent(req);
                     clip.name = file;
                     setter(clip);
-                    Plugin.Logger.LogInfo($"[PsychoticBreak] Loaded {label}: {file}");
+                    LoggingService.LogInfo($"[PsychoticBreak] Loaded {label}: {file}");
                 }
                 else
                 {
                     var errorMsg = string.IsNullOrEmpty(req.error) ? "no error details" : req.error;
-                    Plugin.Logger.LogWarning($"[PsychoticBreak] Failed {label}: {errorMsg}");
+                    LoggingService.LogWarning($"[PsychoticBreak] Failed {label}: {errorMsg}");
                 }
             }
         }

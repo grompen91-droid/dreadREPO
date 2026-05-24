@@ -32,7 +32,7 @@ namespace Dread.Systems
             var path = Path.Combine(AudioDirectory, fileName);
             if (!File.Exists(path))
             {
-                Plugin.Logger.LogWarning($"[AudioClipLoader] Missing audio file: {fileName}");
+                LoggingService.LogWarning($"[AudioClipLoader] Missing audio file: {fileName}");
                 onLoaded(null);
                 yield break;
             }
@@ -51,7 +51,7 @@ namespace Dread.Systems
             else
             {
                 var errorMsg = string.IsNullOrEmpty(req.error) ? "no error details" : req.error;
-                Plugin.Logger.LogWarning($"[AudioClipLoader] Failed to load {fileName}: {errorMsg}");
+                LoggingService.LogWarning($"[AudioClipLoader] Failed to load {fileName}: {errorMsg}");
                 onLoaded(null);
             }
         }

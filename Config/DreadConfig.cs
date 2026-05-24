@@ -1,4 +1,5 @@
 using BepInEx.Configuration;
+using Dread.Systems;
 
 namespace Dread.Config
 {
@@ -39,6 +40,9 @@ namespace Dread.Config
         // 8. Debug Server
         public static ConfigEntry<bool> DebugServerEnabled = null!;
         public static ConfigEntry<int> DebugServerPort = null!;
+
+        // 9. Logging
+        public static ConfigEntry<LogLevel> LogLevelEntry = null!;
 
         public static void Initialize(ConfigFile cfg)
         {
@@ -107,6 +111,10 @@ namespace Dread.Config
                     "Port for the debug server. Falls back to +1 if unavailable.",
                     new AcceptableValueRange<int>(1024, 65535)));
 
+            LogLevelEntry = cfg.Bind("9. Logging", "LogLevel", LogLevel.Debug,
+                "Logging verbosity. None = suppress all output, Error = only errors, "
+                    + "Debug = info + warnings + errors, Verbose = everything including debug traces.");
+
             ConfigEntryBase?[] allFields =
             [
                 AudioEnabled, AudioFrequency, AudioVolume,
@@ -115,25 +123,24 @@ namespace Dread.Config
                 FakeFootstepsEnabled, AdrenalineEnabled, LowStaminaSoundEnabled, PanicSprintEnabled,
                 ErrorReportingEnabled,
                 PsychoticBreakEnabled, PsychoticBreakTriggerChance, PsychoticBreakDuration, PsychoticBreakOncePerMatch,
-                TestCrashButton,
-                DebugServerEnabled, DebugServerPort,
+                TestCrashButton, DebugServerEnabled, DebugServerPort, LogLevelEntry,
             ];
             for (int i = 0; i < allFields.Length; i++)
             {
                 if (allFields[i] == null)
                 {
-                    Plugin.Logger.LogError($"[Dread] Config field at index {i} is null after Initialize!");
+                    LoggingService.LogError($"[Dread] Config field at index {i} is null after Initialize!");
                 }
             }
 
             _initialized = true;
-            Plugin.Logger.LogInfo("[Dread] Config initialized successfully.");
+            LoggingService.LogInfo("[Dread] Config initialized successfully.");
         }
 
         public static void EnsureInitialized()
         {
             if (!_initialized)
-                Plugin.Logger.LogError("[Dread] DreadConfig accessed before Initialize() was called!");
+                LoggingService.LogError("[Dread] DreadConfig accessed before Initialize() was called!");
         }
     }
 
