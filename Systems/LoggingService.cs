@@ -15,10 +15,6 @@ namespace Dread.Systems
     {
         private static LogLevel _current = LogLevel.Debug;
 
-        private const string AnsiRed = "\u001b[31m";
-        private const string AnsiBlue = "\u001b[34m";
-        private const string AnsiReset = "\u001b[0m";
-
         private static readonly string[] AsciiArtLines =
         [
             @"         ███             ███             ███             ███  ",
@@ -98,25 +94,7 @@ namespace Dread.Systems
             var sb = new StringBuilder();
             foreach (string line in AsciiArtLines)
             {
-                string currentColor = "";
-                foreach (char c in line)
-                {
-                    string newColor;
-                    if (c == '\u2588' || c == '\u2591')
-                        newColor = AnsiRed;
-                    else if (c == '@')
-                        newColor = AnsiBlue;
-                    else
-                        newColor = AnsiReset;
-
-                    if (newColor != currentColor)
-                    {
-                        sb.Append(newColor);
-                        currentColor = newColor;
-                    }
-                    sb.Append(c);
-                }
-                sb.AppendLine(AnsiReset);
+                sb.AppendLine(line);
             }
             Plugin.Logger.LogInfo(sb.ToString());
         }
