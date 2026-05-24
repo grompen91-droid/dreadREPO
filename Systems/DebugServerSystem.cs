@@ -257,30 +257,30 @@ namespace Dread.Systems
                     return MakeResponse(req.id, true, CaptureConfig());
 
                 case "set_config":
-                {
-                    SetConfigRequest setReq;
-                    try { setReq = JsonUtility.FromJson<SetConfigRequest>(rawJson); }
-                    catch { return MakeResponse(req.id, false, "invalid JSON", -3); }
+                    {
+                        SetConfigRequest setReq;
+                        try { setReq = JsonUtility.FromJson<SetConfigRequest>(rawJson); }
+                        catch { return MakeResponse(req.id, false, "invalid JSON", -3); }
 
-                    if (setReq.data?.section == null || setReq.data?.key == null || setReq.data?.value == null)
-                        return MakeResponse(req.id, false, "Missing section, key, or value", -3);
+                        if (setReq.data?.section == null || setReq.data?.key == null || setReq.data?.value == null)
+                            return MakeResponse(req.id, false, "Missing section, key, or value", -3);
 
-                    var result = SetConfigValue(setReq.data.section, setReq.data.key, setReq.data.value);
-                    if (result != null)
-                        return MakeResponse(req.id, false, result, -3);
-                    return MakeResponse(req.id, true, "ok");
-                }
+                        var result = SetConfigValue(setReq.data.section, setReq.data.key, setReq.data.value);
+                        if (result != null)
+                            return MakeResponse(req.id, false, result, -3);
+                        return MakeResponse(req.id, true, "ok");
+                    }
 
                 case "get_patches":
                     return MakeResponse(req.id, true, GetHarmonyPatches());
 
                 case "get_logs":
-                {
-                    lock (_logLock)
                     {
-                        return MakeResponse(req.id, true, new LogsResponse { logs = _logBuffer.ToArray() });
+                        lock (_logLock)
+                        {
+                            return MakeResponse(req.id, true, new LogsResponse { logs = _logBuffer.ToArray() });
+                        }
                     }
-                }
 
                 case "shutdown":
                     Plugin.Logger.LogInfo("[Dread DebugServer] Shutdown requested via debug command");
