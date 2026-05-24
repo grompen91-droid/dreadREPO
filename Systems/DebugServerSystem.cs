@@ -171,7 +171,8 @@ namespace Dread.Systems
                                 RequestEnvelope envelope;
                                 try { envelope = JsonUtility.FromJson<RequestEnvelope>(line); }
                                 catch { envelope = new RequestEnvelope(); }
-                                var reject = $"{{\"id\":{envelope.id},\"ok\":false,\"error\":\"queue full\",\"code\":-1}}\n";
+                                var reject = $"{{\"id\":{envelope.id},\"ok\":false,"
+                                    + "\"error\":\"queue full\",\"code\":-1}}\n";
                                 var rejectBytes = Encoding.UTF8.GetBytes(reject);
                                 try { stream.Write(rejectBytes, 0, rejectBytes.Length); }
                                 catch (IOException) { }
