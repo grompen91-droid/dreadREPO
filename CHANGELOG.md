@@ -37,32 +37,16 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - `breath2.ogg`, `breath3.ogg`: audio files for TensionSystem breath variant loading (referenced since v1.4.0 but missing)
 
 ### Fixed
-- CI/CD stubs: move `RawImage` and `RectTransform` from `UnityEngine.dll` stub into dedicated `UnityEngine.UI.dll` stub (fixes `TypeLoadException` on stub-built releases that blocked all system init, audio loading, and debug server startup)
-- PsychoticBreakSystem: resolve `UnityEngine.UI.RawImage` at runtime instead of compile-time field types so stub-built DLLs instantiate correctly under Proton/Wine
-- AudioClipLoader: convert Wine `Z:\\` paths to Unix `file:///` URIs, defer ambient loads until first scene, and surface `downloadHandler.error` when `req.error` is empty
-- DebugServerSystem: read player HP/stamina via Harmony Traverse instead of stub-only `Health` property (fixes MCP `dread_get_state`)
-- dread-mcp-server: parse nested `logs` and `patches` arrays from debug server JSON responses (fixes empty `{}` from `dread_get_logs` / `dread_get_patches`)
-- PsychoticBreakSystem: replace stub-only `Physics.DefaultRaycastLayers` static init with layer mask `-1` to stop loading-screen `TypeInitializationException` spam
-- AudioClipLoader: read `downloadHandler` via reflection to avoid stub `UnityWebRequest.downloadHandler` signature mismatch at runtime
-- AudioClipLoader: map Linux `/home/...` paths to `file:///Z:/home/...` for Wine/Proton (fixes `HTTP/1.1 404 Not Found` when loading OGG files)
-- AudioClipLoader: load OGG via NVorbis direct disk read (bypasses broken UnityWebRequest `file://` on Proton); ships `NVorbis.dll` alongside `Dread.dll`
-- AudioClipLoader: fill decoded PCM via `AudioClip.Create` callback instead of `SetData` (not present in REPO's Unity AudioModule)
-- AudioClipLoader: ship NVorbis dependency DLLs (`System.Memory`, `System.Buffers`, etc.) and resolve them from the plugin folder at runtime
-- Harmony patches: resolve game types at runtime via `AccessTools.TypeByName` and `object` patch parameters to avoid `BadImageFormatException` when DLL was stub-compiled
-- AudioClipLoader: advance NVorbis PCM read position across `AudioClip` callbacks (fixes stuttering/repeating "buggy" ambient and tension sounds)
-- MonsterOverhaul: skip pitch tweaks on already-playing enemy `AudioSource`s; use `SemiFunc.MenuLevel()` guard
-- AudioDread / Tension: defer ambient and fake footstep playback until after level load (menu guard + startup delay)
+- **CI stubs:** `UnityEngine.UI.dll` stub for `RawImage` / `RectTransform`; `JsonUtility.FromJson`; cross-platform `build.ps1` stub detection (PR #146, #161)
+- **Init (Proton):** `DreadSystemInitializer` defers until `UnityEngine.UI` loads; PsychoticBreak uses runtime `RawImage` and layer mask `-1` instead of stub-only `Physics.DefaultRaycastLayers`
+- **Audio (Proton):** NVorbis disk load with dependency DLLs and `PluginDependencyResolver`; Wine `file://` path mapping; PCM via `AudioClip.Create` (no `SetData`); correct PCM read position (no stutter); menu/startup guards for ambient and fake footsteps
+- **Harmony:** runtime `AccessTools.TypeByName` + `object` patch args (no `BadImageFormatException` on stub-built DLLs); monster pitch tweaks skip playing sources
+- **Debug / MCP:** player HP/stamina via Traverse; nested `logs` / `patches` JSON parsing
 
 ### Changed
-- CD pipeline: fixed Thunderstore publish -- `tcli` 0.2.2 does not support `--file` with `--package-version` (mutually exclusive flags)
-- THUNDERSTORE_README.md: updated with Psychotic Break, error telemetry, and CD pipeline documentation
-- Code review: 33 logging fixes applied across `DebugServerSystem`, `MonsterOverhaulSystem`, `AudioDreadSystem`, `PsychoticBreakSystem`, `TensionSystem`, `ErrorReporterSystem`, and `dread-mcp-server/src/index.ts`. Fixes include hot-path guard additions, log level demotions (Info to Verbose), prefix consistency, dead code removal, and lifecycle logging gaps.
-
-### Fixed
-- PsychoticBreakSystem instantiation: extracted nested `FlashlightStateTracker` to standalone file and added `typeof(UnityEngine.UI.RawImage).ToString()` in Plugin.cs to force Unity.UI assembly load before AddComponent calls (PR #158)
-- Audio clip loading: UnityWebRequest audio loads now check `downloadHandler.error` when `req.error` is null, and audio decompression deferred to after first scene load (PR #158)
-- CI build post-merge: removed stale `Application.logMessageReceivedThreaded` from ErrorReporterSystem, fixed `EventHandler` type for `ConfigEntry.SettingChanged`, qualified `LogLevel` to resolve ambiguity, replaced null-forgiving operators with null guards, added `JsonUtility.FromJson` to stubs (PR #161)
-- `build.ps1`: cross-platform compatibility -- auto-detects stub assemblies and passes required MSBuild overrides for Linux/macOS builds without manual flags (PR #146)
+- CD pipeline: fixed Thunderstore publish (`tcli` 0.2.2 `--file` / `--package-version` conflict)
+- THUNDERSTORE_README.md: Psychotic Break, error telemetry, CD pipeline docs
+- Logging: hot-path guards, level demotions, prefix consistency across systems and `dread-mcp-server`
 
 ## [1.5.1] - 2026-05-21
 

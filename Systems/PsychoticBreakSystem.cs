@@ -144,7 +144,8 @@ namespace Dread.Systems
             {
                 _typeInitFailed = true;
                 enabled = false;
-                LoggingService.LogError($"[PsychoticBreak] Disabled after init failure: {ex.InnerException?.Message ?? ex.Message}");
+                var detail = ex.InnerException?.Message ?? ex.Message;
+                LoggingService.LogError($"[PsychoticBreak] Disabled after init failure: {detail}");
             }
         }
 
