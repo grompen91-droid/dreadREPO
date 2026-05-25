@@ -1,5 +1,26 @@
 # Contributing to Dread
 
+## Before you start
+
+| Resource | Purpose |
+|----------|---------|
+| [docs/ROADMAP.md](docs/ROADMAP.md) | Planned backlog with roadmap IDs and GitHub issue links (#163-#175) |
+| [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md) | Create and triage issues with `gh` |
+| [docs/agents/domain.md](docs/agents/domain.md) | How agents should read ADRs, overlay, REPOConfig compat |
+| [docs/agents/triage-labels.md](docs/agents/triage-labels.md) | Label vocabulary (`to-do`, `ready-for-agent`, etc.) |
+| [AGENTS.md](AGENTS.md) | Build, release, and repo conventions for coding agents |
+| `CONTEXT.md` (planned, [#174](https://github.com/grompen91-droid/dreadREPO/issues/174)) | Root glossary and bounded context for contributors and agents |
+
+**Picking work:** Use [docs/ROADMAP.md](docs/ROADMAP.md) **Execution order** (P0 first, then P1/P2). Prefer the linked [GitHub issue](https://github.com/grompen91-droid/dreadREPO/issues) for that row. Comment on the issue before large changes. Reference the roadmap ID in your PR (e.g. `DBG-1`, `ARCH-1`). Suggested starters: #174, #171, #170.
+
+**Verify locally (optional):**
+
+```shell
+pwsh ./scripts/verify-dread.ps1 -Tier 0
+```
+
+See [docs/agents/verify-dread.md](docs/agents/verify-dread.md). Tier 1+ needs a running game with the debug server enabled.
+
 ## Building
 
 ### Prerequisites
@@ -144,4 +165,18 @@ dotnet build Dread.csproj -c Release \
 - Open PRs against `master`.
 - Ensure all CI checks pass (build + analyze).
 - Update `CHANGELOG.md` under `[Unreleased]` with your changes.
-- The version number in `manifest.json` and `Plugin.cs` is bumped on release by CD pipeline.
+- The version number in `manifest.json` and `Plugin.cs` is bumped on release by CD pipeline. Do not edit version strings manually.
+- Link the GitHub issue (`Fixes #NNN` or `Related to #NNN`) when applicable.
+- For behavior or compat changes, update relevant docs (`README.md`, `docs/mod-compatibility.md`, or an ADR under `docs/adr/`).
+
+## Documentation and architecture
+
+- **ADRs** (`docs/adr/`): record non-obvious design decisions (error reporting, debug server, host-only patches).
+- **Mod compatibility** ([docs/mod-compatibility.md](docs/mod-compatibility.md)): update when Harmony or optional-mod behavior changes.
+- **REPOConfig slider workaround** ([docs/repo-config-slider-labels-investigation.md](docs/repo-config-slider-labels-investigation.md)): temporary compat in `Systems/RepoConfigSliderLabelCompat.cs`; prefer upstream fixes (roadmap DBG-4, [#166](https://github.com/grompen91-droid/dreadREPO/issues/166)).
+- **Roadmap** ([docs/ROADMAP.md](docs/ROADMAP.md)): add planned items here and open a matching GitHub issue; close both when shipped.
+- **`CONTEXT.md`** ([#174](https://github.com/grompen91-droid/dreadREPO/issues/174)): root glossary for agents; link from `docs/agents/domain.md` when added.
+
+## Reporting bugs
+
+Use [GitHub issues](https://github.com/grompen91-droid/dreadREPO/issues/new). Include mod list (especially REPOConfig, MenuLib), platform (Windows vs Proton/Linux), Dread version, and `BepInEx/LogOutput.log` excerpts. For overlay or REPOConfig UI bugs, note whether BepInEx Configuration Manager (F1) shows labels correctly.
