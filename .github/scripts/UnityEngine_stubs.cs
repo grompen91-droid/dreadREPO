@@ -108,6 +108,7 @@ namespace UnityEngine
         public float maxDistance { get; set; }
         public float reverbZoneMix { get; set; }
         public float panStereo { get; set; }
+        public bool isPlaying { get; set; }
         public void Play() { }
         public void Stop() { }
     }

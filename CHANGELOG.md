@@ -48,6 +48,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - AudioClipLoader: load OGG via NVorbis direct disk read (bypasses broken UnityWebRequest `file://` on Proton); ships `NVorbis.dll` alongside `Dread.dll`
 - AudioClipLoader: fill decoded PCM via `AudioClip.Create` callback instead of `SetData` (not present in REPO's Unity AudioModule)
 - AudioClipLoader: ship NVorbis dependency DLLs (`System.Memory`, `System.Buffers`, etc.) and resolve them from the plugin folder at runtime
+- Harmony patches: resolve game types at runtime via `AccessTools.TypeByName` and `object` patch parameters to avoid `BadImageFormatException` when DLL was stub-compiled
+- AudioClipLoader: advance NVorbis PCM read position across `AudioClip` callbacks (fixes stuttering/repeating "buggy" ambient and tension sounds)
+- MonsterOverhaul: skip pitch tweaks on already-playing enemy `AudioSource`s; use `SemiFunc.MenuLevel()` guard
+- AudioDread / Tension: defer ambient and fake footstep playback until after level load (menu guard + startup delay)
 
 ### Changed
 - CD pipeline: fixed Thunderstore publish -- `tcli` 0.2.2 does not support `--file` with `--package-version` (mutually exclusive flags)

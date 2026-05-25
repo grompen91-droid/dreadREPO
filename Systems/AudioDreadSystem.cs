@@ -47,7 +47,7 @@ namespace Dread.Systems
 
         private IEnumerator LoadClips()
         {
-            while (!_sceneLoaded)
+            while (!_sceneLoaded || SemiFunc.MenuLevel())
                 yield return null;
 
             yield return AudioClipLoader.LoadClips(ClipNames, (name, clip) =>
@@ -61,6 +61,9 @@ namespace Dread.Systems
 
         private IEnumerator PlayLoop()
         {
+            // Avoid ambient sounds during initial level load / spawn
+            yield return new WaitForSeconds(30f);
+
             while (true)
             {
                 var baseDelay = Random.Range(60f, 180f) / DreadConfig.AudioFrequency.Value;

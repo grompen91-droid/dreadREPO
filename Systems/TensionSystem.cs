@@ -245,9 +245,12 @@ namespace Dread.Systems
 
         private IEnumerator FakeFootstepLoop()
         {
+            yield return new WaitForSeconds(45f);
+
             while (true)
             {
-                if (!DreadConfig.FakeFootstepsEnabled.Value || SemiFunc.MenuLevel() || _footstepClip == null)
+                if (!DreadConfig.FakeFootstepsEnabled.Value || SemiFunc.MenuLevel() || _footstepClip == null
+                    || (object)PlayerController.instance == null)
                 {
                     yield return new WaitForSeconds(1f);
                     continue;

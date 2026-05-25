@@ -21,8 +21,9 @@ $stubsExist = (Test-Path "$stubsDir/UnityEngine.dll") -and (Test-Path "$stubsDir
 $buildArgs = @(
     "build", "Dread.csproj", "-c", "Release", "--nologo", "-v", "quiet"
 )
-if ($stubsExist) {
-    Write-Warning "Building against generated stubs in $stubsDir. For production builds, delete stubs to use real game assemblies."
+$gameDll = "C:\Program Files (x86)\Steam\steamapps\common\REPO\REPO_Data\Managed\UnityEngine.dll"
+if ($stubsExist -and -not (Test-Path $gameDll)) {
+    Write-Warning "Building against generated stubs in $stubsDir. Harmony patches may fail at runtime (BadImageFormatException). Install REPO or set GameDir to real Managed folder for production DLLs."
     $buildArgs += "-p:GameDir=$stubsDir", "-p:BepInExDir=$stubsDir", "-p:DeployToProfile=false", "-p:DeployToDist=false"
 }
 dotnet @buildArgs

@@ -121,6 +121,14 @@ namespace Dread.Systems
                     return false;
 
                 var pcm = samples;
+                if (usedFrames * channels < pcm.Length)
+                {
+                    var trimmed = new float[usedFrames * channels];
+                    Array.Copy(pcm, trimmed, trimmed.Length);
+                    pcm = trimmed;
+                }
+
+                int pcmReadPos = 0;
                 clip = AudioClip.Create(
                     Path.GetFileNameWithoutExtension(clipName),
                     usedFrames,
@@ -129,11 +137,26 @@ namespace Dread.Systems
                     false,
                     data =>
                     {
-                        int toCopy = Math.Min(data.Length, pcm.Length);
-                        if (toCopy > 0)
-                            Array.Copy(pcm, 0, data, 0, toCopy);
+                        int remaining = pcm.Length - pcmReadPos;
+                        if (remaining <= 0)
+                        {
+                            for (int i = 0; i < data.Length; i++)
+                                data[i] = 0f;
+                            return;
+                        }
+
+                        int toCopy = Math.Min(data.Length, remaining);
+                        Array.Copy(pcm, pcmReadPos, data, 0, toCopy);
+                        pcmReadPos += toCopy;
                         for (int i = toCopy; i < data.Length; i++)
                             data[i] = 0f;
+                    },
+                    position =>
+                    {
+                        var pos = (int)(position * channels);
+                        if (pos < 0) pos = 0;
+                        else if (pos > pcm.Length) pos = pcm.Length;
+                        pcmReadPos = pos;
                     });
                 clip.name = clipName;
                 return true;

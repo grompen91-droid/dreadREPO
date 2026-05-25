@@ -594,7 +594,7 @@ namespace Dread.Systems
 
         private IEnumerator LoadAudioClips()
         {
-            while (!_sceneLoaded) yield return null;
+            while (!_sceneLoaded || SemiFunc.MenuLevel()) yield return null;
             var audioDir = Path.Combine(
                 Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
                 "audio");

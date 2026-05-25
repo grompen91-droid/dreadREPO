@@ -2,6 +2,7 @@
 //   EnemyNavMeshAgent — movement component (fields: "agentSpeed", "speedMultiplier")
 //   EnemyParent       — enemy root component (has Start() lifecycle method)
 
+using System;
 using System.Collections;
 using Dread.Config;
 using UnityEngine.AI;
@@ -44,7 +45,7 @@ namespace Dread.Systems
             {
                 yield return new WaitForSeconds(4f);
 
-                if (!DreadConfig.MonsterAudioEnabled.Value || !_inLevel) continue;
+                if (!DreadConfig.MonsterAudioEnabled.Value || !_inLevel || SemiFunc.MenuLevel()) continue;
 
                 var enemies = FindObjectsOfType<EnemyHealth>();
                 LoggingService.LogVerbose($"[MonsterOverhaul] Processing {enemies.Length} enemies...");
@@ -58,12 +59,27 @@ namespace Dread.Systems
             }
         }
 
+        private static bool IsSourcePlaying(AudioSource src)
+        {
+            try
+            {
+                var prop = typeof(AudioSource).GetProperty("isPlaying");
+                return prop != null && (bool)prop.GetValue(src)!;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         private static void ApplyAudioTweaks(GameObject enemy)
         {
             foreach (var src in enemy.GetComponentsInChildren<AudioSource>())
             {
-                src.pitch = Mathf.Clamp(src.pitch * Random.Range(0.5f, 1.5f), 0.3f, 1.5f);
-                src.reverbZoneMix = 1.0f;
+                if (src == null || IsSourcePlaying(src))
+                    continue;
+
+                src.pitch = UnityEngine.Random.Range(0.85f, 1.15f);
                 src.spatialBlend = 1.0f;
             }
         }
@@ -85,7 +101,14 @@ namespace Dread.Systems
 
         internal static void Apply(Harmony harmony)
         {
-            _original = AccessTools.Method(typeof(EnemyNavMeshAgent), "Awake");
+            var type = AccessTools.TypeByName("EnemyNavMeshAgent");
+            _original = type != null ? AccessTools.Method(type, "Awake") : null;
+            if (_original == null)
+            {
+                LoggingService.LogWarning("[Dread] EnemyNavMeshAgent.Awake not found; aggression patch skipped");
+                return;
+            }
+
             harmony.Patch(_original, postfix: new HarmonyMethod(typeof(EnemyNavMeshAgentAwakePatch), nameof(Postfix)));
         }
 
@@ -96,23 +119,21 @@ namespace Dread.Systems
             _original = null;
         }
 
-        private static void Postfix(EnemyNavMeshAgent __instance)
+        private static void Postfix(object __instance)
         {
             if (!DreadConfig.MonsterAggressionEnabled.Value) return;
 
-            var t = Traverse.Create(__instance);
             try
             {
-                var agent = t.Field<NavMeshAgent>("Agent").Value;
+                var agent = Traverse.Create(__instance).Field<NavMeshAgent>("Agent").Value;
                 if (agent == null) return;
 
                 agent.speed *= 1.2f;
                 agent.acceleration *= 1.2f;
-
             }
-            catch
+            catch (Exception ex)
             {
-                // silently skip if fields don't exist
+                LoggingService.LogVerbose($"[Dread] EnemyNavMeshAgent patch skipped: {ex.Message}");
             }
         }
     }
@@ -127,7 +148,14 @@ namespace Dread.Systems
 
         internal static void Apply(Harmony harmony)
         {
-            _original = AccessTools.Method(typeof(PlayerController), "Awake");
+            var type = AccessTools.TypeByName("PlayerController");
+            _original = type != null ? AccessTools.Method(type, "Awake") : null;
+            if (_original == null)
+            {
+                LoggingService.LogWarning("[Dread] PlayerController.Awake not found; crouch speed patch skipped");
+                return;
+            }
+
             harmony.Patch(_original, postfix: new HarmonyMethod(typeof(PlayerControllerAwakePatch), nameof(Postfix)));
         }
 
@@ -138,11 +166,21 @@ namespace Dread.Systems
             _original = null;
         }
 
-        private static void Postfix(PlayerController __instance)
+        private static void Postfix(object __instance)
         {
             if (!DreadConfig.CrouchSpeedBoostEnabled.Value) return;
 
-            __instance.CrouchSpeed *= 1.3f;
+            try
+            {
+                var field = AccessTools.Field(__instance.GetType(), "CrouchSpeed");
+                if (field == null || field.FieldType != typeof(float)) return;
+                var speed = (float)field.GetValue(__instance)!;
+                field.SetValue(__instance, speed * 1.3f);
+            }
+            catch (Exception ex)
+            {
+                LoggingService.LogVerbose($"[Dread] CrouchSpeedBoost patch skipped: {ex.Message}");
+            }
         }
     }
 
@@ -157,7 +195,14 @@ namespace Dread.Systems
 
         internal static void Apply(Harmony harmony)
         {
-            _original = AccessTools.Method(typeof(EnemyDirector), "SetInvestigate");
+            var type = AccessTools.TypeByName("EnemyDirector");
+            _original = type != null ? AccessTools.Method(type, "SetInvestigate") : null;
+            if (_original == null)
+            {
+                LoggingService.LogWarning("[Dread] EnemyDirector.SetInvestigate not found; investigate patch skipped");
+                return;
+            }
+
             var patch = new HarmonyMethod(typeof(EnemyDirectorSetInvestigatePatch), nameof(Prefix));
             harmony.Patch(_original, prefix: patch);
         }
