@@ -5,6 +5,7 @@ using Dread.Systems;
 using HarmonyLib;
 using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Dread
 {
@@ -21,8 +22,12 @@ namespace Dread
         private readonly Harmony _harmony = new(GUID);
         private EventHandler? _logLevelHandler;
 
+        private static bool MonsterPatchesEnabled =>
+            DreadConfig.MonsterAggressionEnabled.Value && !DreadConfig.CompatibilityMode.Value;
+
         private void Awake()
         {
+            PluginDependencyResolver.Register();
             Logger = base.Logger;
             HarmonyInstance = _harmony;
             DreadConfig.Initialize(Config);
@@ -32,28 +37,14 @@ namespace Dread
             _logLevelHandler = (_, _) => LoggingService.SetLevel(DreadConfig.LogLevelEntry.Value);
             DreadConfig.LogLevelEntry.SettingChanged += _logLevelHandler;
 
-            if (DreadConfig.MonsterAggressionEnabled.Value)
-            {
-                EnemyNavMeshAgentAwakePatch.Apply(_harmony);
-                EnemyDirectorSetInvestigatePatch.Apply(_harmony);
-            }
+            ApplyMonsterPatches();
             if (DreadConfig.CrouchSpeedBoostEnabled.Value)
                 PlayerControllerAwakePatch.Apply(_harmony);
-            ErrorReportPatch.Apply(_harmony);
+            if (DreadConfig.DebugConsoleGuardEnabled.Value)
+                DebugConsoleGuardPatch.Apply(_harmony);
 
-            DreadConfig.MonsterAggressionEnabled.SettingChanged += (_, _) =>
-            {
-                if (DreadConfig.MonsterAggressionEnabled.Value)
-                {
-                    EnemyNavMeshAgentAwakePatch.Apply(_harmony);
-                    EnemyDirectorSetInvestigatePatch.Apply(_harmony);
-                }
-                else
-                {
-                    EnemyNavMeshAgentAwakePatch.Remove(_harmony);
-                    EnemyDirectorSetInvestigatePatch.Remove(_harmony);
-                }
-            };
+            DreadConfig.MonsterAggressionEnabled.SettingChanged += (_, _) => ApplyMonsterPatches();
+            DreadConfig.CompatibilityMode.SettingChanged += (_, _) => ApplyMonsterPatches();
 
             DreadConfig.CrouchSpeedBoostEnabled.SettingChanged += (_, _) =>
             {
@@ -63,32 +54,38 @@ namespace Dread
                     PlayerControllerAwakePatch.Remove(_harmony);
             };
 
+            DreadConfig.DebugConsoleGuardEnabled.SettingChanged += (_, _) =>
+            {
+                if (DreadConfig.DebugConsoleGuardEnabled.Value)
+                    DebugConsoleGuardPatch.Apply(_harmony);
+                else
+                    DebugConsoleGuardPatch.Remove(_harmony);
+            };
+
             LoggingService.PrintAsciiArt();
             LoggingService.LogInfo($"{NAME} v{VERSION} loaded.");
+
+            SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
-        private void Start()
+        private void ApplyMonsterPatches()
         {
-            typeof(UnityEngine.UI.RawImage).ToString();
-            int count = 0;
-            if (CreateSystemHost("DreadAudioHost").AddComponent<AudioDreadSystem>() != null) count++;
-            else LoggingService.LogError("Failed to add AudioDreadSystem component.");
-            if (CreateSystemHost("DreadMonsterHost").AddComponent<MonsterOverhaulSystem>() != null) count++;
-            else LoggingService.LogError("Failed to add MonsterOverhaulSystem component.");
-            if (CreateSystemHost("DreadTensionHost").AddComponent<TensionSystem>() != null) count++;
-            else LoggingService.LogError("Failed to add TensionSystem component.");
-            if (CreateSystemHost("DreadErrorHost").AddComponent<ErrorReporterSystem>() != null) count++;
-            else LoggingService.LogError("Failed to add ErrorReporterSystem component.");
-            if (CreateSystemHost("DreadPsychoticBreakHost").AddComponent<PsychoticBreakSystem>() != null) count++;
-            else LoggingService.LogError("Failed to add PsychoticBreakSystem component.");
-            if (CreateSystemHost("DreadTestCrashHost").AddComponent<TestCrashSystem>() != null) count++;
-            else LoggingService.LogError("Failed to add TestCrashSystem component.");
-            if (CreateSystemHost("DreadDebugHost").AddComponent<DebugServerSystem>() != null) count++;
-            else LoggingService.LogError("Failed to add DebugServerSystem component.");
-            if (count > 0)
-                LoggingService.LogInfo($"Systems initialized ({count})");
+            if (MonsterPatchesEnabled)
+            {
+                EnemyNavMeshAgentAwakePatch.Apply(_harmony);
+                EnemyDirectorSetInvestigatePatch.Apply(_harmony);
+            }
             else
-                LoggingService.LogError("All systems failed to initialize.");
+            {
+                EnemyNavMeshAgentAwakePatch.Remove(_harmony);
+                EnemyDirectorSetInvestigatePatch.Remove(_harmony);
+            }
+        }
+
+        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (DreadSystemInitializer.TryInitialize())
+                SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 
         private void OnDestroy()
@@ -96,13 +93,5 @@ namespace Dread
             if (_logLevelHandler != null)
                 DreadConfig.LogLevelEntry.SettingChanged -= _logLevelHandler;
         }
-
-        private static GameObject CreateSystemHost(string name)
-        {
-            var go = new GameObject(name);
-            DontDestroyOnLoad(go);
-            return go;
-        }
     }
 }
-

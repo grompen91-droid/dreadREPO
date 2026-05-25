@@ -16,6 +16,7 @@ namespace UnityEngine
     public class Component : Object
     {
         public T GetComponent<T>() where T : class => null;
+        public Component GetComponent(Type type) => null;
         public T GetComponentInChildren<T>() where T : class => null;
         public GameObject gameObject { get; }
         public Transform transform { get; }
@@ -25,6 +26,7 @@ namespace UnityEngine
         public GameObject() { }
         public GameObject(string name) { }
         public T AddComponent<T>() where T : Component => null;
+        public Component AddComponent(Type componentType) => null;
         public T[] GetComponentsInChildren<T>() where T : class => null;
         public Transform transform { get; }
     }
@@ -106,13 +108,20 @@ namespace UnityEngine
         public float maxDistance { get; set; }
         public float reverbZoneMix { get; set; }
         public float panStereo { get; set; }
+        public bool isPlaying { get; set; }
         public void Play() { }
         public void Stop() { }
     }
     public class AudioClip : Object
     {
+        public delegate void PCMReaderCallback(float[] data);
+        public delegate void PCMSetPositionCallback(int position);
+
         public float length { get; }
         public string name { get; set; }
+        public static AudioClip Create(string name, int lengthSamples, int channels, int frequency, bool stream) => null!;
+        public static AudioClip Create(string name, int lengthSamples, int channels, int frequency, bool stream, PCMReaderCallback pcmreadercallback) => null!;
+        public static AudioClip Create(string name, int lengthSamples, int channels, int frequency, bool stream, PCMReaderCallback pcmreadercallback, PCMSetPositionCallback pcmsetpositioncallback) => null!;
     }
     public enum AudioRolloffMode { Linear }
     public enum AudioType { OGGVORBIS }
@@ -207,6 +216,8 @@ namespace UnityEngine
         public static string version { get; }
         public static string unityVersion { get; }
         public static RuntimePlatform platform { get; }
+        public delegate void LogCallback(string logString, string stackTrace, LogType type);
+        public static event LogCallback logMessageReceived;
     }
     public enum RuntimePlatform { WindowsPlayer, OSXPlayer, LinuxPlayer }
     public static class JsonUtility
@@ -246,6 +257,64 @@ namespace UnityEngine
         public static float dpi => 0f;
         public static FullScreenMode fullScreenMode => FullScreenMode.FullScreenWindow;
     }
+
+    public struct Rect
+    {
+        public float x, y, width, height;
+        public float yMin { get; }
+        public Rect(float x, float y, float width, float height)
+        {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+            yMin = y;
+        }
+    }
+
+    public class GUIContent
+    {
+        public static GUIContent none { get; } = new GUIContent();
+    }
+
+    public class GUIStyleState
+    {
+        public Texture2D? background { get; set; }
+        public Color textColor { get; set; }
+    }
+
+    public class GUIStyle
+    {
+        public GUIStyleState normal { get; } = new GUIStyleState();
+        public int fontSize { get; set; }
+        public bool wordWrap { get; set; }
+        public GUIStyle() { }
+        public GUIStyle(GUIStyle other) { }
+    }
+
+    public class GUISkin
+    {
+        public GUIStyle box { get; } = new GUIStyle();
+        public GUIStyle label { get; } = new GUIStyle();
+    }
+
+    public static class GUI
+    {
+        public static GUISkin skin { get; } = new GUISkin();
+        public static void Box(Rect position, GUIContent content, GUIStyle style) { }
+        public static void Label(Rect position, string text) { }
+        public static void Label(Rect position, string text, GUIStyle style) { }
+    }
+
+    public static class Input
+    {
+        public static bool GetKeyDown(KeyCode key) => false;
+    }
+
+    public enum KeyCode
+    {
+        F10 = 290
+    }
 }
 namespace UnityEngine.Events
 {
@@ -267,24 +336,6 @@ namespace UnityEngine.SceneManagement
     }
     public enum LoadSceneMode { Single, Additive }
 }
-namespace UnityEngine.UI
-{
-    public class RawImage : MonoBehaviour
-    {
-        public Color color { get; set; }
-        public RectTransform rectTransform { get; }
-        public Texture2D texture { get; set; }
-    }
-    public class RectTransform : Component
-    {
-        public Vector2 sizeDelta { get; set; }
-        public Vector2 anchoredPosition { get; set; }
-        public Vector2 localScale { get; set; }
-        public Vector2 anchorMin { get; set; }
-        public Vector2 anchorMax { get; set; }
-    }
-}
-
 namespace UnityEngine.AI
 {
     public class NavMeshAgent : Behaviour

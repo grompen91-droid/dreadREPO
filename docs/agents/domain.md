@@ -49,3 +49,7 @@ If the concept you need isn't in the glossary yet, that's a signal -- either you
 If your output contradicts an existing ADR, surface it explicitly rather than silently overriding:
 
 > _Contradicts ADR-0007 (event-sourced orders) -- but worth reopening because..._
+
+## In-game debug overlay
+
+`DebugOverlaySystem` (config `11. Debug Overlay` / `DebugOverlayEnabled`) draws an IMGUI HUD during runs. Live values come from `DreadRuntimeState`, populated by `TensionSystem`, `PsychoticBreakSystem`, and `AudioDreadSystem` on their existing 0.5s cadence. F10 toggles visibility when the config entry is on. For remote tooling, prefer `DebugServerSystem` (ADR-0013).

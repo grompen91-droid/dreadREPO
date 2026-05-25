@@ -29,23 +29,44 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ![Status](https://img.shields.io/badge/status-development-yellow?style=flat-square)
 
+> **Highlight:** Honest mod compatibility docs, opt-in telemetry, Compatibility mode for broken profiles, and host-only monster patch guards.
+
 ### Added
-- Debug server: `DebugServerSystem` -- TCP server on `127.0.0.1` for AI-assisted debugging. Supports 7 commands (`ping`, `get_state`, `get_config`, `set_config`, `get_patches`, `get_logs`, `shutdown`) via newline-delimited JSON. Config entries under "8. Debug Server" (`DebugServerEnabled`, `DebugServerPort`). Default disabled. (ADR-0013)
+- **Verify automation:** `scripts/verify-dread.ps1` (Tier 0 static, optional Tier 1 TCP, Tier 2 log patterns), `docs/agents/verify-dread.md` runbook, `docs/agents/verify-dread-checklist.json`
+- **Debug APIs:** `TestCrashSystem.TriggerForDebug()`, `PsychoticBreakSystem.ForceEpisodeForDebug()` for debug server / MCP
+- **Debug overlay:** `DebugOverlaySystem` IMGUI HUD (section 11. Debug Overlay, `DebugOverlayEnabled` default off). Shows nearest enemy distance, tension/adrenaline/panic sprint, psychotic break readiness with block reasons, audio clip count and next play ETA, config flags, and Dread Harmony patch count. F10 toggles visibility at runtime when enabled. Hidden on menu levels via `SemiFunc.MenuLevel()`.
+- **Runtime state:** `DreadRuntimeState` snapshot updated by tension, psychotic break, and audio systems for overlay and tooling.
+- **Compatibility:** `docs/mod-compatibility.md` with known-mod table, isolation test, Proton/DLL notes, DebugConsoleUI guidance, and manual test matrix
+- **Config:** `CompatibilityMode` (ambient audio only), `CompatibilitySkipConflictingPatches`, `DebugConsoleGuardEnabled` (section 10. Compatibility)
+- **Harmony:** `HarmonyPatchCompat` for `IsMasterClient()` gates and optional skip when another mod already patched the target method
+- **Host-only:** `EnemyNavMeshAgent` and `EnemyDirector` patches no-op on non-host clients (ADR-0004)
+- Debug server: `DebugServerSystem` -- TCP server on `127.0.0.1` for AI-assisted debugging. Supports 11 commands (`ping`, `get_state`, `get_config`, `set_config`, `get_patches`, `get_logs`, `shutdown`, `verify`, `trigger_test_crash`, `force_psychotic_break`, `get_runtime_state`) via newline-delimited JSON. Config entries under "8. Debug Server" (`DebugServerEnabled`, `DebugServerPort`). Default disabled. (ADR-0013)
 - Configurable logging: `LoggingService` static wrapper with `LogLevel` enum (None/Error/Debug/Verbose), level-gated log methods, Verbose prefixing, and ASCII art on mod injection. Config entry under "9. Logging" (`LogLevel`, default Debug). All ~110 existing `Plugin.Logger.Log*` calls migrated to `LoggingService.Log*`. (ADR-0014)
-- MCP server: `dread-mcp-server` TypeScript MCP server using `@modelcontextprotocol/sdk` wrapping the debug TCP protocol as 7 MCP tools (`dread_ping`, `dread_get_state`, `dread_get_config`, `dread_set_config`, `dread_get_patches`, `dread_get_logs`, `dread_shutdown`) via stdio transport. Config via env vars (`DREAD_HOST`, `DREAD_PORT`, `DREAD_TIMEOUT`). Supports `json` and `text` response formats. (ADR-0013)
+- MCP server: `dread-mcp-server` TypeScript MCP server using `@modelcontextprotocol/sdk` wrapping the debug TCP protocol as 11 MCP tools (`dread_ping`, `dread_get_state`, `dread_get_config`, `dread_set_config`, `dread_get_patches`, `dread_get_logs`, `dread_shutdown`, `dread_verify`, `dread_trigger_test_crash`, `dread_force_psychotic_break`, `dread_get_runtime_state`) via stdio transport. Config via env vars (`DREAD_HOST`, `DREAD_PORT`, `DREAD_TIMEOUT`). Supports `json` and `text` response formats. (ADR-0013)
 - `FlashlightStateTracker.cs`: standalone MonoBehaviour extracted from nested class in PsychoticBreakSystem to fix Unity type registration failure preventing AddComponent. (PR #158)
 - `breath2.ogg`, `breath3.ogg`: audio files for TensionSystem breath variant loading (referenced since v1.4.0 but missing)
 
 ### Changed
-- CD pipeline: fixed Thunderstore publish -- `tcli` 0.2.2 does not support `--file` with `--package-version` (mutually exclusive flags)
-- THUNDERSTORE_README.md: updated with Psychotic Break, error telemetry, and CD pipeline documentation
-- Code review: 33 logging fixes applied across `DebugServerSystem`, `MonsterOverhaulSystem`, `AudioDreadSystem`, `PsychoticBreakSystem`, `TensionSystem`, `ErrorReporterSystem`, and `dread-mcp-server/src/index.ts`. Fixes include hot-path guard additions, log level demotions (Info to Verbose), prefix consistency, dead code removal, and lifecycle logging gaps.
+- **Debug server / MCP:** `get_config` returns flat keys plus grouped `sections` with `debugKey`; `set_config` supports all DreadConfig entries including `debugServer.*`, `overlay.enabled`, `compatibility.*`, `testing.crash`, `logging.level`
+- **Docs:** README and THUNDERSTORE compatibility sections no longer claim conflict-free operation; `mod-profile-conflicts.md` points to `mod-compatibility.md`
+- **Error reporting:** default `ErrorReportingEnabled` to **false** (opt-in); hooks `Application.logMessageReceived` instead of Harmony on `Debug.LogError` / `Debug.LogException` (ADR-0010)
+- **Debug console guard:** config-toggle `DebugConsoleGuardEnabled` (default on), wired in `Plugin.cs`
+- **Compatibility mode:** disables monster Harmony patches, adrenaline/panic sprint mutation, and psychotic break; keeps ambient audio
+- **Harmony priority:** `Priority.Last` on enemy speed postfix, `Priority.First` on investigate prefix
+- CD pipeline: fixed Thunderstore publish (`tcli` 0.2.2 `--file` / `--package-version` conflict)
+- THUNDERSTORE_README.md: Psychotic Break, error telemetry, CD pipeline docs
+- Logging: hot-path guards, level demotions, prefix consistency across systems and `dread-mcp-server`
 
 ### Fixed
-- PsychoticBreakSystem instantiation: extracted nested `FlashlightStateTracker` to standalone file and added `typeof(UnityEngine.UI.RawImage).ToString()` in Plugin.cs to force Unity.UI assembly load before AddComponent calls (PR #158)
-- Audio clip loading: UnityWebRequest audio loads now check `downloadHandler.error` when `req.error` is null, and audio decompression deferred to after first scene load (PR #158)
-- CI build post-merge: removed stale `Application.logMessageReceivedThreaded` from ErrorReporterSystem, fixed `EventHandler` type for `ConfigEntry.SettingChanged`, qualified `LogLevel` to resolve ambiguity, replaced null-forgiving operators with null guards, added `JsonUtility.FromJson` to stubs (PR #161)
-- `build.ps1`: cross-platform compatibility -- auto-detects stub assemblies and passes required MSBuild overrides for Linux/macOS builds without manual flags (PR #146)
+- **TestCrash:** trigger on `SettingChanged` for ConfigurationManager button (no longer relies on `Update` polling)
+- **PsychoticBreak / AudioDread:** seed `_sceneLoaded` from active scene on `Start` so audio loads without waiting for a second scene load
+- **CI stubs:** `UnityEngine.UI.dll` stub for `RawImage` / `RectTransform`; `JsonUtility.FromJson`; cross-platform `build.ps1` stub detection (PR #146, #161)
+- **Init (Proton):** `DreadSystemInitializer` defers until `UnityEngine.UI` loads; PsychoticBreak uses runtime `RawImage` and layer mask `-1` instead of stub-only `Physics.DefaultRaycastLayers`
+- **Audio (Proton):** NVorbis disk load with dependency DLLs and `PluginDependencyResolver`; Wine `file://` path mapping; PCM via `AudioClip.Create` (no `SetData`); correct PCM read position (no stutter); menu/startup guards for ambient and fake footsteps
+- **Harmony:** runtime `AccessTools.TypeByName` + `object` patch args (no `BadImageFormatException` on stub-built DLLs); monster pitch tweaks skip playing sources
+- **Debug / MCP:** player HP/stamina via Traverse; nested `logs` / `patches` JSON parsing
+- **ErrorReporter:** ignore `DebugConsoleUI` / `DebugTester` spam, dedupe reports, cap processing per frame, capture game state once per batch (fixes lag when other mods flood `Debug.LogException`)
+- **Debug console:** Harmony finalizer on `DebugConsoleUI.Update` suppresses broken `SemiFunc.DebugTester` `NullReferenceException` spam (stops console flood at source)
 
 ## [1.5.1] - 2026-05-21
 

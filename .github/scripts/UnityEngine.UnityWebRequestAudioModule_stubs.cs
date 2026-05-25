@@ -10,6 +10,7 @@ namespace UnityEngine.Networking
     }
     public class DownloadHandlerAudioClip
     {
+        public string error { get; set; }
         public static AudioClip GetContent(UnityWebRequest req) => null;
     }
 }

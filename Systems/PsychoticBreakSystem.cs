@@ -8,7 +8,6 @@ using HarmonyLib;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 namespace Dread.Systems
@@ -40,15 +39,17 @@ namespace Dread.Systems
         private bool _hasPlayedPeakScream;
 
         private Canvas? _overlayCanvas;
-        private RawImage? _darknessImage;
-        private RawImage? _vignetteImage;
+        private Component? _darknessImage;
+        private Component? _vignetteImage;
         private Texture2D? _vignetteTexture;
 
         private EnemyHealth[]? _cachedEnemies;
         private float _phantomSoundAccumulator;
         private bool _sceneLoaded;
+        private bool _typeInitFailed;
 
-        private static readonly int VisionBlockMask = Physics.DefaultRaycastLayers;
+        // -1 = all layers; avoids stub-only Physics.DefaultRaycastLayers at type init
+        private const int VisionBlockMask = -1;
 
         private void Start()
         {
@@ -57,8 +58,10 @@ namespace Dread.Systems
             _mainCam = Camera.main;
 
             RefreshConfig();
+            OnSceneLoaded(SceneManager.GetActiveScene(), LoadSceneMode.Single);
 
             DreadConfig.PsychoticBreakEnabled.SettingChanged += OnConfigChanged;
+            DreadConfig.CompatibilityMode.SettingChanged += OnConfigChanged;
             DreadConfig.PsychoticBreakTriggerChance.SettingChanged += OnConfigChanged;
             DreadConfig.PsychoticBreakDuration.SettingChanged += OnConfigChanged;
             DreadConfig.PsychoticBreakOncePerMatch.SettingChanged += OnConfigChanged;
@@ -88,6 +91,7 @@ namespace Dread.Systems
             DreadConfig.PsychoticBreakTriggerChance.SettingChanged -= OnConfigChanged;
             DreadConfig.PsychoticBreakDuration.SettingChanged -= OnConfigChanged;
             DreadConfig.PsychoticBreakOncePerMatch.SettingChanged -= OnConfigChanged;
+            DreadConfig.CompatibilityMode.SettingChanged -= OnConfigChanged;
 
             if (_peakScreamClip != null) Destroy(_peakScreamClip);
             if (_distantScreamClip != null) Destroy(_distantScreamClip);
@@ -133,24 +137,123 @@ namespace Dread.Systems
 
         private void Update()
         {
+            if (_typeInitFailed) return;
+
+            try
+            {
+                UpdateInternal();
+            }
+            catch (TypeInitializationException ex)
+            {
+                _typeInitFailed = true;
+                enabled = false;
+                var detail = ex.InnerException?.Message ?? ex.Message;
+                LoggingService.LogError($"[PsychoticBreak] Disabled after init failure: {detail}");
+            }
+        }
+
+        private void UpdateInternal()
+        {
             if (_episodeActive)
             {
+                if (DreadConfig.CompatibilityMode.Value)
+                {
+                    EndEpisode();
+                    return;
+                }
+
                 UpdateEpisode();
+                PublishRuntimeState();
                 return;
             }
 
-            if (!_enabled || SemiFunc.MenuLevel()) return;
-            if (_oncePerMatch && _hasTriggeredThisMatch) return;
+            if (!_enabled || DreadConfig.CompatibilityMode.Value || SemiFunc.MenuLevel())
+            {
+                PublishRuntimeState();
+                return;
+            }
+            if (_oncePerMatch && _hasTriggeredThisMatch)
+            {
+                PublishRuntimeState();
+                return;
+            }
 
-            if (Time.time < _nextTriggerCheck) return;
+            if (Time.time < _nextTriggerCheck)
+            {
+                PublishRuntimeState();
+                return;
+            }
             _nextTriggerCheck = Time.time + 2f;
 
             UpdateThreatTimestamps();
 
-            if (!CanTrigger()) return;
+            if (!CanTrigger())
+            {
+                PublishRuntimeState();
+                return;
+            }
 
             if (Random.value < _triggerChance)
                 StartEpisode();
+
+            PublishRuntimeState();
+        }
+
+        private void PublishRuntimeState()
+        {
+            DreadRuntimeState.PsychoticBreakEnabled = _enabled && !DreadConfig.CompatibilityMode.Value;
+            DreadRuntimeState.PsychoticBreakEpisodeActive = _episodeActive;
+            DreadRuntimeState.PsychoticBreakEpisodeTimer = _episodeTimer;
+            DreadRuntimeState.PsychoticBreakEpisodeDuration = _episodeDuration;
+            var nextCheck = _nextTriggerCheck - Time.time;
+            DreadRuntimeState.PsychoticBreakNextCheckIn = nextCheck < 0f ? 0f : nextCheck;
+            DreadRuntimeState.PsychoticBreakThreatCount = _recentThreatTimestamps.Count;
+            DreadRuntimeState.PsychoticBreakClipsLoaded = AreClipsLoaded();
+
+            if (_episodeActive)
+            {
+                DreadRuntimeState.PsychoticBreakCanTrigger = false;
+                DreadRuntimeState.PsychoticBreakBlockReason = "episode active";
+                return;
+            }
+
+            var blockReason = GetTriggerBlockReason();
+            DreadRuntimeState.PsychoticBreakBlockReason = blockReason ?? "";
+            DreadRuntimeState.PsychoticBreakCanTrigger = blockReason == null;
+        }
+
+        private bool AreClipsLoaded()
+        {
+            return _peakScreamClip != null && _distantScreamClip != null
+                && _threatScreamClip != null && _footstepClip != null;
+        }
+
+        private string? GetTriggerBlockReason()
+        {
+            if (!_enabled)
+                return "disabled";
+            if (DreadConfig.CompatibilityMode.Value)
+                return "compatibility mode";
+            if (SemiFunc.MenuLevel())
+                return "menu level";
+            if (_oncePerMatch && _hasTriggeredThisMatch)
+                return "once per match";
+            if (!AreClipsLoaded())
+                return "clips not loaded";
+
+            var pc = PlayerController.instance;
+            if ((object)pc == null)
+                return "no player";
+            if (!IsSolo(pc))
+                return "not solo";
+            if (_recentThreatTimestamps.Count == 0)
+                return "no recent threat";
+            if (IsAnyEnemyVisible(_cachedEnemies))
+                return "visible enemy";
+            if (!IsCrouching(pc))
+                return "not crouching";
+
+            return null;
         }
 
         private void UpdateThreatTimestamps()
@@ -180,6 +283,7 @@ namespace Dread.Systems
             if (_recentThreatTimestamps.Count == 0) return false;
             if (IsAnyEnemyVisible(_cachedEnemies)) return false;
             if (!IsCrouching(pc)) return false;
+            if (!AreClipsLoaded()) return false;
 
             return true;
         }
@@ -244,6 +348,15 @@ namespace Dread.Systems
                 Destroy(_distantScreamSource.gameObject);
                 _distantScreamSource = null;
             }
+        }
+
+        /// <summary>Debug server / MCP entry point to force-start an episode.</summary>
+        public void ForceEpisodeForDebug()
+        {
+            if (_episodeActive)
+                return;
+
+            StartEpisode();
         }
 
         private void StartEpisode()
@@ -407,6 +520,13 @@ namespace Dread.Systems
         {
             if (_overlayCanvas != null) return;
 
+            var rawImageType = ResolveRawImageType();
+            if (rawImageType == null)
+            {
+                LoggingService.LogError("[PsychoticBreak] UnityEngine.UI.RawImage not available");
+                return;
+            }
+
             var go = new GameObject("DreadPsychoticBreakOverlay");
             DontDestroyOnLoad(go);
 
@@ -416,19 +536,15 @@ namespace Dread.Systems
 
             var darkGo = new GameObject("Darkness");
             darkGo.transform.SetParent(go.transform, false);
-            _darknessImage = darkGo.AddComponent<RawImage>();
-            _darknessImage.color = new Color(0, 0, 0, 0);
-            _darknessImage.rectTransform.anchorMin = Vector2.zero;
-            _darknessImage.rectTransform.anchorMax = Vector2.one;
-            _darknessImage.rectTransform.sizeDelta = Vector2.zero;
+            _darknessImage = AddRuntimeComponent(darkGo, rawImageType);
+            SetRawImageColor(_darknessImage, new Color(0, 0, 0, 0));
+            StretchToParent(_darknessImage);
 
             var vigGo = new GameObject("Vignette");
             vigGo.transform.SetParent(go.transform, false);
-            _vignetteImage = vigGo.AddComponent<RawImage>();
-            _vignetteImage.color = new Color(0, 0, 0, 0);
-            _vignetteImage.rectTransform.anchorMin = Vector2.zero;
-            _vignetteImage.rectTransform.anchorMax = Vector2.one;
-            _vignetteImage.rectTransform.sizeDelta = Vector2.zero;
+            _vignetteImage = AddRuntimeComponent(vigGo, rawImageType);
+            SetRawImageColor(_vignetteImage, new Color(0, 0, 0, 0));
+            StretchToParent(_vignetteImage);
 
             _vignetteTexture = new Texture2D(256, 256, TextureFormat.RGBA32, false);
             for (int x = 0; x < 256; x++)
@@ -443,7 +559,53 @@ namespace Dread.Systems
                 }
             }
             _vignetteTexture.Apply();
-            _vignetteImage.texture = _vignetteTexture;
+            SetRawImageTexture(_vignetteImage, _vignetteTexture);
+        }
+
+        private static Type? ResolveRawImageType()
+        {
+            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                if (!string.Equals(asm.GetName().Name, "UnityEngine.UI", StringComparison.Ordinal))
+                    continue;
+                return asm.GetType("UnityEngine.UI.RawImage");
+            }
+
+            return Type.GetType("UnityEngine.UI.RawImage, UnityEngine.UI");
+        }
+
+        private static Component AddRuntimeComponent(GameObject go, Type componentType)
+        {
+            return go.AddComponent(componentType);
+        }
+
+        private static void StretchToParent(Component rawImage)
+        {
+            var rectTransformType = rawImage.GetType().Assembly.GetType("UnityEngine.RectTransform")
+                ?? Type.GetType("UnityEngine.RectTransform, UnityEngine.CoreModule");
+            if (rectTransformType == null) return;
+
+            var rectTransform = rawImage.GetComponent(rectTransformType);
+            if (rectTransform == null) return;
+
+            var anchorMin = rectTransformType.GetProperty("anchorMin");
+            var anchorMax = rectTransformType.GetProperty("anchorMax");
+            var sizeDelta = rectTransformType.GetProperty("sizeDelta");
+            anchorMin?.SetValue(rectTransform, Vector2.zero, null);
+            anchorMax?.SetValue(rectTransform, Vector2.one, null);
+            sizeDelta?.SetValue(rectTransform, Vector2.zero, null);
+        }
+
+        private static void SetRawImageColor(Component rawImage, Color color)
+        {
+            var colorProp = rawImage.GetType().GetProperty("color");
+            colorProp?.SetValue(rawImage, color, null);
+        }
+
+        private static void SetRawImageTexture(Component rawImage, Texture2D texture)
+        {
+            var textureProp = rawImage.GetType().GetProperty("texture");
+            textureProp?.SetValue(rawImage, texture, null);
         }
 
         private void CleanupOverlay()
@@ -466,13 +628,13 @@ namespace Dread.Systems
         private void SetDarknessAlpha(float alpha)
         {
             if (_darknessImage != null)
-                _darknessImage.color = new Color(0, 0, 0, Mathf.Clamp01(alpha));
+                SetRawImageColor(_darknessImage, new Color(0, 0, 0, Mathf.Clamp01(alpha)));
         }
 
         private void SetVignetteAlpha(float alpha)
         {
             if (_vignetteImage != null)
-                _vignetteImage.color = new Color(0, 0, 0, Mathf.Clamp01(alpha));
+                SetRawImageColor(_vignetteImage, new Color(0, 0, 0, Mathf.Clamp01(alpha)));
         }
 
         private static void DisableFlashlight(PlayerController pc)
@@ -528,7 +690,7 @@ namespace Dread.Systems
 
         private IEnumerator LoadAudioClips()
         {
-            while (!_sceneLoaded) yield return null;
+            while (!_sceneLoaded || SemiFunc.MenuLevel()) yield return null;
             var audioDir = Path.Combine(
                 Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
                 "audio");
@@ -543,27 +705,39 @@ namespace Dread.Systems
 
             foreach (var (file, label, setter) in clipDefs)
             {
-                var path = Path.Combine(audioDir, file);
+                var path = Path.GetFullPath(Path.Combine(audioDir, file));
                 if (!File.Exists(path))
                 {
                     LoggingService.LogWarning($"[PsychoticBreak] Missing audio: {path}");
                     continue;
                 }
 
+                if (AudioClipLoader.TryLoadWithNvorbis(path, file, out var clip))
+                {
+                    setter(clip);
+                    LoggingService.LogInfo($"[PsychoticBreak] Loaded {label}: {file}");
+                    continue;
+                }
+
                 using var req = UnityWebRequestMultimedia.GetAudioClip(
-                    "file:///" + path.Replace('\\', '/'), AudioType.OGGVORBIS);
+                    AudioClipLoader.ToFileUri(path), AudioType.OGGVORBIS);
                 yield return req.SendWebRequest();
 
                 if (req.result == UnityWebRequest.Result.Success)
                 {
-                    var clip = DownloadHandlerAudioClip.GetContent(req);
-                    clip.name = file;
-                    setter(clip);
+                    var webClip = DownloadHandlerAudioClip.GetContent(req);
+                    webClip.name = file;
+                    setter(webClip);
                     LoggingService.LogInfo($"[PsychoticBreak] Loaded {label}: {file}");
                 }
                 else
                 {
-                    var errorMsg = string.IsNullOrEmpty(req.error) ? "no error details" : req.error;
+                    var handlerError = AudioClipLoader.GetRequestHandlerError(req);
+                    var errorMsg = !string.IsNullOrEmpty(req.error)
+                        ? req.error
+                        : !string.IsNullOrEmpty(handlerError)
+                            ? handlerError
+                            : "no error details";
                     LoggingService.LogWarning($"[PsychoticBreak] Failed {label}: {errorMsg}");
                 }
             }

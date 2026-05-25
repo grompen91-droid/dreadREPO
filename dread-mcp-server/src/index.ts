@@ -219,27 +219,25 @@ server.registerTool(
   "dread_get_config",
   {
     title: "Get Dread Mod Configuration",
-    description: `Retrieve all BepInEx configuration entries for the Dread mod, organized by section.
+    description: `Retrieve Dread mod configuration.
 
-Returns every config key with its current value, type, acceptable range (if applicable), and description.
+Returns flat camelCase keys (e.g. audioEnabled, debugServerEnabled) plus a grouped
+\`sections\` array. Each section entry includes \`debugKey\` values used by set_config
+(section/key pairs like section="audio", key="enabled").
 
 Args:
   - response_format ('json' | 'text'): Output format (default: 'json')
-  - section (string, optional): Filter to a specific config section (e.g., "8. Debug Server")
-
-Returns:
-  For JSON format: Object with sections as keys, each containing key-value entries with type/range/description
+  - section (string, optional): Filter grouped sections by name (e.g. "8. Debug Server")
 
 Examples:
   - Use when: "Show me all current configuration values"
   - Use when: "What debug server settings are configured?"
-  - Use when: "What are the audio-related config options currently set to?"
 
 Error Handling:
   - Returns error if server not reachable`,
     inputSchema: z.object({
       response_format: z.enum(["json", "text"]).default("json").describe("Output format: 'json' for structured data or 'text' for human-readable summary"),
-      section: z.string().optional().describe("Filter to a specific section (e.g., '8. Debug Server', '1. AudioDread')"),
+      section: z.string().optional().describe("Filter grouped sections (e.g. '8. Debug Server', '1. Audio Dread')"),
     }).strict(),
     annotations: {
       readOnlyHint: true,
@@ -250,33 +248,37 @@ Error Handling:
   },
   async ({ response_format, section }) => {
     return toolCall("get_config", {}, (response) => {
-      const config = response.data as Record<string, Record<string, unknown>> ?? {};
-      const sections = section
-        ? Object.fromEntries(Object.entries(config).filter(([k]) => k.toLowerCase() === section.toLowerCase()))
-        : config;
-
-      if (Object.keys(sections).length === 0) {
-        return { content: [{ type: "text", text: section ? `No config section found: '${section}'` : "No config entries found" }] };
-      }
+      const config = response.data as Record<string, unknown> ?? {};
+      const sections = (config.sections as Array<Record<string, unknown>> | undefined) ?? [];
+      const filteredSections = section
+        ? sections.filter((s) => String(s.section ?? "").toLowerCase() === section.toLowerCase())
+        : sections;
 
       if (response_format === "text") {
-        const lines = ["# Dread Mod Configuration", ""];
-        for (const [secName, entries] of Object.entries(sections)) {
-          const entryMap = entries as Record<string, unknown>;
-          lines.push(`## ${secName}`);
-          for (const [key, val] of Object.entries(entryMap)) {
-            const v = val as Record<string, unknown>;
-            lines.push(`- **${key}**: \`${v.value ?? "N/A"}\``);
-            if (v.type) lines.push(`  - Type: ${v.type}`);
-            if (v.description) lines.push(`  - ${v.description}`);
+        const lines = ["# Dread Mod Configuration", "", "## Flat keys"];
+        for (const [key, val] of Object.entries(config)) {
+          if (key === "sections") continue;
+          lines.push(`- **${key}**: \`${val}\``);
+        }
+        lines.push("");
+        for (const sec of filteredSections) {
+          lines.push(`## ${sec.section ?? "unknown"}`);
+          const keys = (sec.keys as Array<Record<string, unknown>> | undefined) ?? [];
+          for (const entry of keys) {
+            lines.push(`- **${entry.key}** (\`${entry.debugKey}\`): \`${entry.value}\``);
+            if (entry.restartRequired) lines.push("  - Restart required");
           }
           lines.push("");
         }
         return { content: [{ type: "text", text: lines.join("\n") }] };
       }
 
+      const payload = section
+        ? { ...config, sections: filteredSections }
+        : config;
+
       return {
-        content: [{ type: "text", text: JSON.stringify(sections, null, 2) }],
+        content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
       };
     });
   },
@@ -286,28 +288,31 @@ server.registerTool(
   "dread_set_config",
   {
     title: "Set Dread Mod Configuration",
-    description: `Modify a BepInEx configuration entry at runtime. Changes take effect immediately (BepInEx fires SettingChanged events).
+    description: `Modify a Dread config entry at runtime via debug-key section/key pairs.
+
+Use the \`debugKey\` from get_config sections, split on the first dot:
+  - debugKey "audio.enabled"     -> section="audio", key="enabled"
+  - debugKey "errorReporting"    -> section="errorReporting", key=""
+  - debugKey "debugServer.enabled" -> section="debugServer", key="enabled"
+
+Restart-required keys (debugServer.enabled, debugServer.port) return a warning in the response.
 
 Args:
-  - section (string, required): Config section name (e.g., "8. Debug Server")
-  - key (string, required): Config entry key (e.g., "DebugServerEnabled")
-  - value (string, required): New value as string (will be parsed to the correct type)
-  - response_format ('json' | 'text'): Output format (default: 'text')
-
-The value is parsed according to the entry's type (bool, float, int, string).
+  - section (string, required): Debug key prefix (e.g. "audio", "psychoticBreak", "debugServer")
+  - key (string, required): Debug key suffix (e.g. "enabled", "volume"). Use "" for bare keys like errorReporting.
+  - value (string, required): New value as string (parsed to bool/float/int/LogLevel)
 
 Examples:
-  - Use when: "Enable verbose logging by setting LogVerbosity to 2"
-  - Use when: "Disable the tension system"
-  - Use when: "Change the debug server port to 15433"
+  - section="audio", key="enabled", value="false"
+  - section="overlay", key="enabled", value="true"
+  - section="psychoticBreak", key="enabled", value="true"
 
 Error Handling:
-  - Returns error code -3 if the value cannot be parsed to the expected type
-  - Returns error if the section/key is not found
+  - Returns error code -3 if value cannot be parsed or key is unknown
   - Returns error if server not reachable`,
     inputSchema: z.object({
-      section: z.string().min(1).describe("Config section name (e.g., '8. Debug Server')"),
-      key: z.string().min(1).describe("Config entry key (e.g., 'DebugServerEnabled')"),
+      section: z.string().describe("Debug key prefix (e.g. 'audio', 'debugServer', 'errorReporting')"),
+      key: z.string().default("").describe("Debug key suffix (e.g. 'enabled'). Empty for bare keys."),
       value: z.string().describe("New value as string (parsed to the correct type automatically)"),
       response_format: z.enum(["json", "text"]).default("text").describe("Output format"),
     }).strict(),
@@ -320,12 +325,16 @@ Error Handling:
   },
   async ({ section, key, value, response_format }) => {
     return toolCall("set_config", { section, key, value }, (response) => {
-      const msg = `Config updated: ${section}.${key} = ${value}`;
+      const data = response.data as Record<string, unknown> | undefined;
+      const warning = data?.warning as string | undefined;
+      const msg = warning
+        ? `Config updated: ${section}.${key} = ${value}. ${warning}`
+        : `Config updated: ${section}.${key} = ${value}`;
       if (response_format === "text") {
         return { content: [{ type: "text", text: msg }] };
       }
       return {
-        content: [{ type: "text", text: JSON.stringify({ updated: true, section, key, value }) }],
+        content: [{ type: "text", text: JSON.stringify({ updated: true, section, key, value, warning: warning ?? null }) }],
       };
     });
   },
@@ -365,7 +374,10 @@ Error Handling:
   },
   async ({ response_format }) => {
     return toolCall("get_patches", {}, (response) => {
-      const patches = response.data as Array<Record<string, unknown>> ?? [];
+      const raw = response.data as Record<string, unknown> | Array<Record<string, unknown>> | undefined;
+      const patches = Array.isArray(raw)
+        ? raw
+        : (raw?.patches as Array<Record<string, unknown>> | undefined) ?? [];
 
       if (response_format === "text") {
         if (patches.length === 0) {
@@ -426,7 +438,10 @@ Error Handling:
   },
   async ({ response_format }) => {
     return toolCall("get_logs", {}, (response) => {
-      const entries = response.data as Array<Record<string, unknown>> ?? [];
+      const raw = response.data as Record<string, unknown> | Array<Record<string, unknown>> | undefined;
+      const entries = Array.isArray(raw)
+        ? raw
+        : (raw?.logs as Array<Record<string, unknown>> | undefined) ?? [];
 
       if (response_format === "text") {
         if (entries.length === 0) {
@@ -477,6 +492,135 @@ Error Handling:
   async () => {
     return toolCall("shutdown", {}, () => {
       return { content: [{ type: "text", text: "Debug server shut down gracefully." }] };
+    });
+  },
+);
+
+server.registerTool(
+  "dread_verify",
+  {
+    title: "Verify Dread Mod Health",
+    description: `Run automated health checks against the live mod.
+
+Returns { checks: [{ id, ok, message }] } covering version, debug server, systems count,
+audio clips, psychotic break clips, debug overlay host, and Harmony patch count.
+
+Use after game launch with DebugServerEnabled=true to confirm the mod loaded correctly.
+
+Examples:
+  - Use when: "Did Dread initialize correctly in this session?"
+  - Use when: "Autonomous agent verify loop after launching REPO"`,
+    inputSchema: z.object({
+      response_format: z.enum(["json", "text"]).default("json").describe("Output format"),
+    }).strict(),
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+  },
+  async ({ response_format }) => {
+    return toolCall("verify", {}, (response) => {
+      const data = response.data as { checks?: Array<{ id: string; ok: boolean; message: string }> } | undefined;
+      const checks = data?.checks ?? [];
+
+      if (response_format === "text") {
+        const lines = ["# Dread Verify", ""];
+        for (const check of checks) {
+          lines.push(`- [${check.ok ? "OK" : "FAIL"}] **${check.id}**: ${check.message}`);
+        }
+        const failed = checks.filter((c) => !c.ok).length;
+        lines.push("", failed === 0 ? "All checks passed." : `${failed} check(s) failed.`);
+        return { content: [{ type: "text", text: lines.join("\n") }] };
+      }
+
+      return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+    });
+  },
+);
+
+server.registerTool(
+  "dread_trigger_test_crash",
+  {
+    title: "Trigger Test Crash",
+    description: `Deliberately crash the game to verify error reporting (same path as config "Crash Game" button).
+
+DESTRUCTIVE: The game process will terminate. Only works when DebugServerEnabled=true.
+
+Examples:
+  - Use when: "Verify error telemetry end-to-end"`,
+    inputSchema: z.object({}).strict(),
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: false,
+      openWorldHint: false,
+    },
+  },
+  async () => {
+    return toolCall("trigger_test_crash", {}, (response) => {
+      return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
+    });
+  },
+);
+
+server.registerTool(
+  "dread_force_psychotic_break",
+  {
+    title: "Force Psychotic Break Episode",
+    description: `Force-start a Psychotic Break episode for testing (bypasses trigger conditions).
+
+Only works when DebugServerEnabled=true and PsychoticBreakSystem is loaded.
+
+Examples:
+  - Use when: "Test psychotic break visuals and audio in a live run"`,
+    inputSchema: z.object({}).strict(),
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: false,
+      openWorldHint: false,
+    },
+  },
+  async () => {
+    return toolCall("force_psychotic_break", {}, (response) => {
+      return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
+    });
+  },
+);
+
+server.registerTool(
+  "dread_get_runtime_state",
+  {
+    title: "Get Dread Runtime State",
+    description: `Return live mod runtime snapshot from DreadRuntimeState (tension, psychotic break, audio, overlay).
+
+Lighter than get_state: no scene/player HP queries. Ideal for feature-level autonomous testing.
+
+Args:
+  - response_format ('json' | 'text'): Output format (default: 'json')`,
+    inputSchema: z.object({
+      response_format: z.enum(["json", "text"]).default("json").describe("Output format"),
+    }).strict(),
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+  },
+  async ({ response_format }) => {
+    return toolCall("get_runtime_state", {}, (response) => {
+      if (response_format === "text") {
+        const d = response.data as Record<string, unknown> ?? {};
+        const lines = ["# Dread Runtime State", ""];
+        for (const [key, val] of Object.entries(d)) {
+          lines.push(`- **${key}**: ${val}`);
+        }
+        return { content: [{ type: "text", text: lines.join("\n") }] };
+      }
+      return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
     });
   },
 );
