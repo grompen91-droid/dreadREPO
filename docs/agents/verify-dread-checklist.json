@@ -1,0 +1,42 @@
+{
+  "name": "dread-verify",
+  "version": "1",
+  "tiers": {
+    "tier0": {
+      "description": "Static checks, no game required",
+      "command": "./scripts/verify-dread.ps1",
+      "checks": ["stubs", "dotnet_build", "null_forgiving", "hardcoded_paths", "trailing_whitespace", "tabs", "mcp_build", "manifest", "icon", "audio"]
+    },
+    "tier1": {
+      "description": "Live debug server (game running, DebugServerEnabled=true)",
+      "command": "./scripts/verify-dread.ps1 -Host 127.0.0.1 -Port 15432",
+      "mcp_sequence": [
+        { "tool": "dread_ping", "expect": "alive" },
+        { "tool": "dread_verify", "expect": "checks.all.ok or document expected menu-level failures" },
+        { "tool": "dread_get_runtime_state", "expect": "json snapshot" },
+        { "tool": "dread_get_config", "expect": "flat keys and sections" }
+      ],
+      "verify_check_ids": [
+        "version",
+        "debug_server_listening",
+        "systems_count",
+        "audio_clips",
+        "psychotic_break_clips",
+        "overlay_present",
+        "harmony_patches"
+      ]
+    },
+    "tier2": {
+      "description": "Post-session BepInEx log patterns",
+      "command": "./scripts/verify-dread.ps1 -LogPath <BepInEx/LogOutput.log>",
+      "patterns": ["[Dread]", "Systems initialized", "[Dread DebugServer] LISTENING"]
+    }
+  },
+  "set_config_examples": [
+    { "section": "debugServer", "key": "enabled", "value": "true", "restart_required": true },
+    { "section": "overlay", "key": "enabled", "value": "true" },
+    { "section": "psychoticBreak", "key": "enabled", "value": "true" },
+    { "section": "audio", "key": "enabled", "value": "true" }
+  ],
+  "destructive_tools": ["dread_trigger_test_crash", "dread_force_psychotic_break"]
+}

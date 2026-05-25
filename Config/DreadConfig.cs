@@ -46,6 +46,9 @@ namespace Dread.Config
         public static ConfigEntry<bool> DebugServerEnabled = null!;
         public static ConfigEntry<int> DebugServerPort = null!;
 
+        // 11. Debug Overlay
+        public static ConfigEntry<bool> DebugOverlayEnabled = null!;
+
         // 9. Logging
         public static ConfigEntry<LogLevel> LogLevelEntry = null!;
 
@@ -133,6 +136,10 @@ namespace Dread.Config
                     "Port for the debug server. Falls back to +1 if unavailable.",
                     new AcceptableValueRange<int>(1024, 65535)));
 
+            DebugOverlayEnabled = cfg.Bind("11. Debug Overlay", "DebugOverlayEnabled", false,
+                "Show an in-game IMGUI debug HUD during runs. Press F10 to toggle visibility at runtime. "
+                    + "Hidden on menu levels.");
+
             LogLevelEntry = cfg.Bind("9. Logging", "LogLevel", LogLevel.Debug,
                 "Logging verbosity. None = suppress all output, Error = only errors, "
                     + "Debug = info + warnings + errors, Verbose = everything including debug traces.");
@@ -146,7 +153,8 @@ namespace Dread.Config
                 ErrorReportingEnabled,
                 CompatibilityMode, CompatibilitySkipConflictingPatches, DebugConsoleGuardEnabled,
                 PsychoticBreakEnabled, PsychoticBreakTriggerChance, PsychoticBreakDuration, PsychoticBreakOncePerMatch,
-                TestCrashButton, DebugServerEnabled, DebugServerPort, LogLevelEntry,
+                TestCrashButton, DebugServerEnabled, DebugServerPort,
+                DebugOverlayEnabled, LogLevelEntry,
             ];
             for (int i = 0; i < allFields.Length; i++)
             {

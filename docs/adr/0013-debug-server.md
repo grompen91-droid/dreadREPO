@@ -86,13 +86,17 @@ Newline-delimited JSON. Each command is a single line terminated by `\n`. Respon
 |---------|---------|---------------------|
 | `ping` | Liveness check | Yes |
 | `get_state` | Full mod + game state snapshot | No (null-guarded) |
-| `get_config` | All config entries | Yes |
-| `set_config` | Modify a config entry | Yes |
+| `get_config` | Flat keys plus grouped `sections` with `debugKey` | Yes |
+| `set_config` | Modify a config entry (`section`/`key` debug-key pairs) | Yes |
 | `get_patches` | Harmony patch info for all patched methods | Yes |
 | `get_logs` | Buffered BepInEx log entries | Yes |
 | `shutdown` | Graceful server shutdown | Yes |
+| `verify` | Health checks JSON `{ checks: [{ id, ok, message }] }` | Yes |
+| `trigger_test_crash` | Deliberate crash (TestCrashSystem path) | Yes |
+| `force_psychotic_break` | Force-start psychotic break episode | No (needs level) |
+| `get_runtime_state` | `DreadRuntimeState` snapshot (tension, psychotic break, audio) | Yes |
 
-Deferred to v2: `inspect` (reflection-based object inspection), `trigger_event` (invoke mod events), `list_objects` (scene enumeration), `subscribe` (event push channel).
+Deferred to v2: `inspect` (reflection-based object inspection), `subscribe` (event push channel).
 
 ### Security
 
@@ -139,7 +143,7 @@ The DebugServerSystem (C#, TCP) is paired with a TypeScript MCP server that brid
 
 - **Runtime:** Node.js (>=18) using `@modelcontextprotocol/sdk` with stdio transport
 - **Role:** Sits on the other side of the TCP connection from `DebugServerSystem`, translating MCP tool calls (JSON-RPC over stdin/stdout) into TCP JSON commands
-- **7 tools:** `dread_ping`, `dread_get_state`, `dread_get_config`, `dread_set_config`, `dread_get_patches`, `dread_get_logs`, `dread_shutdown`
+- **11 tools:** `dread_ping`, `dread_get_state`, `dread_get_config`, `dread_set_config`, `dread_get_patches`, `dread_get_logs`, `dread_shutdown`, `dread_verify`, `dread_trigger_test_crash`, `dread_force_psychotic_break`, `dread_get_runtime_state`
 - **Configuration** via environment variables: `DREAD_HOST` (default `127.0.0.1`), `DREAD_PORT` (default `15432`), `DREAD_TIMEOUT` (default `15000ms`)
 - **Input handling:** Zod schema validation for each tool, strict mode to reject unknown fields
 - **Response format:** `TextContent` with `"json"` or `"text"` format option

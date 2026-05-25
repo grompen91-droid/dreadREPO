@@ -163,21 +163,97 @@ namespace Dread.Systems
                 }
 
                 UpdateEpisode();
+                PublishRuntimeState();
                 return;
             }
 
-            if (!_enabled || DreadConfig.CompatibilityMode.Value || SemiFunc.MenuLevel()) return;
-            if (_oncePerMatch && _hasTriggeredThisMatch) return;
+            if (!_enabled || DreadConfig.CompatibilityMode.Value || SemiFunc.MenuLevel())
+            {
+                PublishRuntimeState();
+                return;
+            }
+            if (_oncePerMatch && _hasTriggeredThisMatch)
+            {
+                PublishRuntimeState();
+                return;
+            }
 
-            if (Time.time < _nextTriggerCheck) return;
+            if (Time.time < _nextTriggerCheck)
+            {
+                PublishRuntimeState();
+                return;
+            }
             _nextTriggerCheck = Time.time + 2f;
 
             UpdateThreatTimestamps();
 
-            if (!CanTrigger()) return;
+            if (!CanTrigger())
+            {
+                PublishRuntimeState();
+                return;
+            }
 
             if (Random.value < _triggerChance)
                 StartEpisode();
+
+            PublishRuntimeState();
+        }
+
+        private void PublishRuntimeState()
+        {
+            DreadRuntimeState.PsychoticBreakEnabled = _enabled && !DreadConfig.CompatibilityMode.Value;
+            DreadRuntimeState.PsychoticBreakEpisodeActive = _episodeActive;
+            DreadRuntimeState.PsychoticBreakEpisodeTimer = _episodeTimer;
+            DreadRuntimeState.PsychoticBreakEpisodeDuration = _episodeDuration;
+            var nextCheck = _nextTriggerCheck - Time.time;
+            DreadRuntimeState.PsychoticBreakNextCheckIn = nextCheck < 0f ? 0f : nextCheck;
+            DreadRuntimeState.PsychoticBreakThreatCount = _recentThreatTimestamps.Count;
+            DreadRuntimeState.PsychoticBreakClipsLoaded = AreClipsLoaded();
+
+            if (_episodeActive)
+            {
+                DreadRuntimeState.PsychoticBreakCanTrigger = false;
+                DreadRuntimeState.PsychoticBreakBlockReason = "episode active";
+                return;
+            }
+
+            var blockReason = GetTriggerBlockReason();
+            DreadRuntimeState.PsychoticBreakBlockReason = blockReason ?? "";
+            DreadRuntimeState.PsychoticBreakCanTrigger = blockReason == null;
+        }
+
+        private bool AreClipsLoaded()
+        {
+            return _peakScreamClip != null && _distantScreamClip != null
+                && _threatScreamClip != null && _footstepClip != null;
+        }
+
+        private string? GetTriggerBlockReason()
+        {
+            if (!_enabled)
+                return "disabled";
+            if (DreadConfig.CompatibilityMode.Value)
+                return "compatibility mode";
+            if (SemiFunc.MenuLevel())
+                return "menu level";
+            if (_oncePerMatch && _hasTriggeredThisMatch)
+                return "once per match";
+            if (!AreClipsLoaded())
+                return "clips not loaded";
+
+            var pc = PlayerController.instance;
+            if ((object)pc == null)
+                return "no player";
+            if (!IsSolo(pc))
+                return "not solo";
+            if (_recentThreatTimestamps.Count == 0)
+                return "no recent threat";
+            if (IsAnyEnemyVisible(_cachedEnemies))
+                return "visible enemy";
+            if (!IsCrouching(pc))
+                return "not crouching";
+
+            return null;
         }
 
         private void UpdateThreatTimestamps()
@@ -207,6 +283,7 @@ namespace Dread.Systems
             if (_recentThreatTimestamps.Count == 0) return false;
             if (IsAnyEnemyVisible(_cachedEnemies)) return false;
             if (!IsCrouching(pc)) return false;
+            if (!AreClipsLoaded()) return false;
 
             return true;
         }
@@ -271,6 +348,15 @@ namespace Dread.Systems
                 Destroy(_distantScreamSource.gameObject);
                 _distantScreamSource = null;
             }
+        }
+
+        /// <summary>Debug server / MCP entry point to force-start an episode.</summary>
+        public void ForceEpisodeForDebug()
+        {
+            if (_episodeActive)
+                return;
+
+            StartEpisode();
         }
 
         private void StartEpisode()

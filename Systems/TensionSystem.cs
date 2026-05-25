@@ -83,6 +83,27 @@ namespace Dread.Systems
             UpdateAdrenaline();
             UpdateLowStamina();
             UpdatePanicSprint();
+            PublishRuntimeState();
+        }
+
+        private void PublishRuntimeState()
+        {
+            DreadRuntimeState.NearestEnemyDist = _nearestDist;
+
+            var pc = PlayerController.instance;
+            bool adrenaline = false;
+            if ((object)pc != null && _originalDrain >= 0f
+                && DreadConfig.AdrenalineEnabled.Value
+                && !DreadConfig.CompatibilityMode.Value
+                && !SemiFunc.MenuLevel()
+                && _nearestDist < ProximityRange)
+            {
+                adrenaline = pc.EnergySprintDrain < _originalDrain * 0.95f;
+            }
+
+            DreadRuntimeState.AdrenalineActive = adrenaline;
+            DreadRuntimeState.PanicSprintActive = _panicTimer > 0f;
+            DreadRuntimeState.PanicSprintCooldown = _panicCooldown < 0f ? 0f : _panicCooldown;
         }
 
         // ── Adrenaline ────────────────────────────────────────────────────────

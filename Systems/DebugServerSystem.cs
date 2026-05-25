@@ -266,9 +266,9 @@ namespace Dread.Systems
                             return MakeResponse(req.id, false, "Missing section, key, or value", -3);
 
                         var result = SetConfigValue(setReq.data.section, setReq.data.key, setReq.data.value);
-                        if (result != null)
-                            return MakeResponse(req.id, false, result, -3);
-                        return MakeResponse(req.id, true, "ok");
+                        if (result.error != null)
+                            return MakeResponse(req.id, false, result.error, -3);
+                        return MakeResponse(req.id, true, result);
                     }
 
                 case "get_patches":
@@ -287,6 +287,18 @@ namespace Dread.Systems
                     _running = false;
                     _listener?.Stop();
                     return MakeResponse(req.id, true, new ShutdownResponse());
+
+                case "verify":
+                    return MakeResponse(req.id, true, RunVerifyChecks());
+
+                case "trigger_test_crash":
+                    return TriggerTestCrash(req.id);
+
+                case "force_psychotic_break":
+                    return ForcePsychoticBreak(req.id);
+
+                case "get_runtime_state":
+                    return MakeResponse(req.id, true, CaptureRuntimeState());
 
                 default:
                     return MakeResponse(req.id, false, $"Unknown command: {req.cmd}", -2);
@@ -342,7 +354,7 @@ namespace Dread.Systems
 
         private static ConfigResponse CaptureConfig()
         {
-            return new ConfigResponse
+            var flat = new ConfigResponse
             {
                 audioEnabled = DreadConfig.AudioEnabled.Value,
                 audioFrequency = DreadConfig.AudioFrequency.Value,
@@ -355,57 +367,276 @@ namespace Dread.Systems
                 lowStaminaSound = DreadConfig.LowStaminaSoundEnabled.Value,
                 panicSprint = DreadConfig.PanicSprintEnabled.Value,
                 errorReporting = DreadConfig.ErrorReportingEnabled.Value,
+                compatibilityMode = DreadConfig.CompatibilityMode.Value,
+                compatibilitySkipConflictingPatches = DreadConfig.CompatibilitySkipConflictingPatches.Value,
+                debugConsoleGuard = DreadConfig.DebugConsoleGuardEnabled.Value,
                 psychoticBreak = DreadConfig.PsychoticBreakEnabled.Value,
                 psychoticBreakTriggerChance = DreadConfig.PsychoticBreakTriggerChance.Value,
                 psychoticBreakDuration = DreadConfig.PsychoticBreakDuration.Value,
                 psychoticBreakOncePerMatch = DreadConfig.PsychoticBreakOncePerMatch.Value,
                 debugServerEnabled = DreadConfig.DebugServerEnabled.Value,
-                debugServerPort = DreadConfig.DebugServerPort.Value
+                debugServerPort = DreadConfig.DebugServerPort.Value,
+                debugOverlayEnabled = DreadConfig.DebugOverlayEnabled.Value,
+                logLevel = DreadConfig.LogLevelEntry.Value.ToString(),
+                sections = BuildConfigSections()
+            };
+            return flat;
+        }
+
+        private static ConfigSectionEntry[] BuildConfigSections()
+        {
+            return new[]
+            {
+                Section("1. Audio Dread",
+                    Entry("Enabled", "audio.enabled", DreadConfig.AudioEnabled),
+                    Entry("Frequency", "audio.frequency", DreadConfig.AudioFrequency),
+                    Entry("Volume", "audio.volume", DreadConfig.AudioVolume)),
+                Section("2. Monster Overhaul",
+                    Entry("AggressionEnabled", "monster.aggression", DreadConfig.MonsterAggressionEnabled),
+                    Entry("AudioEnabled", "monster.audio", DreadConfig.MonsterAudioEnabled)),
+                Section("3. Tension",
+                    Entry("FakeFootstepsEnabled", "tension.fakeFootsteps", DreadConfig.FakeFootstepsEnabled),
+                    Entry("AdrenalineEnabled", "tension.adrenaline", DreadConfig.AdrenalineEnabled),
+                    Entry("LowStaminaSoundEnabled", "tension.lowStamina", DreadConfig.LowStaminaSoundEnabled),
+                    Entry("PanicSprintEnabled", "tension.panicSprint", DreadConfig.PanicSprintEnabled)),
+                Section("4. QOL",
+                    Entry("CrouchSpeedBoost", "crouch.speed", DreadConfig.CrouchSpeedBoostEnabled)),
+                Section("5. Error Reporting",
+                    Entry("ErrorReportingEnabled", "errorReporting", DreadConfig.ErrorReportingEnabled)),
+                Section("6. Psychotic Break",
+                    Entry("PsychoticBreakEnabled", "psychoticBreak.enabled", DreadConfig.PsychoticBreakEnabled),
+                    Entry("PsychoticBreakTriggerChance", "psychoticBreak.triggerChance", DreadConfig.PsychoticBreakTriggerChance),
+                    Entry("PsychoticBreakDuration", "psychoticBreak.duration", DreadConfig.PsychoticBreakDuration),
+                    Entry("PsychoticBreakOncePerMatch", "psychoticBreak.oncePerMatch", DreadConfig.PsychoticBreakOncePerMatch)),
+                Section("7. Testing",
+                    Entry("Crash Game", "testing.crash", DreadConfig.TestCrashButton)),
+                Section("8. Debug Server",
+                    Entry("DebugServerEnabled", "debugServer.enabled", DreadConfig.DebugServerEnabled, restartRequired: true),
+                    Entry("DebugServerPort", "debugServer.port", DreadConfig.DebugServerPort, restartRequired: true)),
+                Section("9. Logging",
+                    Entry("LogLevel", "logging.level", DreadConfig.LogLevelEntry)),
+                Section("10. Compatibility",
+                    Entry("CompatibilityMode", "compatibility.mode", DreadConfig.CompatibilityMode),
+                    Entry("SkipConflictingPatches", "compatibility.skipConflictingPatches", DreadConfig.CompatibilitySkipConflictingPatches),
+                    Entry("DebugConsoleGuardEnabled", "compatibility.debugConsoleGuard", DreadConfig.DebugConsoleGuardEnabled)),
+                Section("11. Debug Overlay",
+                    Entry("DebugOverlayEnabled", "overlay.enabled", DreadConfig.DebugOverlayEnabled)),
             };
         }
 
-        private static string? SetConfigValue(string section, string key, string value)
+        private static ConfigSectionEntry Section(string section, params ConfigKeyEntry[] keys)
         {
-            var entries = new Dictionary<string, ConfigEntryBase>
+            return new ConfigSectionEntry { section = section, keys = keys };
+        }
+
+        private static ConfigKeyEntry Entry(string key, string debugKey, ConfigEntryBase entry, bool restartRequired = false)
+        {
+            string type = entry is ConfigEntry<bool> ? "bool"
+                : entry is ConfigEntry<float> ? "float"
+                : entry is ConfigEntry<int> ? "int"
+                : entry is ConfigEntry<LogLevel> ? "LogLevel"
+                : "string";
+
+            return new ConfigKeyEntry
             {
-                ["audio.enabled"] = DreadConfig.AudioEnabled,
-                ["audio.frequency"] = DreadConfig.AudioFrequency,
-                ["audio.volume"] = DreadConfig.AudioVolume,
-                ["monster.aggression"] = DreadConfig.MonsterAggressionEnabled,
-                ["monster.audio"] = DreadConfig.MonsterAudioEnabled,
-                ["crouch.speed"] = DreadConfig.CrouchSpeedBoostEnabled,
-                ["tension.fakeFootsteps"] = DreadConfig.FakeFootstepsEnabled,
-                ["tension.adrenaline"] = DreadConfig.AdrenalineEnabled,
-                ["tension.lowStamina"] = DreadConfig.LowStaminaSoundEnabled,
-                ["tension.panicSprint"] = DreadConfig.PanicSprintEnabled,
-                ["errorReporting"] = DreadConfig.ErrorReportingEnabled,
-                ["psychoticBreak.enabled"] = DreadConfig.PsychoticBreakEnabled,
-                ["psychoticBreak.triggerChance"] = DreadConfig.PsychoticBreakTriggerChance,
-                ["psychoticBreak.duration"] = DreadConfig.PsychoticBreakDuration,
-                ["psychoticBreak.oncePerMatch"] = DreadConfig.PsychoticBreakOncePerMatch,
+                key = key,
+                debugKey = debugKey,
+                value = ConfigValueToString(entry),
+                type = type,
+                description = entry.Description.Description ?? "",
+                restartRequired = restartRequired
+            };
+        }
+
+        private static string ConfigValueToString(ConfigEntryBase entry)
+        {
+            return entry switch
+            {
+                ConfigEntry<bool> b => b.Value ? "true" : "false",
+                ConfigEntry<float> f => f.Value.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                ConfigEntry<int> i => i.Value.ToString(),
+                ConfigEntry<LogLevel> l => l.Value.ToString(),
+                _ => ""
+            };
+        }
+
+        private static SetConfigResult SetConfigValue(string section, string key, string value)
+        {
+            var entries = new Dictionary<string, (ConfigEntryBase entry, bool restartRequired)>
+            {
+                ["audio.enabled"] = (DreadConfig.AudioEnabled, false),
+                ["audio.frequency"] = (DreadConfig.AudioFrequency, false),
+                ["audio.volume"] = (DreadConfig.AudioVolume, false),
+                ["monster.aggression"] = (DreadConfig.MonsterAggressionEnabled, false),
+                ["monster.audio"] = (DreadConfig.MonsterAudioEnabled, false),
+                ["crouch.speed"] = (DreadConfig.CrouchSpeedBoostEnabled, false),
+                ["tension.fakeFootsteps"] = (DreadConfig.FakeFootstepsEnabled, false),
+                ["tension.adrenaline"] = (DreadConfig.AdrenalineEnabled, false),
+                ["tension.lowStamina"] = (DreadConfig.LowStaminaSoundEnabled, false),
+                ["tension.panicSprint"] = (DreadConfig.PanicSprintEnabled, false),
+                ["errorReporting"] = (DreadConfig.ErrorReportingEnabled, false),
+                ["compatibility.mode"] = (DreadConfig.CompatibilityMode, false),
+                ["compatibility.skipConflictingPatches"] = (DreadConfig.CompatibilitySkipConflictingPatches, false),
+                ["compatibility.debugConsoleGuard"] = (DreadConfig.DebugConsoleGuardEnabled, false),
+                ["psychoticBreak.enabled"] = (DreadConfig.PsychoticBreakEnabled, false),
+                ["psychoticBreak.triggerChance"] = (DreadConfig.PsychoticBreakTriggerChance, false),
+                ["psychoticBreak.duration"] = (DreadConfig.PsychoticBreakDuration, false),
+                ["psychoticBreak.oncePerMatch"] = (DreadConfig.PsychoticBreakOncePerMatch, false),
+                ["testing.crash"] = (DreadConfig.TestCrashButton, false),
+                ["debugServer.enabled"] = (DreadConfig.DebugServerEnabled, true),
+                ["debugServer.port"] = (DreadConfig.DebugServerPort, true),
+                ["overlay.enabled"] = (DreadConfig.DebugOverlayEnabled, false),
+                ["logging.level"] = (DreadConfig.LogLevelEntry, false),
             };
 
-            var combinedKey = $"{section}.{key}";
-            if (!entries.TryGetValue(combinedKey, out var entry) || entry == null)
-                return $"Unknown config: {section}/{key}";
+            var combinedKey = string.IsNullOrEmpty(section)
+                ? key
+                : string.IsNullOrEmpty(key)
+                    ? section
+                    : $"{section}.{key}";
+
+            if (!entries.TryGetValue(combinedKey, out var target) || target.entry == null)
+                return SetConfigResult.Fail($"Unknown config: {section}/{key} (debug key: {combinedKey})");
 
             try
             {
-                if (entry is ConfigEntry<bool> be)
+                if (target.entry is ConfigEntry<bool> be)
                     be.Value = bool.Parse(value);
-                else if (entry is ConfigEntry<float> fe)
+                else if (target.entry is ConfigEntry<float> fe)
                     fe.Value = float.Parse(value);
-                else if (entry is ConfigEntry<int> ie)
+                else if (target.entry is ConfigEntry<int> ie)
                     ie.Value = int.Parse(value);
+                else if (target.entry is ConfigEntry<LogLevel> le)
+                    le.Value = (LogLevel)Enum.Parse(typeof(LogLevel), value, ignoreCase: true);
                 else
-                    return $"Unsupported config type for {section}/{key}";
+                    return SetConfigResult.Fail($"Unsupported config type for {section}/{key}");
             }
             catch (Exception ex)
             {
-                return $"Failed to set {section}/{key}: {ex.Message}";
+                return SetConfigResult.Fail($"Failed to set {section}/{key}: {ex.Message}");
             }
 
-            return null;
+            var result = SetConfigResult.Ok(combinedKey, value);
+            if (target.restartRequired)
+                result.warning = "Restart the game for debug server bind changes to take effect.";
+            return result;
+        }
+
+        private VerifyResponse RunVerifyChecks()
+        {
+            var checks = new List<VerifyCheck>
+            {
+                Check("version", !string.IsNullOrEmpty(Plugin.VERSION), $"version={Plugin.VERSION}"),
+                Check("debug_server_listening", _running && _listener != null, $"port={_boundPort}"),
+                Check("systems_count", CountActiveSystems() >= 7, $"count={CountActiveSystems()}"),
+                Check("audio_clips", DreadRuntimeState.AudioClipCount > 0,
+                    $"loaded={DreadRuntimeState.AudioClipCount}/4"),
+                Check("psychotic_break_clips", DreadRuntimeState.PsychoticBreakClipsLoaded,
+                    DreadRuntimeState.PsychoticBreakClipsLoaded ? "all loaded" : "missing clips"),
+                Check("overlay_present", FindObjectOfType<DebugOverlaySystem>() != null, "DebugOverlaySystem host"),
+                Check("harmony_patches", GetDreadPatchCount() > 0, $"dreadPatches={GetDreadPatchCount()}"),
+            };
+
+            return new VerifyResponse { checks = checks.ToArray() };
+        }
+
+        private static int CountActiveSystems()
+        {
+            int count = 0;
+            if (FindObjectOfType<AudioDreadSystem>() != null) count++;
+            if (FindObjectOfType<MonsterOverhaulSystem>() != null) count++;
+            if (FindObjectOfType<TensionSystem>() != null) count++;
+            if (FindObjectOfType<ErrorReporterSystem>() != null) count++;
+            if (FindObjectOfType<PsychoticBreakSystem>() != null) count++;
+            if (FindObjectOfType<TestCrashSystem>() != null) count++;
+            if (FindObjectOfType<DebugServerSystem>() != null) count++;
+            if (FindObjectOfType<DebugOverlaySystem>() != null) count++;
+            return count;
+        }
+
+        private static int GetDreadPatchCount()
+        {
+            if (DreadRuntimeState.DreadPatchCount > 0)
+                return DreadRuntimeState.DreadPatchCount;
+
+            var harmony = Plugin.HarmonyInstance;
+            if (harmony == null)
+                return 0;
+
+            int count = 0;
+            try
+            {
+                foreach (var method in Harmony.GetAllPatchedMethods())
+                {
+                    var info = Harmony.GetPatchInfo(method);
+                    if (info == null)
+                        continue;
+
+                    if (info.Prefixes?.Any(p => p.owner == Plugin.GUID) == true) count++;
+                    if (info.Postfixes?.Any(p => p.owner == Plugin.GUID) == true) count++;
+                    if (info.Transpilers?.Any(p => p.owner == Plugin.GUID) == true) count++;
+                    if (info.Finalizers?.Any(p => p.owner == Plugin.GUID) == true) count++;
+                }
+            }
+            catch
+            {
+                return -1;
+            }
+
+            return count;
+        }
+
+        private static VerifyCheck Check(string id, bool ok, string message)
+        {
+            return new VerifyCheck { id = id, ok = ok, message = message };
+        }
+
+        private static string TriggerTestCrash(int id)
+        {
+            if (!DreadConfig.DebugServerEnabled.Value)
+                return MakeResponse(id, false, "Debug server disabled", -3);
+
+            TestCrashSystem.TriggerForDebug();
+            return MakeResponse(id, true, new TriggerResponse { triggered = true });
+        }
+
+        private static string ForcePsychoticBreak(int id)
+        {
+            if (!DreadConfig.DebugServerEnabled.Value)
+                return MakeResponse(id, false, "Debug server disabled", -3);
+
+            var system = FindObjectOfType<PsychoticBreakSystem>();
+            if (system == null)
+                return MakeResponse(id, false, "PsychoticBreakSystem not found", -3);
+
+            system.ForceEpisodeForDebug();
+            return MakeResponse(id, true, new TriggerResponse { triggered = true });
+        }
+
+        private static RuntimeStateResponse CaptureRuntimeState()
+        {
+            float nearest = DreadRuntimeState.NearestEnemyDist;
+            return new RuntimeStateResponse
+            {
+                nearestEnemyDist = nearest >= float.MaxValue * 0.5f ? -1f : nearest,
+                psychoticBreakEnabled = DreadRuntimeState.PsychoticBreakEnabled,
+                psychoticBreakCanTrigger = DreadRuntimeState.PsychoticBreakCanTrigger,
+                psychoticBreakBlockReason = DreadRuntimeState.PsychoticBreakBlockReason,
+                psychoticBreakEpisodeActive = DreadRuntimeState.PsychoticBreakEpisodeActive,
+                psychoticBreakEpisodeTimer = DreadRuntimeState.PsychoticBreakEpisodeTimer,
+                psychoticBreakEpisodeDuration = DreadRuntimeState.PsychoticBreakEpisodeDuration,
+                psychoticBreakNextCheckIn = DreadRuntimeState.PsychoticBreakNextCheckIn,
+                psychoticBreakThreatCount = DreadRuntimeState.PsychoticBreakThreatCount,
+                psychoticBreakClipsLoaded = DreadRuntimeState.PsychoticBreakClipsLoaded,
+                adrenalineActive = DreadRuntimeState.AdrenalineActive,
+                panicSprintActive = DreadRuntimeState.PanicSprintActive,
+                panicSprintCooldown = DreadRuntimeState.PanicSprintCooldown,
+                audioClipCount = DreadRuntimeState.AudioClipCount,
+                audioNextPlayIn = DreadRuntimeState.AudioNextPlayIn,
+                dreadPatchCount = DreadRuntimeState.DreadPatchCount,
+                debugOverlayEnabled = DreadConfig.DebugOverlayEnabled.Value,
+                debugOverlayPresent = FindObjectOfType<DebugOverlaySystem>() != null,
+            };
         }
 
         private PatchesResponse GetHarmonyPatches()
@@ -530,12 +761,100 @@ namespace Dread.Systems
             public bool lowStaminaSound;
             public bool panicSprint;
             public bool errorReporting;
+            public bool compatibilityMode;
+            public bool compatibilitySkipConflictingPatches;
+            public bool debugConsoleGuard;
             public bool psychoticBreak;
             public float psychoticBreakTriggerChance;
             public float psychoticBreakDuration;
             public bool psychoticBreakOncePerMatch;
             public bool debugServerEnabled;
             public int debugServerPort;
+            public bool debugOverlayEnabled;
+            public string logLevel = "";
+            public ConfigSectionEntry[] sections = null!;
+        }
+
+        [Serializable]
+        private class ConfigSectionEntry
+        {
+            public string section = "";
+            public ConfigKeyEntry[] keys = null!;
+        }
+
+        [Serializable]
+        private class ConfigKeyEntry
+        {
+            public string key = "";
+            public string debugKey = "";
+            public string value = "";
+            public string type = "";
+            public string description = "";
+            public bool restartRequired;
+        }
+
+        [Serializable]
+        private class SetConfigResult
+        {
+            public string status = "ok";
+            public string debugKey = "";
+            public string value = "";
+            public string warning = "";
+
+            public static SetConfigResult Ok(string debugKey, string value)
+            {
+                return new SetConfigResult { debugKey = debugKey, value = value };
+            }
+
+            public static SetConfigResult Fail(string error)
+            {
+                return new SetConfigResult { status = "error", error = error };
+            }
+
+            public string? error;
+        }
+
+        [Serializable]
+        private class VerifyResponse
+        {
+            public VerifyCheck[] checks = null!;
+        }
+
+        [Serializable]
+        private class VerifyCheck
+        {
+            public string id = "";
+            public bool ok;
+            public string message = "";
+        }
+
+        [Serializable]
+        private class TriggerResponse
+        {
+            public bool triggered;
+        }
+
+        [Serializable]
+        private class RuntimeStateResponse
+        {
+            public float nearestEnemyDist = -1;
+            public bool psychoticBreakEnabled;
+            public bool psychoticBreakCanTrigger;
+            public string psychoticBreakBlockReason = "";
+            public bool psychoticBreakEpisodeActive;
+            public float psychoticBreakEpisodeTimer;
+            public float psychoticBreakEpisodeDuration;
+            public float psychoticBreakNextCheckIn;
+            public int psychoticBreakThreatCount;
+            public bool psychoticBreakClipsLoaded;
+            public bool adrenalineActive;
+            public bool panicSprintActive;
+            public float panicSprintCooldown;
+            public int audioClipCount;
+            public float audioNextPlayIn = -1;
+            public int dreadPatchCount;
+            public bool debugOverlayEnabled;
+            public bool debugOverlayPresent;
         }
 
         [Serializable]

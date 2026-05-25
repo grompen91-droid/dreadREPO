@@ -30,6 +30,7 @@ namespace Dread.Systems
             count += TryAddSystem<PsychoticBreakSystem>("DreadPsychoticBreakHost");
             count += TryAddSystem<TestCrashSystem>("DreadTestCrashHost");
             count += TryAddSystem<DebugServerSystem>("DreadDebugHost");
+            count += TryAddSystem<DebugOverlaySystem>("DreadDebugOverlayHost");
 
             if (count > 0)
                 LoggingService.LogInfo($"Systems initialized ({count})");

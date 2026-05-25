@@ -11,6 +11,7 @@ namespace Dread.Systems
         private readonly List<AudioClip> _clips = new();
         private Camera? _mainCam;
         private bool _sceneLoaded;
+        private float _nextPlayAt = -1f;
 
         private static readonly string[] ClipNames =
         {
@@ -57,6 +58,7 @@ namespace Dread.Systems
             });
 
             LoggingService.LogInfo($"[AudioDread] Loaded {_clips.Count}/{ClipNames.Length} clips.");
+            DreadRuntimeState.AudioClipCount = _clips.Count;
             StartCoroutine(PlayLoop());
         }
 
@@ -68,6 +70,8 @@ namespace Dread.Systems
             while (true)
             {
                 var baseDelay = Random.Range(60f, 180f) / DreadConfig.AudioFrequency.Value;
+                _nextPlayAt = Time.time + baseDelay;
+                DreadRuntimeState.AudioNextPlayIn = baseDelay;
                 yield return new WaitForSeconds(baseDelay);
 
                 LoggingService.LogVerbose("[AudioDread] Checking audio play...");
@@ -81,6 +85,16 @@ namespace Dread.Systems
                     continue;
 
                 PlayRandomSound();
+                DreadRuntimeState.AudioClipCount = _clips.Count;
+            }
+        }
+
+        private void Update()
+        {
+            if (_nextPlayAt > 0f)
+            {
+                var eta = _nextPlayAt - Time.time;
+                DreadRuntimeState.AudioNextPlayIn = eta < 0f ? 0f : eta;
             }
         }
 

@@ -24,6 +24,12 @@ namespace Dread.Systems
             TriggerCrash();
         }
 
+        /// <summary>Debug server / MCP entry point for deliberate crash testing.</summary>
+        public static void TriggerForDebug()
+        {
+            TriggerCrash();
+        }
+
         private static void TriggerCrash()
         {
             DreadConfig.TestCrashButton.Value = false;

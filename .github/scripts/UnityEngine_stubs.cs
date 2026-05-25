@@ -257,6 +257,64 @@ namespace UnityEngine
         public static float dpi => 0f;
         public static FullScreenMode fullScreenMode => FullScreenMode.FullScreenWindow;
     }
+
+    public struct Rect
+    {
+        public float x, y, width, height;
+        public float yMin { get; }
+        public Rect(float x, float y, float width, float height)
+        {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+            yMin = y;
+        }
+    }
+
+    public class GUIContent
+    {
+        public static GUIContent none { get; } = new GUIContent();
+    }
+
+    public class GUIStyleState
+    {
+        public Texture2D? background { get; set; }
+        public Color textColor { get; set; }
+    }
+
+    public class GUIStyle
+    {
+        public GUIStyleState normal { get; } = new GUIStyleState();
+        public int fontSize { get; set; }
+        public bool wordWrap { get; set; }
+        public GUIStyle() { }
+        public GUIStyle(GUIStyle other) { }
+    }
+
+    public class GUISkin
+    {
+        public GUIStyle box { get; } = new GUIStyle();
+        public GUIStyle label { get; } = new GUIStyle();
+    }
+
+    public static class GUI
+    {
+        public static GUISkin skin { get; } = new GUISkin();
+        public static void Box(Rect position, GUIContent content, GUIStyle style) { }
+        public static void Label(Rect position, string text) { }
+        public static void Label(Rect position, string text, GUIStyle style) { }
+    }
+
+    public static class Input
+    {
+        public static bool GetKeyDown(KeyCode key) => false;
+    }
+
+    public enum KeyCode
+    {
+        F10 = 290
+    }
 }
 namespace UnityEngine.Events
 {

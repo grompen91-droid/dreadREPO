@@ -32,17 +32,22 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 > **Highlight:** Honest mod compatibility docs, opt-in telemetry, Compatibility mode for broken profiles, and host-only monster patch guards.
 
 ### Added
+- **Verify automation:** `scripts/verify-dread.ps1` (Tier 0 static, optional Tier 1 TCP, Tier 2 log patterns), `docs/agents/verify-dread.md` runbook, `docs/agents/verify-dread-checklist.json`
+- **Debug APIs:** `TestCrashSystem.TriggerForDebug()`, `PsychoticBreakSystem.ForceEpisodeForDebug()` for debug server / MCP
+- **Debug overlay:** `DebugOverlaySystem` IMGUI HUD (section 11. Debug Overlay, `DebugOverlayEnabled` default off). Shows nearest enemy distance, tension/adrenaline/panic sprint, psychotic break readiness with block reasons, audio clip count and next play ETA, config flags, and Dread Harmony patch count. F10 toggles visibility at runtime when enabled. Hidden on menu levels via `SemiFunc.MenuLevel()`.
+- **Runtime state:** `DreadRuntimeState` snapshot updated by tension, psychotic break, and audio systems for overlay and tooling.
 - **Compatibility:** `docs/mod-compatibility.md` with known-mod table, isolation test, Proton/DLL notes, DebugConsoleUI guidance, and manual test matrix
 - **Config:** `CompatibilityMode` (ambient audio only), `CompatibilitySkipConflictingPatches`, `DebugConsoleGuardEnabled` (section 10. Compatibility)
 - **Harmony:** `HarmonyPatchCompat` for `IsMasterClient()` gates and optional skip when another mod already patched the target method
 - **Host-only:** `EnemyNavMeshAgent` and `EnemyDirector` patches no-op on non-host clients (ADR-0004)
-- Debug server: `DebugServerSystem` -- TCP server on `127.0.0.1` for AI-assisted debugging. Supports 7 commands (`ping`, `get_state`, `get_config`, `set_config`, `get_patches`, `get_logs`, `shutdown`) via newline-delimited JSON. Config entries under "8. Debug Server" (`DebugServerEnabled`, `DebugServerPort`). Default disabled. (ADR-0013)
+- Debug server: `DebugServerSystem` -- TCP server on `127.0.0.1` for AI-assisted debugging. Supports 11 commands (`ping`, `get_state`, `get_config`, `set_config`, `get_patches`, `get_logs`, `shutdown`, `verify`, `trigger_test_crash`, `force_psychotic_break`, `get_runtime_state`) via newline-delimited JSON. Config entries under "8. Debug Server" (`DebugServerEnabled`, `DebugServerPort`). Default disabled. (ADR-0013)
 - Configurable logging: `LoggingService` static wrapper with `LogLevel` enum (None/Error/Debug/Verbose), level-gated log methods, Verbose prefixing, and ASCII art on mod injection. Config entry under "9. Logging" (`LogLevel`, default Debug). All ~110 existing `Plugin.Logger.Log*` calls migrated to `LoggingService.Log*`. (ADR-0014)
-- MCP server: `dread-mcp-server` TypeScript MCP server using `@modelcontextprotocol/sdk` wrapping the debug TCP protocol as 7 MCP tools (`dread_ping`, `dread_get_state`, `dread_get_config`, `dread_set_config`, `dread_get_patches`, `dread_get_logs`, `dread_shutdown`) via stdio transport. Config via env vars (`DREAD_HOST`, `DREAD_PORT`, `DREAD_TIMEOUT`). Supports `json` and `text` response formats. (ADR-0013)
+- MCP server: `dread-mcp-server` TypeScript MCP server using `@modelcontextprotocol/sdk` wrapping the debug TCP protocol as 11 MCP tools (`dread_ping`, `dread_get_state`, `dread_get_config`, `dread_set_config`, `dread_get_patches`, `dread_get_logs`, `dread_shutdown`, `dread_verify`, `dread_trigger_test_crash`, `dread_force_psychotic_break`, `dread_get_runtime_state`) via stdio transport. Config via env vars (`DREAD_HOST`, `DREAD_PORT`, `DREAD_TIMEOUT`). Supports `json` and `text` response formats. (ADR-0013)
 - `FlashlightStateTracker.cs`: standalone MonoBehaviour extracted from nested class in PsychoticBreakSystem to fix Unity type registration failure preventing AddComponent. (PR #158)
 - `breath2.ogg`, `breath3.ogg`: audio files for TensionSystem breath variant loading (referenced since v1.4.0 but missing)
 
 ### Changed
+- **Debug server / MCP:** `get_config` returns flat keys plus grouped `sections` with `debugKey`; `set_config` supports all DreadConfig entries including `debugServer.*`, `overlay.enabled`, `compatibility.*`, `testing.crash`, `logging.level`
 - **Docs:** README and THUNDERSTORE compatibility sections no longer claim conflict-free operation; `mod-profile-conflicts.md` points to `mod-compatibility.md`
 - **Error reporting:** default `ErrorReportingEnabled` to **false** (opt-in); hooks `Application.logMessageReceived` instead of Harmony on `Debug.LogError` / `Debug.LogException` (ADR-0010)
 - **Debug console guard:** config-toggle `DebugConsoleGuardEnabled` (default on), wired in `Plugin.cs`
