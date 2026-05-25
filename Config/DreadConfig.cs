@@ -28,6 +28,11 @@ namespace Dread.Config
         // 5. Error Reporting
         public static ConfigEntry<bool> ErrorReportingEnabled = null!;
 
+        // 10. Compatibility
+        public static ConfigEntry<bool> CompatibilityMode = null!;
+        public static ConfigEntry<bool> CompatibilitySkipConflictingPatches = null!;
+        public static ConfigEntry<bool> DebugConsoleGuardEnabled = null!;
+
         // 6. Psychotic Break
         public static ConfigEntry<bool> PsychoticBreakEnabled = null!;
         public static ConfigEntry<float> PsychoticBreakTriggerChance = null!;
@@ -76,9 +81,26 @@ namespace Dread.Config
             CrouchSpeedBoostEnabled = cfg.Bind("4. QOL", "CrouchSpeedBoost", true,
                 "Crouch movement is 30% faster.");
 
-            ErrorReportingEnabled = cfg.Bind("5. Error Reporting", "ErrorReportingEnabled", true,
+            ErrorReportingEnabled = cfg.Bind("5. Error Reporting", "ErrorReportingEnabled", false,
                 "Send anonymous error reports to the developer when crashes occur. "
-                    + "Helps fix bugs faster. Disable if you prefer no telemetry.");
+                    + "Opt-in. Helps fix bugs faster. Leave off if you prefer no telemetry.");
+
+            CompatibilityMode = cfg.Bind("10. Compatibility", "CompatibilityMode", false,
+                "Ambient audio only: disables monster Harmony patches, adrenaline/panic sprint "
+                    + "mutation, and psychotic break. Use when another mod conflicts with Dread.");
+
+            CompatibilitySkipConflictingPatches = cfg.Bind(
+                "10. Compatibility",
+                "SkipConflictingPatches",
+                false,
+                "If another mod already patched the same game method, skip Dread's patch and log once.");
+
+            DebugConsoleGuardEnabled = cfg.Bind(
+                "10. Compatibility",
+                "DebugConsoleGuardEnabled",
+                true,
+                "Suppress NullReferenceException spam from broken DebugConsoleUI hooks "
+                    + "(common with MenuLib/REPOConfig). Disable to see raw console errors.");
 
             PsychoticBreakEnabled = cfg.Bind("6. Psychotic Break", "PsychoticBreakEnabled", true,
                 "Master toggle for the Psychotic Break system.");
@@ -122,6 +144,7 @@ namespace Dread.Config
                 CrouchSpeedBoostEnabled,
                 FakeFootstepsEnabled, AdrenalineEnabled, LowStaminaSoundEnabled, PanicSprintEnabled,
                 ErrorReportingEnabled,
+                CompatibilityMode, CompatibilitySkipConflictingPatches, DebugConsoleGuardEnabled,
                 PsychoticBreakEnabled, PsychoticBreakTriggerChance, PsychoticBreakDuration, PsychoticBreakOncePerMatch,
                 TestCrashButton, DebugServerEnabled, DebugServerPort, LogLevelEntry,
             ];

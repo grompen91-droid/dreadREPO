@@ -101,6 +101,9 @@ namespace Dread.Systems
 
         internal static void Apply(Harmony harmony)
         {
+            if (_original != null || DreadConfig.CompatibilityMode.Value)
+                return;
+
             var type = AccessTools.TypeByName("EnemyNavMeshAgent");
             _original = type != null ? AccessTools.Method(type, "Awake") : null;
             if (_original == null)
@@ -108,6 +111,9 @@ namespace Dread.Systems
                 LoggingService.LogWarning("[Dread] EnemyNavMeshAgent.Awake not found; aggression patch skipped");
                 return;
             }
+
+            if (HarmonyPatchCompat.ShouldSkipDueToForeignPatches(_original, "EnemyNavMeshAgent.Awake"))
+                return;
 
             harmony.Patch(_original, postfix: new HarmonyMethod(typeof(EnemyNavMeshAgentAwakePatch), nameof(Postfix)));
         }
@@ -119,9 +125,13 @@ namespace Dread.Systems
             _original = null;
         }
 
+        [HarmonyPriority(Priority.Last)]
         private static void Postfix(object __instance)
         {
-            if (!DreadConfig.MonsterAggressionEnabled.Value) return;
+            if (!DreadConfig.MonsterAggressionEnabled.Value || DreadConfig.CompatibilityMode.Value)
+                return;
+            if (!HarmonyPatchCompat.IsMasterClient())
+                return;
 
             try
             {
@@ -148,6 +158,9 @@ namespace Dread.Systems
 
         internal static void Apply(Harmony harmony)
         {
+            if (_original != null)
+                return;
+
             var type = AccessTools.TypeByName("PlayerController");
             _original = type != null ? AccessTools.Method(type, "Awake") : null;
             if (_original == null)
@@ -195,6 +208,9 @@ namespace Dread.Systems
 
         internal static void Apply(Harmony harmony)
         {
+            if (_original != null || DreadConfig.CompatibilityMode.Value)
+                return;
+
             var type = AccessTools.TypeByName("EnemyDirector");
             _original = type != null ? AccessTools.Method(type, "SetInvestigate") : null;
             if (_original == null)
@@ -202,6 +218,9 @@ namespace Dread.Systems
                 LoggingService.LogWarning("[Dread] EnemyDirector.SetInvestigate not found; investigate patch skipped");
                 return;
             }
+
+            if (HarmonyPatchCompat.ShouldSkipDueToForeignPatches(_original, "EnemyDirector.SetInvestigate"))
+                return;
 
             var patch = new HarmonyMethod(typeof(EnemyDirectorSetInvestigatePatch), nameof(Prefix));
             harmony.Patch(_original, prefix: patch);
@@ -214,9 +233,13 @@ namespace Dread.Systems
             _original = null;
         }
 
+        [HarmonyPriority(Priority.First)]
         private static void Prefix(ref float radius)
         {
-            if (!DreadConfig.MonsterAggressionEnabled.Value) return;
+            if (!DreadConfig.MonsterAggressionEnabled.Value || DreadConfig.CompatibilityMode.Value)
+                return;
+            if (!HarmonyPatchCompat.IsMasterClient())
+                return;
             if (radius < float.MaxValue)
                 radius *= 1.5f;
         }

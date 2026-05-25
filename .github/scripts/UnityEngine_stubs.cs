@@ -216,6 +216,8 @@ namespace UnityEngine
         public static string version { get; }
         public static string unityVersion { get; }
         public static RuntimePlatform platform { get; }
+        public delegate void LogCallback(string logString, string stackTrace, LogType type);
+        public static event LogCallback logMessageReceived;
     }
     public enum RuntimePlatform { WindowsPlayer, OSXPlayer, LinuxPlayer }
     public static class JsonUtility

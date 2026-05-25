@@ -58,8 +58,10 @@ namespace Dread.Systems
             _mainCam = Camera.main;
 
             RefreshConfig();
+            OnSceneLoaded(SceneManager.GetActiveScene(), LoadSceneMode.Single);
 
             DreadConfig.PsychoticBreakEnabled.SettingChanged += OnConfigChanged;
+            DreadConfig.CompatibilityMode.SettingChanged += OnConfigChanged;
             DreadConfig.PsychoticBreakTriggerChance.SettingChanged += OnConfigChanged;
             DreadConfig.PsychoticBreakDuration.SettingChanged += OnConfigChanged;
             DreadConfig.PsychoticBreakOncePerMatch.SettingChanged += OnConfigChanged;
@@ -89,6 +91,7 @@ namespace Dread.Systems
             DreadConfig.PsychoticBreakTriggerChance.SettingChanged -= OnConfigChanged;
             DreadConfig.PsychoticBreakDuration.SettingChanged -= OnConfigChanged;
             DreadConfig.PsychoticBreakOncePerMatch.SettingChanged -= OnConfigChanged;
+            DreadConfig.CompatibilityMode.SettingChanged -= OnConfigChanged;
 
             if (_peakScreamClip != null) Destroy(_peakScreamClip);
             if (_distantScreamClip != null) Destroy(_distantScreamClip);
@@ -153,11 +156,17 @@ namespace Dread.Systems
         {
             if (_episodeActive)
             {
+                if (DreadConfig.CompatibilityMode.Value)
+                {
+                    EndEpisode();
+                    return;
+                }
+
                 UpdateEpisode();
                 return;
             }
 
-            if (!_enabled || SemiFunc.MenuLevel()) return;
+            if (!_enabled || DreadConfig.CompatibilityMode.Value || SemiFunc.MenuLevel()) return;
             if (_oncePerMatch && _hasTriggeredThisMatch) return;
 
             if (Time.time < _nextTriggerCheck) return;

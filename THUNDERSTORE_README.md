@@ -81,6 +81,14 @@ LogLevel = Debug
 
 ## Compatibility
 
-Works with modded enemies (Mimic, WesleysEnemies, etc.), REPOConfig, and other audio mods. REPOLib not required.
+Dread only requires BepInEx. It works with many popular mods (Mimic, Wesleys Enemies, MoreUpgrades, REPOConfig), but **cannot guarantee compatibility with every mod** because Harmony patches can overlap.
+
+**If something breaks:**
+
+- Enable **Compatibility mode** (`10. Compatibility`) for ambient audio only
+- Turn off **Error reporting** (default off) if logs grow too fast
+- Keep **Debug console guard** on if MenuLib/REPOConfig spams console errors
+
+Full matrix, Proton DLL notes, and test checklist: [mod-compatibility.md](https://github.com/grompen91-droid/dreadREPO/blob/master/docs/mod-compatibility.md)
 
 [Changelog](CHANGELOG.md)

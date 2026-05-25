@@ -89,8 +89,7 @@ namespace Dread.Systems
 
         private void UpdateAdrenaline()
         {
-            LoggingService.LogVerbose("[Tension] Checking adrenaline...");
-            if (!DreadConfig.AdrenalineEnabled.Value || SemiFunc.MenuLevel())
+            if (!DreadConfig.AdrenalineEnabled.Value || DreadConfig.CompatibilityMode.Value || SemiFunc.MenuLevel())
             {
                 RestoreDrain();
                 return;
@@ -129,7 +128,6 @@ namespace Dread.Systems
 
         private void UpdateLowStamina()
         {
-            LoggingService.LogVerbose("[Tension] Checking low stamina...");
             if (!DreadConfig.LowStaminaSoundEnabled.Value || SemiFunc.MenuLevel())
             {
                 _breathCooldown = 0f;
@@ -165,8 +163,7 @@ namespace Dread.Systems
 
         private void UpdatePanicSprint()
         {
-            LoggingService.LogVerbose("[Tension] Checking panic sprint...");
-            if (!DreadConfig.PanicSprintEnabled.Value || SemiFunc.MenuLevel())
+            if (!DreadConfig.PanicSprintEnabled.Value || DreadConfig.CompatibilityMode.Value || SemiFunc.MenuLevel())
             {
                 if (_originalSprintMultiplier >= 0f)
                     RestoreSprintMultiplier();

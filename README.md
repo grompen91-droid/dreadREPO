@@ -248,12 +248,17 @@ Monster changes are **host-authoritative** because the Harmony patches run on th
 
 ## Mod Compatibility
 
-Dread works alongside other mods without conflicts:
+Dread is **dependency-free** (BepInEx only) and is tested alongside common mod stacks, but **cannot promise zero conflicts** with every Thunderstore mod. Harmony load order, shared game types, and platform (Windows vs Proton) all matter.
 
-- **Modded enemies** (Mimic, WesleysEnemies, etc.): fully supported. The 4s audio scan loop catches any `EnemyHealth` component regardless of origin, and Harmony patches apply to all `EnemyNavMeshAgent` derivatives.
-- **REPOConfig**: compatible for live config editing.
-- **Other audio mods**: no conflict. Dread only modifies its own spawned `AudioSource` objects and enemy child audio sources via the marker guard.
-- **REPOLib**: no longer required (removed in v1.4.0). Dread is dependency-free.
+See **[docs/mod-compatibility.md](docs/mod-compatibility.md)** for the full matrix, isolation test steps, Linux DLL notes, and manual test checklist.
+
+**Quick guidance:**
+
+- **Modded enemies** (Mimic, WesleysEnemies, etc.): supported via `EnemyHealth` scan and host-only aggression patches when you are lobby host.
+- **REPOConfig / MenuLib**: usually fine; broken `DebugConsoleUI` hooks are mitigated by `DebugConsoleGuardEnabled` (default on).
+- **Sprint or stamina overhauls**: if movement feels wrong, disable `AdrenalineEnabled` / `PanicSprintEnabled` or enable **Compatibility mode** (ambient audio only).
+- **Broken profiles**: set `CompatibilityMode = true` or `ErrorReportingEnabled = false` (default) without uninstalling Dread.
+- **REPOLib**: not required (removed in v1.4.0).
 
 The `audio/` folder includes `door_creak.ogg` which is shipped but not currently loaded by any system. It is available for future ambient variants or custom sound replacement.
 

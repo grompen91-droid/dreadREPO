@@ -1,10 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
-using HarmonyLib;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
@@ -24,10 +22,13 @@ namespace Dread.Systems
         private const int MaxMessageLength = 500;
         private const float ProximityRange = 15f;
         private const int MaxPendingLogs = 100;
+        private const int MaxProcessPerFrame = 3;
         private const int HashPrefixLength = 16;
         private const int PlayerMaxHp = 100;
+        private const float DedupeCooldownSeconds = 60f;
         private static readonly Queue<RawLogEntry> _pendingLogs = new Queue<RawLogEntry>(32);
         private static readonly object _logsLock = new object();
+        private static readonly Dictionary<string, float> _recentHashes = new Dictionary<string, float>();
 
         private class RawLogEntry
         {
@@ -39,14 +40,21 @@ namespace Dread.Systems
         private void OnEnable()
         {
             LoggingService.LogVerbose("[ErrorReporter] Awake starting...");
+            Application.logMessageReceived += OnLogMessageReceived;
             SceneManager.sceneLoaded += OnSceneLoaded;
             _lastFlushTime = Time.realtimeSinceStartup;
         }
 
         private void OnDisable()
         {
+            Application.logMessageReceived -= OnLogMessageReceived;
             SceneManager.sceneLoaded -= OnSceneLoaded;
             FlushNow();
+        }
+
+        private static void OnLogMessageReceived(string logString, string stackTrace, LogType type)
+        {
+            EnqueueLog(logString, stackTrace, type);
         }
 
         internal static void EnqueueLog(string logString, string stackTrace, LogType type)
@@ -57,16 +65,39 @@ namespace Dread.Systems
             if (!DreadConfig.ErrorReportingEnabled.Value)
                 return;
 
+            if (IsIgnoredSpam(logString, stackTrace))
+                return;
+
+            var hash = ComputeHash(stackTrace, logString);
+            var now = Time.realtimeSinceStartup;
             lock (_logsLock)
             {
-                if (_pendingLogs.Count < MaxPendingLogs)
-                    _pendingLogs.Enqueue(new RawLogEntry
-                    {
-                        Message = logString,
-                        StackTrace = stackTrace,
-                        Type = type
-                    });
+                if (_recentHashes.TryGetValue(hash, out var last) && now - last < DedupeCooldownSeconds)
+                    return;
+
+                _recentHashes[hash] = now;
+                if (_pendingLogs.Count >= MaxPendingLogs)
+                    return;
+
+                _pendingLogs.Enqueue(new RawLogEntry
+                {
+                    Message = logString,
+                    StackTrace = stackTrace,
+                    Type = type
+                });
             }
+        }
+
+        private static bool IsIgnoredSpam(string message, string stackTrace)
+        {
+            if (message.Contains("DebugConsoleUI", StringComparison.Ordinal)
+                || stackTrace.Contains("DebugConsoleUI", StringComparison.Ordinal))
+                return true;
+            if (message.Contains("DebugTester", StringComparison.Ordinal)
+                || stackTrace.Contains("SemiFunc.DebugTester", StringComparison.Ordinal)
+                || stackTrace.Contains("DebugTester", StringComparison.Ordinal))
+                return true;
+            return false;
         }
 
         private void Update()
@@ -84,9 +115,18 @@ namespace Dread.Systems
             {
                 if (_pendingLogs.Count == 0)
                     return;
-                batch = _pendingLogs.ToArray();
-                _pendingLogs.Clear();
+
+                var count = Math.Min(MaxProcessPerFrame, _pendingLogs.Count);
+                batch = new RawLogEntry[count];
+                for (var i = 0; i < count; i++)
+                    batch[i] = _pendingLogs.Dequeue();
             }
+
+            var gameState = CaptureGameState();
+            var systemInfo = CaptureSystemInfo();
+            var display = CaptureDisplayInfo();
+            var config = CaptureConfig();
+            var scene = SceneManager.GetActiveScene().name ?? "unknown";
 
             foreach (var raw in batch)
             {
@@ -98,11 +138,11 @@ namespace Dread.Systems
                     ExceptionType = ParseExceptionType(raw.Message),
                     Message = Truncate(raw.Message, MaxMessageLength),
                     StackTrace = Truncate(raw.StackTrace, MaxStackTraceLength),
-                    Scene = SceneManager.GetActiveScene().name ?? "unknown",
-                    GameState = CaptureGameState(),
-                    SystemInfo = CaptureSystemInfo(),
-                    Display = CaptureDisplayInfo(),
-                    Config = CaptureConfig()
+                    Scene = scene,
+                    GameState = gameState,
+                    SystemInfo = systemInfo,
+                    Display = display,
+                    Config = config
                 };
 
                 lock (_buffer)
@@ -366,48 +406,4 @@ namespace Dread.Systems
         }
     }
 
-    internal static class ErrorReportPatch
-    {
-        private static MethodInfo? _logErrorOriginal;
-        private static MethodInfo? _logExceptionOriginal;
-
-        internal static void Apply(Harmony harmony)
-        {
-            _logErrorOriginal = AccessTools.Method(typeof(Debug), "LogError", new[] { typeof(object) });
-            if (_logErrorOriginal != null)
-                harmony.Patch(_logErrorOriginal,
-                    postfix: new HarmonyMethod(typeof(ErrorReportPatch), nameof(OnLogError)));
-
-            _logExceptionOriginal = AccessTools.Method(typeof(Debug), "LogException", new[] { typeof(Exception) });
-            if (_logExceptionOriginal != null)
-                harmony.Patch(_logExceptionOriginal,
-                    postfix: new HarmonyMethod(typeof(ErrorReportPatch), nameof(OnLogException)));
-        }
-
-        internal static void Remove(Harmony harmony)
-        {
-            if (_logErrorOriginal != null)
-            {
-                harmony.Unpatch(_logErrorOriginal,
-                    AccessTools.Method(typeof(ErrorReportPatch), nameof(OnLogError)));
-                _logErrorOriginal = null;
-            }
-            if (_logExceptionOriginal != null)
-            {
-                harmony.Unpatch(_logExceptionOriginal,
-                    AccessTools.Method(typeof(ErrorReportPatch), nameof(OnLogException)));
-                _logExceptionOriginal = null;
-            }
-        }
-
-        private static void OnLogError(object __0)
-        {
-            ErrorReporterSystem.EnqueueLog(__0?.ToString() ?? "", "", LogType.Error);
-        }
-
-        private static void OnLogException(Exception __0)
-        {
-            ErrorReporterSystem.EnqueueLog(__0?.Message ?? "", __0?.StackTrace ?? "", LogType.Exception);
-        }
-    }
 }

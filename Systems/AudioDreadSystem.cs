@@ -30,6 +30,7 @@ namespace Dread.Systems
         {
             LoggingService.LogVerbose("[AudioDread] Awake starting...");
             SceneManager.sceneLoaded += OnSceneLoaded;
+            OnSceneLoaded(SceneManager.GetActiveScene(), LoadSceneMode.Single);
             StartCoroutine(LoadClips());
         }
 
