@@ -32,6 +32,8 @@ namespace Dread.Systems
             count += TryAddSystem<DebugServerSystem>("DreadDebugHost");
             count += TryAddSystem<DebugOverlaySystem>("DreadDebugOverlayHost");
 
+            RepoConfigSliderLabelCompat.TryApply(Plugin.HarmonyInstance);
+
             if (count > 0)
                 LoggingService.LogInfo($"Systems initialized ({count})");
             else

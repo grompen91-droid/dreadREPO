@@ -31,6 +31,22 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 > **Highlight:** Honest mod compatibility docs, opt-in telemetry, Compatibility mode for broken profiles, and host-only monster patch guards.
 
+<details>
+<summary>Planned (not in this release)</summary>
+
+Tracked in [docs/ROADMAP.md](docs/ROADMAP.md):
+
+- Debug overlay: draggable panel, better config, font fixes
+- Codebase refactor into smaller files; fewer reflection/DLL dependencies where possible
+- Extensibility and hardened core (extension points, fail-safe init, compat patterns)
+- Performance pass
+- Error reporting: full test matrix; default-on + first-run opt-in/out prompt (today default is off, ADR-0010)
+- Root `CONTEXT.md` agent glossary (DOCS-1, #174)
+
+GitHub backlog: issues #163-#175, table in [docs/ROADMAP.md](docs/ROADMAP.md).
+
+</details>
+
 ### Added
 - **Verify automation:** `scripts/verify-dread.ps1` (Tier 0 static, optional Tier 1 TCP, Tier 2 log patterns), `docs/agents/verify-dread.md` runbook, `docs/agents/verify-dread-checklist.json`
 - **Debug APIs:** `TestCrashSystem.TriggerForDebug()`, `PsychoticBreakSystem.ForceEpisodeForDebug()` for debug server / MCP
@@ -58,6 +74,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Logging: hot-path guards, level demotions, prefix consistency across systems and `dread-mcp-server`
 
 ### Fixed
+- **REPOConfig sliders (temporary):** when REPOConfig + MenuLib are present, `RepoConfigSliderLabelCompat` restores slider setting names for empty descriptions (label at x=100, compact row); upstream REPOConfig/MenuLib fix preferred; skipped when REPOConfig is absent. See `docs/repo-config-slider-labels-investigation.md`
 - **TestCrash:** trigger on `SettingChanged` for ConfigurationManager button (no longer relies on `Update` polling)
 - **PsychoticBreak / AudioDread:** seed `_sceneLoaded` from active scene on `Start` so audio loads without waiting for a second scene load
 - **CI stubs:** `UnityEngine.UI.dll` stub for `RawImage` / `RectTransform`; `JsonUtility.FromJson`; cross-platform `build.ps1` stub detection (PR #146, #161)

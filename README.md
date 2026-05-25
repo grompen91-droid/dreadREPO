@@ -183,6 +183,8 @@ An automatic telemetry system that hooks into Unity's `Debug.LogError` and `Debu
 
 `BepInEx/config/elytraking.dread.cfg` is generated on first run. Compatible with **REPOConfig** for live editing.
 
+**REPOConfig slider labels (temporary workaround):** REPOConfig passes an empty description to MenuLib sliders, so setting names were invisible on float/int rows. When REPOConfig and MenuLib are installed, Dread applies a **best-effort** Harmony compat (`RepoConfigSliderLabelCompat`): restores the name on the left, hides the empty description row, keeps a compact row height. This uses a fixed label X offset and may not match toggle label styling exactly. **Proper fix belongs in REPOConfig or MenuLib upstream.** Without REPOConfig, use `elytraking.dread.cfg` or BepInEx Configuration Manager. Full timeline: [docs/repo-config-slider-labels-investigation.md](docs/repo-config-slider-labels-investigation.md).
+
 <details>
 <summary>Full config reference</summary>
 
@@ -252,10 +254,12 @@ Dread is **dependency-free** (BepInEx only) and is tested alongside common mod s
 
 See **[docs/mod-compatibility.md](docs/mod-compatibility.md)** for the full matrix, isolation test steps, Linux DLL notes, and manual test checklist.
 
+**Planned work:** [docs/ROADMAP.md](docs/ROADMAP.md) (debug overlay UX, refactor, extensibility and hardened core, performance, error reporting defaults + first-run prompt).
+
 **Quick guidance:**
 
 - **Modded enemies** (Mimic, WesleysEnemies, etc.): supported via `EnemyHealth` scan and host-only aggression patches when you are lobby host.
-- **REPOConfig / MenuLib**: usually fine; broken `DebugConsoleUI` hooks are mitigated by `DebugConsoleGuardEnabled` (default on).
+- **REPOConfig / MenuLib**: usually fine; broken `DebugConsoleUI` hooks are mitigated by `DebugConsoleGuardEnabled` (default on). Slider names use a **temporary** Dread compat when REPOConfig is present (see [Configuration](#configuration)); upstream REPOConfig/MenuLib fix still desired.
 - **Sprint or stamina overhauls**: if movement feels wrong, disable `AdrenalineEnabled` / `PanicSprintEnabled` or enable **Compatibility mode** (ambient audio only).
 - **Broken profiles**: set `CompatibilityMode = true` or `ErrorReportingEnabled = false` (default) without uninstalling Dread.
 - **REPOLib**: not required (removed in v1.4.0).

@@ -82,6 +82,11 @@ namespace Dread
             }
         }
 
+        private void Start()
+        {
+            RepoConfigSliderLabelCompat.TryApply(_harmony);
+        }
+
         private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             if (DreadSystemInitializer.TryInitialize())
