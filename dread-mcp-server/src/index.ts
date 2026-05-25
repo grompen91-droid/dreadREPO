@@ -365,7 +365,10 @@ Error Handling:
   },
   async ({ response_format }) => {
     return toolCall("get_patches", {}, (response) => {
-      const patches = response.data as Array<Record<string, unknown>> ?? [];
+      const raw = response.data as Record<string, unknown> | Array<Record<string, unknown>> | undefined;
+      const patches = Array.isArray(raw)
+        ? raw
+        : (raw?.patches as Array<Record<string, unknown>> | undefined) ?? [];
 
       if (response_format === "text") {
         if (patches.length === 0) {
@@ -426,7 +429,10 @@ Error Handling:
   },
   async ({ response_format }) => {
     return toolCall("get_logs", {}, (response) => {
-      const entries = response.data as Array<Record<string, unknown>> ?? [];
+      const raw = response.data as Record<string, unknown> | Array<Record<string, unknown>> | undefined;
+      const entries = Array.isArray(raw)
+        ? raw
+        : (raw?.logs as Array<Record<string, unknown>> | undefined) ?? [];
 
       if (response_format === "text") {
         if (entries.length === 0) {

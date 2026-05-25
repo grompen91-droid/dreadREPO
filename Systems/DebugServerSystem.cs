@@ -309,8 +309,8 @@ namespace Dread.Systems
                 var player = FindObjectOfType<PlayerController>();
                 if (player != null)
                 {
-                    playerHp = player.Health;
-                    playerStamina = player.stamina;
+                    playerHp = ReadPlayerFloat(player, "Health", "health", "playerHealth");
+                    playerStamina = ReadPlayerFloat(player, "stamina", "Stamina", "energy");
                     foreach (var e in enemies)
                     {
                         if (e.CurrentHealth > 0)
@@ -453,6 +453,26 @@ namespace Dread.Systems
         {
             var safeError = Sanitize(error);
             return $"{{\"id\":{id},\"ok\":{(ok ? "true" : "false")},\"error\":\"{safeError}\",\"code\":{code}}}";
+        }
+
+        private static float ReadPlayerFloat(PlayerController player, params string[] names)
+        {
+            foreach (var name in names)
+            {
+                try
+                {
+                    return Traverse.Create(player).Property<float>(name).Value;
+                }
+                catch { }
+
+                try
+                {
+                    return Traverse.Create(player).Field<float>(name).Value;
+                }
+                catch { }
+            }
+
+            return -1f;
         }
 
         private static string Sanitize(string s)

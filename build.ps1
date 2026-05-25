@@ -29,7 +29,23 @@ dotnet @buildArgs
 if ($LASTEXITCODE -ne 0) { Write-Error "Build failed"; exit 1 }
 
 # Copy mod files into Thunderstore package layout
-Copy-Item "bin\Release\net48\Dread.dll" "$outDir\BepInEx\plugins\$name\"
+$pluginOut = "$outDir\BepInEx\plugins\$name"
+Copy-Item "bin\Release\net48\Dread.dll" $pluginOut
+$pluginDeps = @(
+    "NVorbis.dll",
+    "System.Memory.dll",
+    "System.Buffers.dll",
+    "System.Numerics.Vectors.dll",
+    "System.Runtime.CompilerServices.Unsafe.dll"
+)
+foreach ($dep in $pluginDeps) {
+    $src = "bin\Release\net48\$dep"
+    if (Test-Path $src) {
+        Copy-Item $src $pluginOut
+    } else {
+        Write-Warning "Missing dependency: $dep"
+    }
+}
 
 if (Test-Path "audio") {
     Copy-Item -Recurse "audio" "$outDir\BepInEx\plugins\$name\"

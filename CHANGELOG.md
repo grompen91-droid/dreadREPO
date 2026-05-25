@@ -36,6 +36,19 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - `FlashlightStateTracker.cs`: standalone MonoBehaviour extracted from nested class in PsychoticBreakSystem to fix Unity type registration failure preventing AddComponent. (PR #158)
 - `breath2.ogg`, `breath3.ogg`: audio files for TensionSystem breath variant loading (referenced since v1.4.0 but missing)
 
+### Fixed
+- CI/CD stubs: move `RawImage` and `RectTransform` from `UnityEngine.dll` stub into dedicated `UnityEngine.UI.dll` stub (fixes `TypeLoadException` on stub-built releases that blocked all system init, audio loading, and debug server startup)
+- PsychoticBreakSystem: resolve `UnityEngine.UI.RawImage` at runtime instead of compile-time field types so stub-built DLLs instantiate correctly under Proton/Wine
+- AudioClipLoader: convert Wine `Z:\\` paths to Unix `file:///` URIs, defer ambient loads until first scene, and surface `downloadHandler.error` when `req.error` is empty
+- DebugServerSystem: read player HP/stamina via Harmony Traverse instead of stub-only `Health` property (fixes MCP `dread_get_state`)
+- dread-mcp-server: parse nested `logs` and `patches` arrays from debug server JSON responses (fixes empty `{}` from `dread_get_logs` / `dread_get_patches`)
+- PsychoticBreakSystem: replace stub-only `Physics.DefaultRaycastLayers` static init with layer mask `-1` to stop loading-screen `TypeInitializationException` spam
+- AudioClipLoader: read `downloadHandler` via reflection to avoid stub `UnityWebRequest.downloadHandler` signature mismatch at runtime
+- AudioClipLoader: map Linux `/home/...` paths to `file:///Z:/home/...` for Wine/Proton (fixes `HTTP/1.1 404 Not Found` when loading OGG files)
+- AudioClipLoader: load OGG via NVorbis direct disk read (bypasses broken UnityWebRequest `file://` on Proton); ships `NVorbis.dll` alongside `Dread.dll`
+- AudioClipLoader: fill decoded PCM via `AudioClip.Create` callback instead of `SetData` (not present in REPO's Unity AudioModule)
+- AudioClipLoader: ship NVorbis dependency DLLs (`System.Memory`, `System.Buffers`, etc.) and resolve them from the plugin folder at runtime
+
 ### Changed
 - CD pipeline: fixed Thunderstore publish -- `tcli` 0.2.2 does not support `--file` with `--package-version` (mutually exclusive flags)
 - THUNDERSTORE_README.md: updated with Psychotic Break, error telemetry, and CD pipeline documentation

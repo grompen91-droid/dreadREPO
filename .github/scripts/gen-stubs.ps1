@@ -99,11 +99,26 @@ if (Test-Path $uwrDllPath) {
     Write-Host "[gen-stubs] Created UnityEngine.UnityWebRequestModule.dll ($size KB)"
 }
 
+# Build UnityEngine.UI stubs (RawImage, RectTransform; depends on UnityEngine)
+$uiCsproj = Write-StubProject -Name "UnityEngine.UI" -SourceFile "$PSScriptRoot/UnityEngine.UI_stubs.cs" -Directory $stubsDir -References @("UnityEngine")
+Write-Host "[gen-stubs] Compiling UnityEngine.UI stubs..."
+$output = dotnet build $uiCsproj -c Release --nologo 2>&1
+$exitCode = $LASTEXITCODE
+$output | Out-String | ForEach-Object { Write-Host "$_" }
+if ($exitCode -ne 0) {
+    Write-Host "::error::[gen-stubs] Failed to compile UnityEngine.UI stubs (exit $exitCode)"
+    exit 1
+}
+$uiDllPath = "$stubsDir/UnityEngine.UI.dll"
+if (Test-Path $uiDllPath) {
+    $size = (Get-Item $uiDllPath).Length / 1KB
+    Write-Host "[gen-stubs] Created UnityEngine.UI.dll ($size KB)"
+}
+
 # Generate empty stub assemblies (no MSBuild restore needed, fast sequential builds)
 $emptyAssemblies = @(
     'UnityEngine.CoreModule',
     'UnityEngine.AudioModule',
-    'UnityEngine.UI',
     'UnityEngine.PhysicsModule',
     'UnityEngine.ImageConversionModule',
 

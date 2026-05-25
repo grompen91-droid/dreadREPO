@@ -5,6 +5,7 @@ using Dread.Systems;
 using HarmonyLib;
 using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Dread
 {
@@ -23,6 +24,7 @@ namespace Dread
 
         private void Awake()
         {
+            PluginDependencyResolver.Register();
             Logger = base.Logger;
             HarmonyInstance = _harmony;
             DreadConfig.Initialize(Config);
@@ -65,43 +67,20 @@ namespace Dread
 
             LoggingService.PrintAsciiArt();
             LoggingService.LogInfo($"{NAME} v{VERSION} loaded.");
+
+            SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
-        private void Start()
+        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            typeof(UnityEngine.UI.RawImage).ToString();
-            int count = 0;
-            if (CreateSystemHost("DreadAudioHost").AddComponent<AudioDreadSystem>() != null) count++;
-            else LoggingService.LogError("Failed to add AudioDreadSystem component.");
-            if (CreateSystemHost("DreadMonsterHost").AddComponent<MonsterOverhaulSystem>() != null) count++;
-            else LoggingService.LogError("Failed to add MonsterOverhaulSystem component.");
-            if (CreateSystemHost("DreadTensionHost").AddComponent<TensionSystem>() != null) count++;
-            else LoggingService.LogError("Failed to add TensionSystem component.");
-            if (CreateSystemHost("DreadErrorHost").AddComponent<ErrorReporterSystem>() != null) count++;
-            else LoggingService.LogError("Failed to add ErrorReporterSystem component.");
-            if (CreateSystemHost("DreadPsychoticBreakHost").AddComponent<PsychoticBreakSystem>() != null) count++;
-            else LoggingService.LogError("Failed to add PsychoticBreakSystem component.");
-            if (CreateSystemHost("DreadTestCrashHost").AddComponent<TestCrashSystem>() != null) count++;
-            else LoggingService.LogError("Failed to add TestCrashSystem component.");
-            if (CreateSystemHost("DreadDebugHost").AddComponent<DebugServerSystem>() != null) count++;
-            else LoggingService.LogError("Failed to add DebugServerSystem component.");
-            if (count > 0)
-                LoggingService.LogInfo($"Systems initialized ({count})");
-            else
-                LoggingService.LogError("All systems failed to initialize.");
+            if (DreadSystemInitializer.TryInitialize())
+                SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 
         private void OnDestroy()
         {
             if (_logLevelHandler != null)
                 DreadConfig.LogLevelEntry.SettingChanged -= _logLevelHandler;
-        }
-
-        private static GameObject CreateSystemHost(string name)
-        {
-            var go = new GameObject(name);
-            DontDestroyOnLoad(go);
-            return go;
         }
     }
 }

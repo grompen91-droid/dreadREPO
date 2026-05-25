@@ -10,6 +10,7 @@ namespace Dread.Systems
     {
         private readonly List<AudioClip> _clips = new();
         private Camera? _mainCam;
+        private bool _sceneLoaded;
 
         private static readonly string[] ClipNames =
         {
@@ -40,11 +41,15 @@ namespace Dread.Systems
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
+            _sceneLoaded = true;
             _mainCam = Camera.main;
         }
 
         private IEnumerator LoadClips()
         {
+            while (!_sceneLoaded)
+                yield return null;
+
             yield return AudioClipLoader.LoadClips(ClipNames, (name, clip) =>
             {
                 if (clip != null) _clips.Add(clip);

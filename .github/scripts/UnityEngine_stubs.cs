@@ -16,6 +16,7 @@ namespace UnityEngine
     public class Component : Object
     {
         public T GetComponent<T>() where T : class => null;
+        public Component GetComponent(Type type) => null;
         public T GetComponentInChildren<T>() where T : class => null;
         public GameObject gameObject { get; }
         public Transform transform { get; }
@@ -25,6 +26,7 @@ namespace UnityEngine
         public GameObject() { }
         public GameObject(string name) { }
         public T AddComponent<T>() where T : Component => null;
+        public Component AddComponent(Type componentType) => null;
         public T[] GetComponentsInChildren<T>() where T : class => null;
         public Transform transform { get; }
     }
@@ -111,8 +113,14 @@ namespace UnityEngine
     }
     public class AudioClip : Object
     {
+        public delegate void PCMReaderCallback(float[] data);
+        public delegate void PCMSetPositionCallback(int position);
+
         public float length { get; }
         public string name { get; set; }
+        public static AudioClip Create(string name, int lengthSamples, int channels, int frequency, bool stream) => null!;
+        public static AudioClip Create(string name, int lengthSamples, int channels, int frequency, bool stream, PCMReaderCallback pcmreadercallback) => null!;
+        public static AudioClip Create(string name, int lengthSamples, int channels, int frequency, bool stream, PCMReaderCallback pcmreadercallback, PCMSetPositionCallback pcmsetpositioncallback) => null!;
     }
     public enum AudioRolloffMode { Linear }
     public enum AudioType { OGGVORBIS }
@@ -267,24 +275,6 @@ namespace UnityEngine.SceneManagement
     }
     public enum LoadSceneMode { Single, Additive }
 }
-namespace UnityEngine.UI
-{
-    public class RawImage : MonoBehaviour
-    {
-        public Color color { get; set; }
-        public RectTransform rectTransform { get; }
-        public Texture2D texture { get; set; }
-    }
-    public class RectTransform : Component
-    {
-        public Vector2 sizeDelta { get; set; }
-        public Vector2 anchoredPosition { get; set; }
-        public Vector2 localScale { get; set; }
-        public Vector2 anchorMin { get; set; }
-        public Vector2 anchorMax { get; set; }
-    }
-}
-
 namespace UnityEngine.AI
 {
     public class NavMeshAgent : Behaviour
