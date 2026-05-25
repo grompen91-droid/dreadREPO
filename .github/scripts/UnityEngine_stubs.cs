@@ -25,6 +25,7 @@ namespace UnityEngine
     {
         public GameObject() { }
         public GameObject(string name) { }
+        public bool activeInHierarchy { get; }
         public T AddComponent<T>() where T : Component => null;
         public Component AddComponent(Type componentType) => null;
         public T[] GetComponentsInChildren<T>() where T : class => null;
@@ -137,6 +138,7 @@ namespace UnityEngine
         public static float deltaTime { get; }
         public static float time { get; }
         public static float realtimeSinceStartup { get; }
+        public static int frameCount { get; }
     }
     public static class Random
     {
@@ -188,9 +190,52 @@ namespace UnityEngine
 
     public class Texture2D : Object
     {
+        public Texture2D(int width, int height) { }
         public Texture2D(int width, int height, TextureFormat format, bool mipChain) { }
         public void SetPixel(int x, int y, Color color) { }
+        public void SetPixels(Color[] colors) { }
         public void Apply() { }
+    }
+
+    public class Font : Object
+    {
+        public static Font CreateDynamicFontFromOSFont(string fontname, int size) => new Font();
+    }
+
+    public enum FontStyle
+    {
+        Normal,
+        Bold,
+        Italic,
+        BoldAndItalic
+    }
+
+    public enum TextAnchor
+    {
+        UpperLeft,
+        UpperCenter,
+        UpperRight,
+        MiddleLeft,
+        MiddleCenter,
+        MiddleRight,
+        LowerLeft,
+        LowerCenter,
+        LowerRight
+    }
+
+    public class RectOffset
+    {
+        public RectOffset() { }
+        public RectOffset(int left, int right, int top, int bottom) { }
+        public int left { get; set; }
+        public int right { get; set; }
+        public int top { get; set; }
+        public int bottom { get; set; }
+    }
+
+    public static class Resources
+    {
+        public static T GetBuiltinResource<T>(string path) where T : Object => null;
     }
     public enum TextureFormat { RGBA32 }
     public enum RenderMode { ScreenSpaceOverlay }
@@ -262,6 +307,7 @@ namespace UnityEngine
     {
         public float x, y, width, height;
         public float yMin { get; }
+        public float xMax => x + width;
         public Rect(float x, float y, float width, float height)
         {
             this.x = x;
@@ -274,7 +320,9 @@ namespace UnityEngine
 
     public class GUIContent
     {
-        public static GUIContent none { get; } = new GUIContent();
+        public static GUIContent none { get; } = new GUIContent("");
+        public GUIContent() { }
+        public GUIContent(string text) { }
     }
 
     public class GUIStyleState
@@ -286,22 +334,44 @@ namespace UnityEngine
     public class GUIStyle
     {
         public GUIStyleState normal { get; } = new GUIStyleState();
+        public Font? font { get; set; }
         public int fontSize { get; set; }
+        public FontStyle fontStyle { get; set; }
+        public TextAnchor alignment { get; set; }
         public bool wordWrap { get; set; }
+        public bool richText { get; set; }
+        public RectOffset border { get; set; } = new RectOffset();
+        public RectOffset padding { get; set; } = new RectOffset();
         public GUIStyle() { }
         public GUIStyle(GUIStyle other) { }
+        public Vector2 CalcSize(GUIContent content) => Vector2.zero;
     }
 
     public class GUISkin
     {
         public GUIStyle box { get; } = new GUIStyle();
         public GUIStyle label { get; } = new GUIStyle();
+        public Font? font { get; }
+    }
+
+    public class Event
+    {
+        public static Event? current { get; set; }
+        public EventType type { get; set; }
+        public KeyCode keyCode { get; set; }
+    }
+
+    public enum EventType
+    {
+        KeyDown
     }
 
     public static class GUI
     {
         public static GUISkin skin { get; } = new GUISkin();
+        public static Color color { get; set; }
         public static void Box(Rect position, GUIContent content, GUIStyle style) { }
+        public static void DrawTexture(Rect position, Texture2D texture) { }
         public static void Label(Rect position, string text) { }
         public static void Label(Rect position, string text, GUIStyle style) { }
     }

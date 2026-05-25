@@ -29,6 +29,13 @@ namespace Dread
         {
             PluginDependencyResolver.Register();
             Logger = base.Logger;
+            StubBuildDetector.Initialize();
+            if (StubBuildDetector.IsStubBuild)
+            {
+                Logger.LogWarning(
+                    "[Dread] Built against compile stubs: error reporting is disabled. "
+                        + "Install REPO Managed DLLs for a production build to enable telemetry.");
+            }
             HarmonyInstance = _harmony;
             DreadConfig.Initialize(Config);
 
@@ -65,7 +72,44 @@ namespace Dread
             LoggingService.PrintAsciiArt();
             LoggingService.LogInfo($"{NAME} v{VERSION} loaded.");
 
+            // #region agent log
+            DebugAgentLog.Write(
+                "F",
+                "Plugin.cs:Awake",
+                "plugin_loaded",
+                "post-fix",
+                ("overlayEnabled", DreadConfig.DebugOverlayEnabled.Value),
+                ("logLevel", DreadConfig.LogLevelEntry.Value.ToString()),
+                ("compatibilityMode", DreadConfig.CompatibilityMode.Value),
+                ("debugServerEnabled", DreadConfig.DebugServerEnabled.Value),
+                ("audioFrequency", DreadConfig.AudioFrequency.Value));
+            // #endregion
+
+            if (DreadConfig.LogLevelEntry.Value == Systems.LogLevel.Verbose)
+            {
+                LoggingService.LogWarning(
+                    "[Dread] LogLevel=Verbose hurts FPS. Set LogLevel=Debug in elytraking.dread.cfg for normal play.");
+            }
+
+            if (DreadConfig.AudioFrequency.Value > 3f)
+            {
+                LoggingService.LogWarning(
+                    $"[Dread] Audio Frequency={DreadConfig.AudioFrequency.Value} is very high. "
+                        + "Use 1-2 for normal play.");
+            }
+
+            if (DreadConfig.DebugOverlayEnabled.Value)
+            {
+                LoggingService.LogWarning(
+                    "[Dread] Debug overlay enabled. Hide with ToggleKey when not debugging.");
+            }
+
             SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private void Start()
+        {
+            RepoConfigSliderLabelCompat.TryApply(_harmony);
         }
 
         private void ApplyMonsterPatches()

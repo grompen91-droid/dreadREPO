@@ -62,6 +62,7 @@ namespace Dread.Systems
             RestoreDrain();
             RestoreSprintMultiplier();
             AudioClipLoader.ClearCache();
+            EnemyScanCache.Invalidate();
             _mainCam = Camera.main;
             _originalDrain = -1f;
             _panicTimer = 0f;
@@ -72,18 +73,34 @@ namespace Dread.Systems
             _breathCooldown = 0f;
         }
 
+        private float _nextRuntimePublish;
+
         private void Update()
         {
+            RuntimePerfSampler.RecordFrame();
+
+            if (SemiFunc.MenuLevel())
+            {
+                RestoreDrain();
+                RestoreSprintMultiplier();
+                return;
+            }
+
             if (Time.time >= _nextScan)
             {
                 _nextScan = Time.time + 0.5f;
-                _nearestDist = SemiFunc.MenuLevel() ? float.MaxValue : FindNearestEnemyDist();
+                _nearestDist = EnemyScanCache.NearestDistance(_mainCam);
             }
 
             UpdateAdrenaline();
             UpdateLowStamina();
             UpdatePanicSprint();
-            PublishRuntimeState();
+
+            if (Time.time >= _nextRuntimePublish)
+            {
+                _nextRuntimePublish = Time.time + 0.5f;
+                PublishRuntimeState();
+            }
         }
 
         private void PublishRuntimeState()
@@ -223,22 +240,6 @@ namespace Dread.Systems
         }
 
         // ── Shared ────────────────────────────────────────────────────────────
-
-        private float FindNearestEnemyDist()
-        {
-            if (_mainCam == null) _mainCam = Camera.main;
-            var cam = _mainCam;
-            if (cam == null) return float.MaxValue;
-
-            float nearest = float.MaxValue;
-            foreach (var e in FindObjectsOfType<EnemyHealth>())
-            {
-                if (e == null) continue;
-                float d = Vector3.Distance(cam.transform.position, e.transform.position);
-                if (d < nearest) nearest = d;
-            }
-            return nearest;
-        }
 
         // ── Breath Clips ──────────────────────────────────────────────────────
 

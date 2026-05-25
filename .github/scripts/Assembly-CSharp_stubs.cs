@@ -14,6 +14,7 @@ public class EnemyNavMeshAgent : MonoBehaviour
 }
 public class EnemyDirector : MonoBehaviour
 {
+    public void SetInvestigate(Vector3 position, float radius, bool pathfindOnly = false) { }
     public void SetInvestigate(ref float radius) { }
 }
 public class PlayerController : MonoBehaviour

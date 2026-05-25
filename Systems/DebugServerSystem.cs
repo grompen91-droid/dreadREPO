@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -55,7 +56,11 @@ namespace Dread.Systems
 
             public void LogEvent(object sender, LogEventArgs e)
             {
-                _owner.AddLogEntry($"[{e.Level}]", e.Data?.ToString() ?? "");
+                var message = e.Data?.ToString() ?? "";
+                if (message.IndexOf("Dread", StringComparison.OrdinalIgnoreCase) < 0)
+                    return;
+
+                _owner.AddLogEntry($"[{e.Level}]", message);
             }
 
             public void Dispose() { }
@@ -325,7 +330,7 @@ namespace Dread.Systems
                     playerStamina = ReadPlayerFloat(player, "stamina", "Stamina", "energy");
                     foreach (var e in enemies)
                     {
-                        if (e.CurrentHealth > 0)
+                        if (EnemyHealthCompat.IsAlive(e))
                         {
                             var dist = Vector3.Distance(e.transform.position, player.transform.position);
                             if (nearestEnemyDist < 0 || dist < nearestEnemyDist)
@@ -420,7 +425,14 @@ namespace Dread.Systems
                     Entry("SkipConflictingPatches", "compatibility.skipConflictingPatches", DreadConfig.CompatibilitySkipConflictingPatches),
                     Entry("DebugConsoleGuardEnabled", "compatibility.debugConsoleGuard", DreadConfig.DebugConsoleGuardEnabled)),
                 Section("11. Debug Overlay",
-                    Entry("DebugOverlayEnabled", "overlay.enabled", DreadConfig.DebugOverlayEnabled)),
+                    Entry("DebugOverlayEnabled", "overlay.enabled", DreadConfig.DebugOverlayEnabled),
+                    Entry("Anchor", "overlay.anchor", DreadConfig.DebugOverlayScreenAnchor),
+                    Entry("OffsetX", "overlay.offsetX", DreadConfig.DebugOverlayOffsetX),
+                    Entry("OffsetY", "overlay.offsetY", DreadConfig.DebugOverlayOffsetY),
+                    Entry("PanelWidth", "overlay.panelWidth", DreadConfig.DebugOverlayPanelWidth),
+                    Entry("FontSize", "overlay.fontSize", DreadConfig.DebugOverlayFontSize),
+                    Entry("BackgroundAlpha", "overlay.backgroundAlpha", DreadConfig.DebugOverlayBackgroundAlpha),
+                    Entry("ToggleKey", "overlay.toggleKey", DreadConfig.DebugOverlayToggleKey)),
             };
         }
 
@@ -435,6 +447,7 @@ namespace Dread.Systems
                 : entry is ConfigEntry<float> ? "float"
                 : entry is ConfigEntry<int> ? "int"
                 : entry is ConfigEntry<LogLevel> ? "LogLevel"
+                : entry is ConfigEntry<string> ? "string"
                 : "string";
 
             return new ConfigKeyEntry
@@ -456,6 +469,7 @@ namespace Dread.Systems
                 ConfigEntry<float> f => f.Value.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 ConfigEntry<int> i => i.Value.ToString(),
                 ConfigEntry<LogLevel> l => l.Value.ToString(),
+                ConfigEntry<string> s => s.Value,
                 _ => ""
             };
         }
@@ -486,6 +500,13 @@ namespace Dread.Systems
                 ["debugServer.enabled"] = (DreadConfig.DebugServerEnabled, true),
                 ["debugServer.port"] = (DreadConfig.DebugServerPort, true),
                 ["overlay.enabled"] = (DreadConfig.DebugOverlayEnabled, false),
+                ["overlay.anchor"] = (DreadConfig.DebugOverlayScreenAnchor, false),
+                ["overlay.offsetX"] = (DreadConfig.DebugOverlayOffsetX, false),
+                ["overlay.offsetY"] = (DreadConfig.DebugOverlayOffsetY, false),
+                ["overlay.panelWidth"] = (DreadConfig.DebugOverlayPanelWidth, false),
+                ["overlay.fontSize"] = (DreadConfig.DebugOverlayFontSize, false),
+                ["overlay.backgroundAlpha"] = (DreadConfig.DebugOverlayBackgroundAlpha, false),
+                ["overlay.toggleKey"] = (DreadConfig.DebugOverlayToggleKey, false),
                 ["logging.level"] = (DreadConfig.LogLevelEntry, false),
             };
 
@@ -508,6 +529,8 @@ namespace Dread.Systems
                     ie.Value = int.Parse(value);
                 else if (target.entry is ConfigEntry<LogLevel> le)
                     le.Value = (LogLevel)Enum.Parse(typeof(LogLevel), value, ignoreCase: true);
+                else if (target.entry is ConfigEntry<string> se)
+                    se.Value = value;
                 else
                     return SetConfigResult.Fail($"Unsupported config type for {section}/{key}");
             }
@@ -591,13 +614,20 @@ namespace Dread.Systems
             return new VerifyCheck { id = id, ok = ok, message = message };
         }
 
-        private static string TriggerTestCrash(int id)
+        private string TriggerTestCrash(int id)
         {
             if (!DreadConfig.DebugServerEnabled.Value)
                 return MakeResponse(id, false, "Debug server disabled", -3);
 
-            TestCrashSystem.TriggerForDebug();
+            StartCoroutine(DeferredFailFastCrash());
             return MakeResponse(id, true, new TriggerResponse { triggered = true });
+        }
+
+        private static IEnumerator DeferredFailFastCrash()
+        {
+            yield return null;
+            Environment.FailFast(
+                "[Dread TestCrash] Game crashed deliberately to verify error reporting.");
         }
 
         private static string ForcePsychoticBreak(int id)

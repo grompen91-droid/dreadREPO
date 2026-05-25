@@ -21,6 +21,8 @@ namespace Dread.Systems
 
         private bool _episodeActive;
         private bool _hasTriggeredThisMatch;
+        private bool _episodeLocationCaptured;
+        private Vector3 _episodeWorldPosition;
         private float _nextTriggerCheck;
         private float _episodeTimer;
         private Camera? _mainCam;
@@ -42,10 +44,19 @@ namespace Dread.Systems
         private Component? _darknessImage;
         private Component? _vignetteImage;
         private Texture2D? _vignetteTexture;
+        private bool _useImguiOverlay;
+        private float _darknessAlpha;
+        private float _vignetteAlpha;
+        private Texture2D? _imguiSolidTexture;
+        private Texture2D? _imguiVignetteTexture;
+        private GUIStyle? _imguiBoxStyle;
 
         private EnemyHealth[]? _cachedEnemies;
         private float _phantomSoundAccumulator;
+        private float _tumbleMaintainTimer;
         private bool _sceneLoaded;
+        private float _nextStatePublish;
+        private string _cachedBlockReason = "";
         private bool _typeInitFailed;
 
         // -1 = all layers; avoids stub-only Physics.DefaultRaycastLayers at type init
@@ -82,6 +93,15 @@ namespace Dread.Systems
             RefreshConfig();
         }
 
+        private void OnApplicationQuit()
+        {
+            CleanupOverlay();
+            if (_episodeActive)
+                RestorePlayerControl(PlayerController.instance);
+
+            _episodeActive = false;
+        }
+
         private void OnDestroy()
         {
             StopAllCoroutines();
@@ -113,21 +133,16 @@ namespace Dread.Systems
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
+            CleanupOverlay();
             _sceneLoaded = true;
             if (_episodeActive)
-            {
-                var pc = PlayerController.instance;
-                if ((object)pc != null)
-                {
-                    RestoreFlashlight(pc);
-                    UnlockInput(pc);
-                }
-            }
+                RestorePlayerControl(PlayerController.instance);
 
             _episodeActive = false;
             _recentThreatTimestamps.Clear();
             _cachedEnemies = null;
             _mainCam = Camera.main;
+            EnemyScanCache.Invalidate();
             CleanupOverlay();
             CleanupFootstepSource();
             CleanupDistantScreamSource();
@@ -163,39 +178,59 @@ namespace Dread.Systems
                 }
 
                 UpdateEpisode();
-                PublishRuntimeState();
+                PublishRuntimeStateThrottled(force: true);
                 return;
             }
 
-            if (!_enabled || DreadConfig.CompatibilityMode.Value || SemiFunc.MenuLevel())
+            if (SemiFunc.MenuLevel())
             {
-                PublishRuntimeState();
+                if (_episodeActive)
+                    EndEpisode();
+                else
+                    CleanupOverlay();
+                PublishRuntimeStateThrottled(force: true);
+                return;
+            }
+
+            if (!_enabled || DreadConfig.CompatibilityMode.Value)
+            {
+                PublishRuntimeStateThrottled();
                 return;
             }
             if (_oncePerMatch && _hasTriggeredThisMatch)
             {
-                PublishRuntimeState();
+                PublishRuntimeStateThrottled();
                 return;
             }
 
             if (Time.time < _nextTriggerCheck)
             {
-                PublishRuntimeState();
+                PublishRuntimeStateThrottled();
                 return;
             }
             _nextTriggerCheck = Time.time + 2f;
 
             UpdateThreatTimestamps();
+            _cachedBlockReason = GetTriggerBlockReason() ?? "";
 
             if (!CanTrigger())
             {
-                PublishRuntimeState();
+                PublishRuntimeStateThrottled(force: true);
                 return;
             }
 
             if (Random.value < _triggerChance)
                 StartEpisode();
 
+            PublishRuntimeStateThrottled(force: true);
+        }
+
+        private void PublishRuntimeStateThrottled(bool force = false)
+        {
+            if (!force && !_episodeActive && Time.time < _nextStatePublish)
+                return;
+
+            _nextStatePublish = Time.time + 0.5f;
             PublishRuntimeState();
         }
 
@@ -210,16 +245,16 @@ namespace Dread.Systems
             DreadRuntimeState.PsychoticBreakThreatCount = _recentThreatTimestamps.Count;
             DreadRuntimeState.PsychoticBreakClipsLoaded = AreClipsLoaded();
 
+            var blockReason = _episodeActive ? "episode active" : _cachedBlockReason;
             if (_episodeActive)
             {
                 DreadRuntimeState.PsychoticBreakCanTrigger = false;
-                DreadRuntimeState.PsychoticBreakBlockReason = "episode active";
+                DreadRuntimeState.PsychoticBreakBlockReason = blockReason;
                 return;
             }
 
-            var blockReason = GetTriggerBlockReason();
-            DreadRuntimeState.PsychoticBreakBlockReason = blockReason ?? "";
-            DreadRuntimeState.PsychoticBreakCanTrigger = blockReason == null;
+            DreadRuntimeState.PsychoticBreakBlockReason = blockReason;
+            DreadRuntimeState.PsychoticBreakCanTrigger = string.IsNullOrEmpty(blockReason);
         }
 
         private bool AreClipsLoaded()
@@ -263,7 +298,7 @@ namespace Dread.Systems
 
             _recentThreatTimestamps.RemoveAll(t => Time.time - t > ThreatMemoryDuration);
 
-            _cachedEnemies = FindObjectsOfType<EnemyHealth>();
+            _cachedEnemies = EnemyScanCache.GetEnemies();
             foreach (var e in _cachedEnemies)
             {
                 if (e == null) continue;
@@ -275,7 +310,6 @@ namespace Dread.Systems
 
         private bool CanTrigger()
         {
-            LoggingService.LogVerbose("[PsychoticBreak] Checking trigger condition...");
             var pc = PlayerController.instance;
             if ((object)pc == null) return false;
 
@@ -288,9 +322,22 @@ namespace Dread.Systems
             return true;
         }
 
+        private static PlayerController[]? _cachedPlayers;
+        private static float _nextPlayerRefresh;
+
         private static bool IsSolo(PlayerController pc)
         {
-            foreach (var other in FindObjectsOfType<PlayerController>())
+            if (Time.time >= _nextPlayerRefresh)
+            {
+                _nextPlayerRefresh = Time.time + 2f;
+                _cachedPlayers = FindObjectsOfType<PlayerController>();
+            }
+
+            var players = _cachedPlayers;
+            if (players == null)
+                return true;
+
+            foreach (var other in players)
             {
                 if ((object)other == null || (object)other == (object)pc) continue;
                 if (!IsPlayerAlive(other)) continue;
@@ -300,11 +347,8 @@ namespace Dread.Systems
             return true;
         }
 
-        private static bool IsPlayerAlive(PlayerController pc)
-        {
-            try { return pc.Health > 0f; }
-            catch { return false; }
-        }
+        private static bool IsPlayerAlive(PlayerController pc) =>
+            PlayerControllerCompat.IsAlive(pc);
 
         private bool IsAnyEnemyVisible(EnemyHealth[]? enemies)
         {
@@ -329,17 +373,8 @@ namespace Dread.Systems
             return false;
         }
 
-        private static bool IsCrouching(PlayerController pc)
-        {
-            try
-            {
-                return Traverse.Create(pc).Field<bool>("crouching").Value;
-            }
-            catch
-            {
-                return false;
-            }
-        }
+        private static bool IsCrouching(PlayerController pc) =>
+            PlayerControllerCompat.IsCrouching(pc);
 
         private void CleanupDistantScreamSource()
         {
@@ -365,15 +400,12 @@ namespace Dread.Systems
             _hasTriggeredThisMatch = true;
             _episodeTimer = 0f;
             _phantomSoundAccumulator = 0f;
+            _tumbleMaintainTimer = 0f;
             _nextTriggerCheck = Time.time + 10f;
             _hasPlayedPeakScream = false;
 
-            var pc = PlayerController.instance;
-            if ((object)pc != null)
-            {
-                DisableFlashlight(pc);
-                LockInput(pc);
-            }
+            CaptureEpisodeLocation(PlayerController.instance);
+            LockPlayerForEpisode(PlayerController.instance);
 
             CreateOverlay();
             PlayCirclingFootsteps();
@@ -387,7 +419,12 @@ namespace Dread.Systems
             _episodeTimer += Time.deltaTime;
             float raw = _episodeTimer;
 
-            if (_overlayCanvas == null) return;
+            _tumbleMaintainTimer -= Time.deltaTime;
+            if (_tumbleMaintainTimer <= 0f)
+            {
+                _tumbleMaintainTimer = 0.4f;
+                MaintainPlayerFallenState(PlayerController.instance);
+            }
 
             float p1 = _episodeDuration * 0.15f;
             float p2 = _episodeDuration * 0.50f;
@@ -478,17 +515,34 @@ namespace Dread.Systems
             SetVignetteAlpha(0f);
 
             var pc = PlayerController.instance;
+            RestorePlayerControl(pc);
             if ((object)pc != null)
-            {
-                RestoreFlashlight(pc);
-                UnlockInput(pc);
                 StartCoroutine(DoStumble());
-            }
 
             CleanupFootstepSource();
             CleanupDistantScreamSource();
             CleanupOverlay();
+            AlertMonstersToEpisodeLocation();
             LoggingService.LogInfo("[Dread] Psychotic Break ended.");
+        }
+
+        private void CaptureEpisodeLocation(PlayerController? pc)
+        {
+            _episodeLocationCaptured = false;
+            if ((object)pc == null)
+                return;
+
+            _episodeWorldPosition = pc.transform.position;
+            _episodeLocationCaptured = true;
+        }
+
+        private void AlertMonstersToEpisodeLocation()
+        {
+            if (!_episodeLocationCaptured || DreadConfig.CompatibilityMode.Value)
+                return;
+
+            EnemyDirectorCompat.AlertAllEnemiesToPoint(_episodeWorldPosition);
+            _episodeLocationCaptured = false;
         }
 
         private IEnumerator DoStumble()
@@ -518,48 +572,127 @@ namespace Dread.Systems
 
         private void CreateOverlay()
         {
-            if (_overlayCanvas != null) return;
+            if (_overlayCanvas != null)
+                return;
+
+            _useImguiOverlay = false;
+            _darknessAlpha = 0f;
+            _vignetteAlpha = 0f;
 
             var rawImageType = ResolveRawImageType();
             if (rawImageType == null)
             {
-                LoggingService.LogError("[PsychoticBreak] UnityEngine.UI.RawImage not available");
+                EnableImguiOverlayFallback("UnityEngine.UI.RawImage not available");
                 return;
             }
 
-            var go = new GameObject("DreadPsychoticBreakOverlay");
-            DontDestroyOnLoad(go);
-
-            _overlayCanvas = go.AddComponent<Canvas>();
-            _overlayCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            _overlayCanvas.sortingOrder = 999;
-
-            var darkGo = new GameObject("Darkness");
-            darkGo.transform.SetParent(go.transform, false);
-            _darknessImage = AddRuntimeComponent(darkGo, rawImageType);
-            SetRawImageColor(_darknessImage, new Color(0, 0, 0, 0));
-            StretchToParent(_darknessImage);
-
-            var vigGo = new GameObject("Vignette");
-            vigGo.transform.SetParent(go.transform, false);
-            _vignetteImage = AddRuntimeComponent(vigGo, rawImageType);
-            SetRawImageColor(_vignetteImage, new Color(0, 0, 0, 0));
-            StretchToParent(_vignetteImage);
-
-            _vignetteTexture = new Texture2D(256, 256, TextureFormat.RGBA32, false);
-            for (int x = 0; x < 256; x++)
+            try
             {
-                for (int y = 0; y < 256; y++)
-                {
-                    float dx = (x / 255f) - 0.5f;
-                    float dy = (y / 255f) - 0.5f;
-                    float dist = Mathf.Sqrt(dx * dx + dy * dy) * 2f;
-                    float alpha = Mathf.Clamp01((dist - 0.3f) / 0.7f);
-                    _vignetteTexture.SetPixel(x, y, new Color(0, 0, 0, alpha));
-                }
+                var go = new GameObject("DreadPsychoticBreakOverlay");
+                DontDestroyOnLoad(go);
+
+                _overlayCanvas = go.AddComponent<Canvas>();
+                _overlayCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                _overlayCanvas.sortingOrder = 999;
+
+                var darkGo = new GameObject("Darkness");
+                darkGo.transform.SetParent(go.transform, false);
+                _darknessImage = AddRuntimeComponent(darkGo, rawImageType);
+                if (_darknessImage == null)
+                    throw new InvalidOperationException("Failed to add darkness RawImage");
+                SetRawImageColor(_darknessImage, new Color(0, 0, 0, 0));
+                StretchToParent(_darknessImage);
+
+                var vigGo = new GameObject("Vignette");
+                vigGo.transform.SetParent(go.transform, false);
+                _vignetteImage = AddRuntimeComponent(vigGo, rawImageType);
+                if (_vignetteImage == null)
+                    throw new InvalidOperationException("Failed to add vignette RawImage");
+                SetRawImageColor(_vignetteImage, new Color(0, 0, 0, 0));
+                StretchToParent(_vignetteImage);
+
+                _vignetteTexture = OverlayTextureUtil.CreateVignette(256);
+                if (_vignetteTexture != null)
+                    SetRawImageTexture(_vignetteImage, _vignetteTexture);
+                else
+                    LoggingService.LogWarning("[PsychoticBreak] Vignette texture skipped (no supported format on this GPU)");
+
+                LoggingService.LogInfo("[PsychoticBreak] Canvas overlay created");
             }
-            _vignetteTexture.Apply();
-            SetRawImageTexture(_vignetteImage, _vignetteTexture);
+            catch (Exception ex)
+            {
+                CleanupOverlay();
+                EnableImguiOverlayFallback(ex.Message);
+            }
+        }
+
+        private void EnableImguiOverlayFallback(string reason)
+        {
+            _useImguiOverlay = true;
+            _overlayCanvas = null;
+            _darknessImage = null;
+            _vignetteImage = null;
+            EnsureImguiOverlayTextures();
+            LoggingService.LogWarning($"[PsychoticBreak] Using IMGUI overlay fallback: {reason}");
+        }
+
+        private void EnsureImguiOverlayTextures()
+        {
+            _imguiSolidTexture ??= OverlayTextureUtil.CreateSolid(Color.black);
+            _imguiVignetteTexture ??= OverlayTextureUtil.CreateVignette(256);
+            if (_imguiSolidTexture != null && _imguiBoxStyle == null)
+            {
+                _imguiBoxStyle = new GUIStyle(GUI.skin.box)
+                {
+                    border = new RectOffset(0, 0, 0, 0),
+                    padding = new RectOffset(0, 0, 0, 0)
+                };
+                _imguiBoxStyle.normal.background = _imguiSolidTexture;
+            }
+        }
+
+        private void OnGUI()
+        {
+            if (!_episodeActive || !_useImguiOverlay)
+                return;
+
+            if (ConfigUiDetector.IsConfigurationManagerOpen())
+                return;
+
+            try
+            {
+                DrawImguiOverlay();
+            }
+            catch (Exception ex)
+            {
+                LoggingService.LogVerbose($"[PsychoticBreak] IMGUI overlay frame skipped: {ex.Message}");
+            }
+        }
+
+        private void DrawImguiOverlay()
+        {
+            if (_imguiSolidTexture == null)
+                EnsureImguiOverlayTextures();
+            if (_imguiBoxStyle == null)
+                return;
+
+            var screen = new Rect(0f, 0f, Screen.width, Screen.height);
+
+            if (_darknessAlpha > 0.001f)
+            {
+                var prev = GUI.color;
+                GUI.color = new Color(1f, 1f, 1f, _darknessAlpha);
+                GUI.Box(screen, ImGuiContentCache.Empty, _imguiBoxStyle);
+                GUI.color = prev;
+            }
+
+            if (_vignetteAlpha > 0.001f && _imguiVignetteTexture != null)
+            {
+                var prev = GUI.color;
+                GUI.color = new Color(1f, 1f, 1f, _vignetteAlpha);
+                GUI.DrawTexture(screen, _imguiVignetteTexture);
+                GUI.color = prev;
+            }
         }
 
         private static Type? ResolveRawImageType()
@@ -594,6 +727,11 @@ namespace Dread.Systems
             anchorMin?.SetValue(rectTransform, Vector2.zero, null);
             anchorMax?.SetValue(rectTransform, Vector2.one, null);
             sizeDelta?.SetValue(rectTransform, Vector2.zero, null);
+
+            var offsetMin = rectTransformType.GetProperty("offsetMin");
+            var offsetMax = rectTransformType.GetProperty("offsetMax");
+            offsetMin?.SetValue(rectTransform, Vector2.zero, null);
+            offsetMax?.SetValue(rectTransform, Vector2.zero, null);
         }
 
         private static void SetRawImageColor(Component rawImage, Color color)
@@ -610,6 +748,10 @@ namespace Dread.Systems
 
         private void CleanupOverlay()
         {
+            _useImguiOverlay = false;
+            _darknessAlpha = 0f;
+            _vignetteAlpha = 0f;
+
             if (_overlayCanvas != null)
             {
                 Destroy(_overlayCanvas.gameObject);
@@ -623,18 +765,93 @@ namespace Dread.Systems
                 Destroy(_vignetteTexture);
                 _vignetteTexture = null;
             }
+
+            if (_imguiSolidTexture != null)
+            {
+                Destroy(_imguiSolidTexture);
+                _imguiSolidTexture = null;
+            }
+
+            if (_imguiVignetteTexture != null)
+            {
+                Destroy(_imguiVignetteTexture);
+                _imguiVignetteTexture = null;
+            }
+
+            _imguiBoxStyle = null;
+            DestroyOrphanOverlayCanvas();
+        }
+
+        private static void DestroyOrphanOverlayCanvas()
+        {
+            var canvases = UnityEngine.Object.FindObjectsOfType<Canvas>();
+            if (canvases == null)
+                return;
+
+            foreach (var canvas in canvases)
+            {
+                if (canvas == null || canvas.sortingOrder != 999)
+                    continue;
+
+                var go = canvas.gameObject;
+                if (go == null)
+                    continue;
+
+                try
+                {
+                    var name = Traverse.Create(go).Property<string>("name").Value;
+                    if (name == "DreadPsychoticBreakOverlay")
+                        UnityEngine.Object.Destroy(go);
+                }
+                catch { }
+            }
         }
 
         private void SetDarknessAlpha(float alpha)
         {
+            _darknessAlpha = Mathf.Clamp01(alpha);
             if (_darknessImage != null)
-                SetRawImageColor(_darknessImage, new Color(0, 0, 0, Mathf.Clamp01(alpha)));
+                SetRawImageColor(_darknessImage, new Color(0, 0, 0, _darknessAlpha));
         }
 
         private void SetVignetteAlpha(float alpha)
         {
+            _vignetteAlpha = Mathf.Clamp01(alpha);
             if (_vignetteImage != null)
-                SetRawImageColor(_vignetteImage, new Color(0, 0, 0, Mathf.Clamp01(alpha)));
+                SetRawImageColor(_vignetteImage, new Color(0, 0, 0, _vignetteAlpha));
+        }
+
+        private static void LockPlayerForEpisode(PlayerController? pc)
+        {
+            if ((object)pc == null)
+                return;
+
+            DisableFlashlight(pc);
+            LockInput(pc);
+            if (!PlayerTumbleCompat.ApplyForcedTumble(pc))
+                LoggingService.LogWarning("[PsychoticBreak] Could not apply tumble; input lock only");
+        }
+
+        private static void MaintainPlayerFallenState(PlayerController? pc)
+        {
+            if ((object)pc == null)
+                return;
+
+            PlayerTumbleCompat.MaintainForcedTumble(pc);
+            LockInput(pc);
+        }
+
+        private static void RestorePlayerControl(PlayerController? pc)
+        {
+            if ((object)pc == null)
+            {
+                PlayerTumbleCompat.ReleaseForcedTumble(null);
+                return;
+            }
+
+            PlayerTumbleCompat.ReleaseForcedTumble(pc);
+            UnlockInput(pc);
+            RestoreFlashlight(pc);
         }
 
         private static void DisableFlashlight(PlayerController pc)

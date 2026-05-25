@@ -24,19 +24,12 @@ namespace Dread.Systems
             TriggerCrash();
         }
 
-        /// <summary>Debug server / MCP entry point for deliberate crash testing.</summary>
-        public static void TriggerForDebug()
-        {
-            TriggerCrash();
-        }
-
         private static void TriggerCrash()
         {
             DreadConfig.TestCrashButton.Value = false;
-            throw new InvalidOperationException(
+            Environment.FailFast(
                 "[Dread TestCrash] Game crashed deliberately via the "
-                    + "'Crash Game' config button to verify error reporting."
-            );
+                    + "'Crash Game' config button to verify error reporting.");
         }
     }
 }

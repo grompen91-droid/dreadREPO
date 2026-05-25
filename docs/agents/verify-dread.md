@@ -53,6 +53,10 @@ Split `debugKey` from `dread_get_config` sections on the first dot:
 | `debugServer.enabled` | `debugServer` | `enabled` | Restart required |
 | `debugServer.port` | `debugServer` | `port` | Restart required |
 | `overlay.enabled` | `overlay` | `enabled` | Debug overlay HUD |
+| `overlay.anchor` | `overlay` | `anchor` | TopLeft, TopRight, BottomLeft, BottomRight |
+| `overlay.offsetX` / `overlay.offsetY` | `overlay` | `offsetX` / `offsetY` | Pixel offset from anchor |
+| `overlay.fontSize` | `overlay` | `fontSize` | HUD text size |
+| `overlay.panelWidth` / `overlay.backgroundAlpha` | `overlay` | `panelWidth` / `backgroundAlpha` | Panel size and opacity |
 | `psychoticBreak.enabled` | `psychoticBreak` | `enabled` | |
 | `compatibility.mode` | `compatibility` | `mode` | Ambient-only mode |
 | `errorReporting` | `errorReporting` | `` | Bare key (empty suffix) |

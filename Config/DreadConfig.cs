@@ -48,6 +48,13 @@ namespace Dread.Config
 
         // 11. Debug Overlay
         public static ConfigEntry<bool> DebugOverlayEnabled = null!;
+        public static ConfigEntry<string> DebugOverlayScreenAnchor = null!;
+        public static ConfigEntry<float> DebugOverlayOffsetX = null!;
+        public static ConfigEntry<float> DebugOverlayOffsetY = null!;
+        public static ConfigEntry<float> DebugOverlayPanelWidth = null!;
+        public static ConfigEntry<int> DebugOverlayFontSize = null!;
+        public static ConfigEntry<float> DebugOverlayBackgroundAlpha = null!;
+        public static ConfigEntry<string> DebugOverlayToggleKey = null!;
 
         // 9. Logging
         public static ConfigEntry<LogLevel> LogLevelEntry = null!;
@@ -137,8 +144,42 @@ namespace Dread.Config
                     new AcceptableValueRange<int>(1024, 65535)));
 
             DebugOverlayEnabled = cfg.Bind("11. Debug Overlay", "DebugOverlayEnabled", false,
-                "Show an in-game IMGUI debug HUD during runs. Press F10 to toggle visibility at runtime. "
-                    + "Hidden on menu levels.");
+                "Enable the in-game IMGUI debug HUD (hidden until you press ToggleKey). "
+                    + "Hidden on menu levels. Keep off unless debugging.");
+
+            DebugOverlayScreenAnchor = cfg.Bind(
+                "11. Debug Overlay",
+                "Anchor",
+                "TopLeft",
+                new ConfigDescription(
+                    "Screen corner for the overlay panel.",
+                    new AcceptableValueList<string>(new[] { "TopLeft", "TopRight", "BottomLeft", "BottomRight" })));
+
+            DebugOverlayOffsetX = cfg.Bind("11. Debug Overlay", "OffsetX", 0f,
+                new ConfigDescription(
+                    "Horizontal offset in pixels from the anchor corner.",
+                    new AcceptableValueRange<float>(-2000f, 2000f)));
+            DebugOverlayOffsetY = cfg.Bind("11. Debug Overlay", "OffsetY", 0f,
+                new ConfigDescription(
+                    "Vertical offset in pixels from the anchor corner.",
+                    new AcceptableValueRange<float>(-2000f, 2000f)));
+            DebugOverlayPanelWidth = cfg.Bind("11. Debug Overlay", "PanelWidth", 400f,
+                new ConfigDescription(
+                    "Overlay panel width in pixels.",
+                    new AcceptableValueRange<float>(260f, 900f)));
+
+            DebugOverlayFontSize = cfg.Bind("11. Debug Overlay", "FontSize", 14,
+                new ConfigDescription(
+                    "Overlay text size in pixels.",
+                    new AcceptableValueRange<int>(8, 32)));
+
+            DebugOverlayBackgroundAlpha = cfg.Bind("11. Debug Overlay", "BackgroundAlpha", 0.82f,
+                new ConfigDescription(
+                    "Panel background opacity (0 = transparent, 1 = opaque).",
+                    new AcceptableValueRange<float>(0.2f, 1f)));
+
+            DebugOverlayToggleKey = cfg.Bind("11. Debug Overlay", "ToggleKey", "F10",
+                "Hotkey to show/hide the overlay at runtime (e.g. F10, F9). Uses Unity Input System when available.");
 
             LogLevelEntry = cfg.Bind("9. Logging", "LogLevel", LogLevel.Debug,
                 "Logging verbosity. None = suppress all output, Error = only errors, "
@@ -154,7 +195,10 @@ namespace Dread.Config
                 CompatibilityMode, CompatibilitySkipConflictingPatches, DebugConsoleGuardEnabled,
                 PsychoticBreakEnabled, PsychoticBreakTriggerChance, PsychoticBreakDuration, PsychoticBreakOncePerMatch,
                 TestCrashButton, DebugServerEnabled, DebugServerPort,
-                DebugOverlayEnabled, LogLevelEntry,
+                DebugOverlayEnabled, DebugOverlayScreenAnchor, DebugOverlayOffsetX, DebugOverlayOffsetY,
+                DebugOverlayPanelWidth, DebugOverlayFontSize, DebugOverlayBackgroundAlpha,
+                DebugOverlayToggleKey,
+                LogLevelEntry,
             ];
             for (int i = 0; i < allFields.Length; i++)
             {
@@ -178,5 +222,8 @@ namespace Dread.Config
     internal class ConfigurationManagerAttributes
     {
         public bool? ShowAsButton;
+        public bool? Browsable;
+        public bool? ShowRangeAsPercent;
+        public int? Order;
     }
 }

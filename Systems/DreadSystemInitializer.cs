@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using Dread;
 using UnityEngine;
 
 namespace Dread.Systems
@@ -26,16 +27,29 @@ namespace Dread.Systems
             count += TryAddSystem<AudioDreadSystem>("DreadAudioHost");
             count += TryAddSystem<MonsterOverhaulSystem>("DreadMonsterHost");
             count += TryAddSystem<TensionSystem>("DreadTensionHost");
-            count += TryAddSystem<ErrorReporterSystem>("DreadErrorHost");
+            if (!StubBuildDetector.IsStubBuild)
+                count += TryAddSystem<ErrorReporterSystem>("DreadErrorHost");
             count += TryAddSystem<PsychoticBreakSystem>("DreadPsychoticBreakHost");
             count += TryAddSystem<TestCrashSystem>("DreadTestCrashHost");
             count += TryAddSystem<DebugServerSystem>("DreadDebugHost");
             count += TryAddSystem<DebugOverlaySystem>("DreadDebugOverlayHost");
+            count += TryAddSystem<DebugOverlayToggleHost>("DreadDebugOverlayToggleHost");
+
+            RepoConfigSliderLabelCompat.TryApply(Plugin.HarmonyInstance);
 
             if (count > 0)
                 LoggingService.LogInfo($"Systems initialized ({count})");
             else
                 LoggingService.LogError("All systems failed to initialize.");
+
+            // #region agent log
+            DebugAgentLog.Write(
+                "A",
+                "DreadSystemInitializer.cs:TryInitialize",
+                "systems_initialized",
+                "pre-fix",
+                ("systemCount", count));
+            // #endregion
 
             return true;
         }

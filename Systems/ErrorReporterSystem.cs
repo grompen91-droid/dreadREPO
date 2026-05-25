@@ -29,6 +29,7 @@ namespace Dread.Systems
         private static readonly Queue<RawLogEntry> _pendingLogs = new Queue<RawLogEntry>(32);
         private static readonly object _logsLock = new object();
         private static readonly Dictionary<string, float> _recentHashes = new Dictionary<string, float>();
+        private static bool _permanentlyDisabled;
 
         private class RawLogEntry
         {
@@ -39,6 +40,12 @@ namespace Dread.Systems
 
         private void OnEnable()
         {
+            if (StubBuildDetector.IsStubBuild || _permanentlyDisabled)
+            {
+                enabled = false;
+                return;
+            }
+
             LoggingService.LogVerbose("[ErrorReporter] Awake starting...");
             Application.logMessageReceived += OnLogMessageReceived;
             SceneManager.sceneLoaded += OnSceneLoaded;
@@ -62,7 +69,8 @@ namespace Dread.Systems
             if (type != LogType.Exception && type != LogType.Error)
                 return;
 
-            if (!DreadConfig.ErrorReportingEnabled.Value)
+            if (_permanentlyDisabled || StubBuildDetector.IsStubBuild
+                || !DreadConfig.ErrorReportingEnabled.Value)
                 return;
 
             if (IsIgnoredSpam(logString, stackTrace))
@@ -90,6 +98,16 @@ namespace Dread.Systems
 
         private static bool IsIgnoredSpam(string message, string stackTrace)
         {
+            if (message.Contains("GUIContent.get_none", StringComparison.Ordinal)
+                || message.Contains("GUI.DrawTexture", StringComparison.Ordinal)
+                || message.Contains("EnemyHealth.get_CurrentHealth", StringComparison.Ordinal)
+                || message.Contains("PlayerController.get_Health", StringComparison.Ordinal)
+                || message.Contains("PlayerController.get_stamina", StringComparison.Ordinal)
+                || message.Contains("SupportsTextureFormat", StringComparison.Ordinal)
+                || message.Contains("zero rva", StringComparison.OrdinalIgnoreCase)
+                || message.Contains("BadImageFormatException", StringComparison.Ordinal)
+                || stackTrace.Contains("ErrorReporterSystem", StringComparison.Ordinal))
+                return true;
             if (message.Contains("DebugConsoleUI", StringComparison.Ordinal)
                 || stackTrace.Contains("DebugConsoleUI", StringComparison.Ordinal))
                 return true;
@@ -102,10 +120,50 @@ namespace Dread.Systems
 
         private void Update()
         {
-            ProcessPendingLogs();
+            if (_permanentlyDisabled || !enabled)
+                return;
+
+            try
+            {
+                ProcessPendingLogs();
+            }
+            catch (Exception ex)
+            {
+                DisablePermanently($"Error reporter disabled after failure: {ex.GetType().Name}");
+            }
 
             if (_shouldFlush || Time.realtimeSinceStartup - _lastFlushTime >= FlushInterval)
-                FlushNow();
+            {
+                try
+                {
+                    FlushNow();
+                }
+                catch (Exception ex)
+                {
+                    DisablePermanently($"Error reporter flush failed: {ex.GetType().Name}");
+                }
+            }
+        }
+
+        private static void DisablePermanently(string reason)
+        {
+            if (_permanentlyDisabled)
+                return;
+
+            _permanentlyDisabled = true;
+            Application.logMessageReceived -= OnLogMessageReceived;
+            lock (_logsLock)
+            {
+                _pendingLogs.Clear();
+            }
+
+            try
+            {
+                DreadConfig.ErrorReportingEnabled.Value = false;
+            }
+            catch { }
+
+            LoggingService.LogError($"[ErrorReporter] {reason}");
         }
 
         private void ProcessPendingLogs()
@@ -238,7 +296,7 @@ namespace Dread.Systems
                 var player = FindObjectOfType<PlayerController>();
                 foreach (var e in enemies)
                 {
-                    if (e.CurrentHealth > 0) alive++;
+                    if (EnemyHealthCompat.IsAlive(e)) alive++;
                     if (player != null)
                     {
                         var dist = Vector3.Distance(e.transform.position, player.transform.position);
@@ -252,9 +310,13 @@ namespace Dread.Systems
                 var pc = player;
                 if (pc != null)
                 {
-                    state.PlayerHp = (int)(pc.Health * 100f);
+                    var health = PlayerControllerCompat.GetHealth(pc);
+                    if (health >= 0f)
+                        state.PlayerHp = (int)(health * 100f);
                     state.PlayerMaxHp = PlayerMaxHp;
-                    state.PlayerStamina = (int)(pc.stamina * 100f);
+                    var stamina = PlayerControllerCompat.GetStamina(pc);
+                    if (stamina >= 0f)
+                        state.PlayerStamina = (int)(stamina * 100f);
                     state.PlayerPosition = pc.transform.position;
                 }
             }

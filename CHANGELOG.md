@@ -31,10 +31,26 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 > **Highlight:** Honest mod compatibility docs, opt-in telemetry, Compatibility mode for broken profiles, and host-only monster patch guards.
 
+<details>
+<summary>Planned (not in this release)</summary>
+
+Tracked in [docs/ROADMAP.md](docs/ROADMAP.md):
+
+- Debug overlay: draggable panel, better config, font fixes
+- Codebase refactor into smaller files; fewer reflection/DLL dependencies where possible
+- Extensibility and hardened core (extension points, fail-safe init, compat patterns)
+- Performance pass
+- Error reporting: full test matrix; default-on + first-run opt-in/out prompt (today default is off, ADR-0010)
+- Root `CONTEXT.md` agent glossary (DOCS-1, #174)
+
+GitHub backlog: issues #163-#175, table in [docs/ROADMAP.md](docs/ROADMAP.md).
+
+</details>
+
 ### Added
 - **Verify automation:** `scripts/verify-dread.ps1` (Tier 0 static, optional Tier 1 TCP, Tier 2 log patterns), `docs/agents/verify-dread.md` runbook, `docs/agents/verify-dread-checklist.json`
 - **Debug APIs:** `TestCrashSystem.TriggerForDebug()`, `PsychoticBreakSystem.ForceEpisodeForDebug()` for debug server / MCP
-- **Debug overlay:** `DebugOverlaySystem` IMGUI HUD (section 11. Debug Overlay, `DebugOverlayEnabled` default off). Shows nearest enemy distance, tension/adrenaline/panic sprint, psychotic break readiness with block reasons, audio clip count and next play ETA, config flags, and Dread Harmony patch count. F10 toggles visibility at runtime when enabled. Hidden on menu levels via `SemiFunc.MenuLevel()`.
+- **Debug overlay:** `DebugOverlaySystem` IMGUI HUD (section 11. Debug Overlay, `DebugOverlayEnabled` default off). Styled panel with section headers, status colors, and configurable anchor (`Anchor`), offsets (`OffsetX`/`OffsetY`), `FontSize`, width (`PanelWidth`), and opacity (`BackgroundAlpha`). Shows nearest enemy distance, tension/adrenaline/panic sprint, psychotic break readiness with block reasons, audio clip count and next play ETA, config flags, and Dread Harmony patch count. F10 toggles visibility at runtime when enabled. Hidden on menu levels via `SemiFunc.MenuLevel()`.
 - **Runtime state:** `DreadRuntimeState` snapshot updated by tension, psychotic break, and audio systems for overlay and tooling.
 - **Compatibility:** `docs/mod-compatibility.md` with known-mod table, isolation test, Proton/DLL notes, DebugConsoleUI guidance, and manual test matrix
 - **Config:** `CompatibilityMode` (ambient audio only), `CompatibilitySkipConflictingPatches`, `DebugConsoleGuardEnabled` (section 10. Compatibility)
@@ -51,6 +67,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **Docs:** README and THUNDERSTORE compatibility sections no longer claim conflict-free operation; `mod-profile-conflicts.md` points to `mod-compatibility.md`
 - **Error reporting:** default `ErrorReportingEnabled` to **false** (opt-in); hooks `Application.logMessageReceived` instead of Harmony on `Debug.LogError` / `Debug.LogException` (ADR-0010)
 - **Debug console guard:** config-toggle `DebugConsoleGuardEnabled` (default on), wired in `Plugin.cs`
+- **Debug overlay:** restyled IMGUI panel (header bar, section colors, aligned rows); configurable anchor, offsets, font name/size, panel width, and background opacity (section 11)
+- **Psychotic break:** local player stays in REPO tumble (ragdoll/fallen) for the full episode via `PlayerTumbleCompat` (`TumbleSet`/`TumbleRequest`), re-applied every 0.4s plus input lock; released on episode end, scene load, or quit
+- **Psychotic break aftermath:** on episode end (host), `EnemyDirectorCompat` calls `EnemyDirector.SetInvestigate` at the break location so all spawned monsters path toward that point
 - **Compatibility mode:** disables monster Harmony patches, adrenaline/panic sprint mutation, and psychotic break; keeps ambient audio
 - **Harmony priority:** `Priority.Last` on enemy speed postfix, `Priority.First` on investigate prefix
 - CD pipeline: fixed Thunderstore publish (`tcli` 0.2.2 `--file` / `--package-version` conflict)
@@ -58,6 +77,22 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Logging: hot-path guards, level demotions, prefix consistency across systems and `dread-mcp-server`
 
 ### Fixed
+- **REPOConfig sliders (temporary):** when REPOConfig + MenuLib are present, `RepoConfigSliderLabelCompat` restores slider setting names for empty descriptions (label at x=100, compact row); upstream REPOConfig/MenuLib fix preferred; skipped when REPOConfig is absent. See `docs/repo-config-slider-labels-investigation.md`
+- **Debug overlay perf:** IMGUI renderer component is created only while the HUD is visible and destroyed on hide (zero OnGUI cost when hidden)
+- **Debug overlay toggle:** F10 polling runs from `DebugOverlayToggleHost` in menu and in-game; turning overlay off in REPOConfig force-hides the HUD
+- **Debug overlay:** IMGUI only while HUD visible (separate renderer); fixed `Rect.x` draw crash on REPO/IL2CPP; dropped per-frame Harmony patch scan
+- **Config UI probe:** remove mistaken `MenuLib` type lookups from `ConfigUiDetector` (fixed log spam and loading-screen lag when MenuLib is not installed); only detect BepInEx ConfigurationManager, cached once
+- **Debug overlay:** labels-only IMGUI (no `GUIContent.none` / `GUI.DrawTexture`); disable `MonoBehaviour` when config off so `OnGUI` does not run
+- **Enemy health:** `EnemyHealthCompat` reads HP and alive state via Harmony Traverse (fixes `EnemyHealth.get_CurrentHealth` in error reporter and debug server)
+- **Psychotic break crouch:** detect `Crouching`/`Crawling` on `PlayerController` and `isCrouching`/`isCrawling` on `PlayerAvatar` (fixes false "not crouching" under tables)
+- **Debug overlay perf:** replace `GUIContent.none` (fixes per-frame warning spam and lag on REPO/Proton); overlay starts hidden until ToggleKey; log draw failure once; Harmony patch count only while HUD visible
+- **Debug overlay toggle:** F10 (configurable `ToggleKey`) works with Unity Input System via `DebugOverlayInput`; IMGUI `Event` fallback; overlay no longer disables the whole component on draw errors
+- **Overlays (Proton/Linux):** `OverlayTextureUtil` avoids `SupportsTextureFormat` throws; psychotic break falls back to IMGUI fullscreen overlay when Canvas/RawImage fails; debug HUD no longer disables permanently on texture errors
+- **Psychotic break overlay:** pick first GPU-supported `TextureFormat` for vignette (fixes `SupportsTextureFormat` on Proton/Linux)
+- **Error reporter:** read stamina via `PlayerControllerCompat` Traverse (fixes `PlayerController.get_stamina` spam when error reporting is on)
+- **Stub builds:** `stub-build.marker` disables `ErrorReporterSystem` on CI/Linux stub compiles (fixes `BadImageFormatException: Method has zero rva` log flood)
+- **Psychotic break overlay:** force teardown on menu level, scene load, and application quit (fixes black screen when leaving mid-episode)
+- **Test crash:** MCP/TCP `trigger_test_crash` uses `Environment.FailFast` (no longer swallowed by debug server try/catch)
 - **TestCrash:** trigger on `SettingChanged` for ConfigurationManager button (no longer relies on `Update` polling)
 - **PsychoticBreak / AudioDread:** seed `_sceneLoaded` from active scene on `Start` so audio loads without waiting for a second scene load
 - **CI stubs:** `UnityEngine.UI.dll` stub for `RawImage` / `RectTransform`; `JsonUtility.FromJson`; cross-platform `build.ps1` stub detection (PR #146, #161)

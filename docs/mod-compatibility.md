@@ -24,7 +24,7 @@ Dread is **dependency-free** (BepInEx only) and works alongside many popular REP
 | eth9n-Mimic | Low | Works with Mimic_Patcher |
 | BULLETBOT-MoreUpgrades | Low | |
 | Magic_Wesley-Wesleys_Enemies | Low | Dread aggression/audio apply via `EnemyHealth` |
-| nickklmao-MenuLib / REPOConfig | Low to medium | Can break `SemiFunc.DebugTester`; use `DebugConsoleGuard` (default on) |
+| nickklmao-MenuLib / REPOConfig | Low to medium | Can break `SemiFunc.DebugTester`; use `DebugConsoleGuard` (default on). Slider labels: Dread **temporary** compat when REPOConfig present ([investigation](repo-config-slider-labels-investigation.md)) |
 | elytraking-Dread | — | |
 
 **Mimic_Patcher (`3.0.0-Final`) is unrelated** to Dread audio. Its startup warning only removes a conflicting **Mimics** patch.

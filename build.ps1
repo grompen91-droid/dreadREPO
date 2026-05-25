@@ -17,13 +17,28 @@ New-Item -ItemType Directory -Force "$outDir\BepInEx\plugins\$name" | Out-Null
 # Build release DLL
 Write-Host "Building..."
 $stubsDir = ".github/stubs/refs"
-$stubsExist = (Test-Path "$stubsDir/UnityEngine.dll") -and (Test-Path "$stubsDir/core/BepInEx.dll")
+$stubsRoot = ".github/stubs"
 $buildArgs = @(
     "build", "Dread.csproj", "-c", "Release", "--nologo", "-v", "quiet"
 )
 $gameDll = "C:\Program Files (x86)\Steam\steamapps\common\REPO\REPO_Data\Managed\UnityEngine.dll"
-if ($stubsExist -and -not (Test-Path $gameDll)) {
-    Write-Warning "Building against generated stubs in $stubsDir. Harmony patches may fail at runtime (BadImageFormatException). Install REPO or set GameDir to real Managed folder for production DLLs."
+$stubBuild = $false
+if (-not (Test-Path $gameDll)) {
+    Write-Host "No REPO Managed folder found. Cleaning and regenerating stubs..."
+    if (Test-Path $stubsRoot) {
+        Remove-Item -Recurse -Force $stubsRoot
+    }
+    & pwsh -NoProfile .github/scripts/gen-stubs.ps1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Stub generation failed"
+        exit 1
+    }
+    if (-not (Test-Path "$stubsDir/UnityEngine.dll") -or -not (Test-Path "$stubsDir/core/BepInEx.dll")) {
+        Write-Error "Stub generation did not produce expected DLLs in $stubsDir"
+        exit 1
+    }
+    $stubBuild = $true
+    Write-Warning "Building against fresh stubs in $stubsDir. Harmony patches may fail at runtime (BadImageFormatException). Install REPO or set GameDir to real Managed folder for production DLLs."
     $buildArgs += "-p:GameDir=$stubsDir", "-p:BepInExDir=$stubsDir", "-p:DeployToProfile=false", "-p:DeployToDist=false"
 }
 dotnet @buildArgs
@@ -32,6 +47,10 @@ if ($LASTEXITCODE -ne 0) { Write-Error "Build failed"; exit 1 }
 # Copy mod files into Thunderstore package layout
 $pluginOut = "$outDir\BepInEx\plugins\$name"
 Copy-Item "bin\Release\net48\Dread.dll" $pluginOut
+if ($stubBuild) {
+    Set-Content -Path "$pluginOut/stub-build.marker" -Value "stub build - error reporting disabled at runtime"
+    Write-Warning "Wrote stub-build.marker (error reporting will not load in-game)"
+}
 $pluginDeps = @(
     "NVorbis.dll",
     "System.Memory.dll",

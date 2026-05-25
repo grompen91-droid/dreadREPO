@@ -40,6 +40,8 @@ Monster changes are host-authoritative. Audio, tension, and psychotic breaks are
 
 Generated at `BepInEx/config/elytraking.dread.cfg` on first launch. Compatible with REPOConfig for live editing.
 
+**REPOConfig sliders:** Dread includes a **temporary** label workaround when REPOConfig + MenuLib are installed (names on the left, compact rows). Styling may differ from bool toggles; upstream fix in REPOConfig/MenuLib is preferred. Without REPOConfig, or if labels look wrong, edit the cfg file directly. Details: [repo-config-slider-labels-investigation.md](https://github.com/grompen91-droid/dreadREPO/blob/master/docs/repo-config-slider-labels-investigation.md).
+
 ```
 [1. Audio Dread]
 Enabled = true

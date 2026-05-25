@@ -74,8 +74,6 @@ namespace Dread.Systems
                 DreadRuntimeState.AudioNextPlayIn = baseDelay;
                 yield return new WaitForSeconds(baseDelay);
 
-                LoggingService.LogVerbose("[AudioDread] Checking audio play...");
-
                 if (!DreadConfig.AudioEnabled.Value || SemiFunc.MenuLevel() || _clips.Count == 0)
                     continue;
 
@@ -89,13 +87,18 @@ namespace Dread.Systems
             }
         }
 
+        private float _nextEtaPublish;
+
         private void Update()
         {
-            if (_nextPlayAt > 0f)
-            {
-                var eta = _nextPlayAt - Time.time;
-                DreadRuntimeState.AudioNextPlayIn = eta < 0f ? 0f : eta;
-            }
+            if (_nextPlayAt <= 0f)
+                return;
+            if (Time.time < _nextEtaPublish)
+                return;
+
+            _nextEtaPublish = Time.time + 0.25f;
+            var eta = _nextPlayAt - Time.time;
+            DreadRuntimeState.AudioNextPlayIn = eta < 0f ? 0f : eta;
         }
 
         private AudioClip PickWeightedClip()

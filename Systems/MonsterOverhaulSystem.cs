@@ -47,7 +47,7 @@ namespace Dread.Systems
 
                 if (!DreadConfig.MonsterAudioEnabled.Value || !_inLevel || SemiFunc.MenuLevel()) continue;
 
-                var enemies = FindObjectsOfType<EnemyHealth>();
+                var enemies = EnemyScanCache.GetEnemies();
                 LoggingService.LogVerbose($"[MonsterOverhaul] Processing {enemies.Length} enemies...");
                 foreach (var e in enemies)
                 {
