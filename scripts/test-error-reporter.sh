@@ -37,6 +37,17 @@ PASS=0
 FAIL=0
 VERIFY_ISSUE=false
 
+# ── Temp Files ─────────────────────────────────────────────────────────────────
+
+TEMP_HEALTH=".dread-health-body.tmp"
+TEMP_REPORT=".dread-report-body.tmp"
+
+# Register cleanup trap
+cleanup() {
+  rm -f "$TEMP_HEALTH" "$TEMP_REPORT"
+}
+trap cleanup EXIT
+
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 log_pass() {
@@ -94,9 +105,9 @@ echo ""
 
 echo -e "${BOLD}[1/3] Health check (GET /health)${RESET}"
 
-HEALTH_HTTP_CODE=$(curl -s -o /tmp/dread-health-body.txt -w "%{http_code}" \
+HEALTH_HTTP_CODE=$(curl -s -o "$TEMP_HEALTH" -w "%{http_code}" \
   "${WORKER_URL}/health" 2>/dev/null || echo "000")
-HEALTH_BODY=$(cat /tmp/dread-health-body.txt 2>/dev/null || echo "")
+HEALTH_BODY=$(cat "$TEMP_HEALTH" 2>/dev/null || echo "")
 
 if [ "$HEALTH_HTTP_CODE" = "200" ]; then
   log_pass "HTTP 200 returned"
@@ -182,12 +193,12 @@ PAYLOAD=$(cat <<EOF
 EOF
 )
 
-REPORT_HTTP_CODE=$(curl -s -o /tmp/dread-report-body.txt -w "%{http_code}" \
+REPORT_HTTP_CODE=$(curl -s -o "$TEMP_REPORT" -w "%{http_code}" \
   -X POST \
   -H "Content-Type: application/json" \
   -d "$PAYLOAD" \
   "${WORKER_URL}/api/report" 2>/dev/null || echo "000")
-REPORT_BODY=$(cat /tmp/dread-report-body.txt 2>/dev/null || echo "")
+REPORT_BODY=$(cat "$TEMP_REPORT" 2>/dev/null || echo "")
 
 if [ "$REPORT_HTTP_CODE" = "200" ]; then
   log_pass "HTTP 200 returned"
@@ -250,8 +261,7 @@ if [ "$FAIL" -gt 0 ]; then
 fi
 echo -e "${BOLD}═══════════════════════════════════════════════════${RESET}"
 
-# Cleanup temp files
-rm -f /tmp/dread-health-body.txt /tmp/dread-report-body.txt
+# Temp files are automatically cleaned up by the trap on exit
 
 if [ "$FAIL" -gt 0 ]; then
   echo -e "\n${RED}SMOKE TEST FAILED${RESET}"

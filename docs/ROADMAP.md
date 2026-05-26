@@ -30,8 +30,8 @@ Work top to bottom within each phase. Do not skip **Depends on** unless the issu
 
 | Order | ID | Priority | Issue | Depends on | Why first |
 |-------|-----|----------|-------|------------|-----------|
-| 1 | ERR-1 | **P0** | [#171](https://github.com/grompen91-droid/dreadREPO/issues/171) | — | Must prove telemetry works before default-on or public promises |
-| 2 | PERF-2 | P1 | [#170](https://github.com/grompen91-droid/dreadREPO/issues/170) | — | Quick regression guard on overlay perf fix already in `master` |
+| 1 | ERR-1 | **P0** | [#171](https://github.com/grompen91-droid/dreadREPO/issues/171) | None | Must prove telemetry works before default-on or public promises |
+| 2 | PERF-2 | P1 | [#170](https://github.com/grompen91-droid/dreadREPO/issues/170) | None | Quick regression guard on overlay perf fix already in `master` |
 
 ### Phase 2: Structure (before extensibility and large features)
 

@@ -369,6 +369,41 @@ describe("Deduplication", () => {
 			gh.restore();
 		}
 	});
+
+	it("throttles comments on the same issue after 5 comments in the hour", async () => {
+		const gh = mockGitHub();
+		const issueNumber = 88;
+		gh.setSearch({
+			total_count: 1,
+			items: [{ number: issueNumber, state: "open" }],
+		});
+		try {
+			// Send 5 reports, which should all successfully post comments
+			for (let i = 0; i < 5; i++) {
+				const response = await postReport(makePayload({}, { Hash: `comment_throttle_${i}` }));
+				expect(response.status).toBe(200);
+				const body = await response.json();
+				expect(body.results[0].status).toBe("commented");
+				expect(body.results[0].issueNumber).toBe(issueNumber);
+			}
+
+			// Clear captured calls to make it easy to verify new calls
+			gh.calls.length = 0;
+
+			// Send 6th report, comment should be throttled
+			const response6 = await postReport(makePayload({}, { Hash: "comment_throttle_6" }));
+			expect(response6.status).toBe(200);
+
+			const body6 = await response6.json();
+			expect(body6.results[0].status).toBe("commented");
+
+			// No new comment call should be sent to GitHub
+			const commentCall = gh.calls.find((c) => c.url.includes("/comments"));
+			expect(commentCall).toBeUndefined();
+		} finally {
+			gh.restore();
+		}
+	});
 });
 
 describe("Rate limiting", () => {

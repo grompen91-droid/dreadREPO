@@ -96,8 +96,8 @@ After forcing psychotic break, call `dread_get_runtime_state` and confirm `psych
 1. Run `./scripts/verify-dread.ps1` (Tier 0).
 2. Ask user to launch REPO with debug server enabled, or enable via config and restart.
 3. `dread_ping` until success.
-4. `dread_verify` — all checks should pass in a loaded run (audio/psychotic clips may fail on main menu before level load).
-5. `dread_get_runtime_state` — inspect block reasons for psychotic break.
+4. `dread_verify`: all checks should pass in a loaded run (audio/psychotic clips may fail on main menu before level load).
+5. `dread_get_runtime_state`: inspect block reasons for psychotic break.
 6. Optional: `dread_set_config` section=`overlay` key=`enabled` value=`true`, then confirm overlay host via verify.
 7. `dread_shutdown` when done (optional).
 
