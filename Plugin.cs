@@ -84,6 +84,7 @@ namespace Dread
 
         private void Start()
         {
+            // TODO(DBG-4): Remove when upstream REPOConfig/MenuLib fix lands. See #166.
             RepoConfigSliderLabelCompat.TryApply(_harmony);
         }
 
