@@ -70,10 +70,10 @@ A coroutine loop places rare, positional sounds in the world during runs. Every 
 | `footsteps.ogg` | 0.6 | Common | Steps from a direction nobody is in |
 | `breathing.ogg` | 0.3 | Uncommon | Close, slow breathing nearby |
 | `whisper.ogg` | 0.1 | Rare | A voice at the edge of hearing |
-| `shadow_scream_1.ogg` | -- | Psychotic Break | Close, guttural scream (variant 1) |
-| `shadow_scream_2.ogg` | -- | Psychotic Break | Close, guttural scream (variant 2) |
-| `shadow_scream_3.ogg` | -- | Psychotic Break | Close, guttural scream (variant 3) |
-| `phantom_footsteps.ogg` | -- | Psychotic Break | Footsteps circling the player |
+| `scream_peak.ogg` | -- | Psychotic Break | Peak phase intense scream |
+| `scream_distant.ogg` | -- | Psychotic Break | Buildup/crescendo distant ambience |
+| `scream_threat.ogg` | -- | Psychotic Break | Peak-window phantom threat (3D) |
+| `footsteps.ogg` | -- | Psychotic Break | Circling footsteps during episode (also used for ambient/fake footsteps) |
 
 - Fully spatialized (`spatialBlend = 1.0`), linear rolloff, falloff from 1m to 25m
 - Each AudioSource self-destructs after `clip.length + 0.5s`
@@ -121,7 +121,7 @@ A single `Update()` loop scans for the nearest `EnemyHealth` every **0.5 seconds
 - Uses `Traverse` to access private `SprintSpeedMultiplier` field
 - Clean multiplier restoration on cooldown or scene change
 
-#### Out of Breath
+#### Low stamina sound
 - Plays a gasping breath sound when stamina drops below 5 after sprinting
 - 60-second cooldown
 - Supports multiple variants (`breathing.ogg`, `breath2.ogg`, `breath3.ogg`)
@@ -255,6 +255,8 @@ Dread is **dependency-free** (BepInEx only) and is tested alongside common mod s
 See **[docs/mod-compatibility.md](docs/mod-compatibility.md)** for the full matrix, isolation test steps, Linux DLL notes, and manual test checklist.
 
 **Planned work:** [docs/ROADMAP.md](docs/ROADMAP.md) (debug overlay UX, refactor, extensibility and hardened core, performance, error reporting defaults + first-run prompt).
+
+**Contributor glossary:** [CONTEXT.md](CONTEXT.md) (domain terms for issues, PRs, and agents).
 
 **Quick guidance:**
 

@@ -105,4 +105,4 @@ Default five-role vocabulary (needs-triage, needs-info, ready-for-agent, ready-f
 
 ### Domain docs
 
-Single-context layout. See `docs/agents/domain.md`. Backlog: `docs/ROADMAP.md`.
+Single-context layout. Read `CONTEXT.md` (glossary) and `docs/agents/domain.md` before exploring code. Backlog: `docs/ROADMAP.md`.

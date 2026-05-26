@@ -24,14 +24,14 @@ Work top to bottom within each phase. Do not skip **Depends on** unless the issu
 | ID | Item | Notes |
 |----|------|-------|
 | (compat) | **REPOConfig slider labels** | Temporary fix in `RepoConfigSliderLabelCompat.cs`; user-verified. Remove when DBG-4 upstream lands. |
+| DOCS-1 | **Root `CONTEXT.md`** | Glossary + file map ([#174](https://github.com/grompen91-droid/dreadREPO/issues/174), PR #179) |
 
 ### Phase 1: Foundation (start here)
 
 | Order | ID | Priority | Issue | Depends on | Why first |
 |-------|-----|----------|-------|------------|-----------|
-| 1 | DOCS-1 | P1 | [#174](https://github.com/grompen91-droid/dreadREPO/issues/174) | — | Shared vocabulary for agents and contributors; cheap, helps every later PR |
-| 2 | ERR-1 | **P0** | [#171](https://github.com/grompen91-droid/dreadREPO/issues/171) | — | Must prove telemetry works before default-on or public promises |
-| 3 | PERF-2 | P1 | [#170](https://github.com/grompen91-droid/dreadREPO/issues/170) | — | Quick regression guard on overlay perf fix already in `master` |
+| 1 | ERR-1 | **P0** | [#171](https://github.com/grompen91-droid/dreadREPO/issues/171) | — | Must prove telemetry works before default-on or public promises |
+| 2 | PERF-2 | P1 | [#170](https://github.com/grompen91-droid/dreadREPO/issues/170) | — | Quick regression guard on overlay perf fix already in `master` |
 
 ### Phase 2: Structure (before extensibility and large features)
 
@@ -148,7 +148,7 @@ See also: `docs/repo-config-slider-labels-investigation.md`.
 
 | ID | Priority | Item | Notes | Status | Issue |
 |----|----------|------|-------|--------|-------|
-| DOCS-1 | P1 | **Add root `CONTEXT.md`** | Glossary + bounded context for agents | idea | [#174](https://github.com/grompen91-droid/dreadREPO/issues/174) |
+| DOCS-1 | P1 | **Add root `CONTEXT.md`** | Glossary + bounded context for agents | done | [#174](https://github.com/grompen91-droid/dreadREPO/issues/174) |
 
 ---
 
@@ -157,6 +157,6 @@ See also: `docs/repo-config-slider-labels-investigation.md`.
 1. Pick the next row from **Execution order** (lowest order number not `done`).
 2. Work the linked GitHub issue; reference roadmap ID in PR body (`ARCH-1`, etc.).
 3. When shipped: close issue, update `CHANGELOG.md` `[Unreleased]`, mark `done` here.
-4. Agents: read `docs/agents/domain.md` and `CONTEXT.md` (after DOCS-1) before implementing.
+4. Agents: read [`CONTEXT.md`](../CONTEXT.md) and `docs/agents/domain.md` before implementing.
 
-**Suggested first three issues for a new contributor:** #174 (DOCS-1), #171 (ERR-1), #170 (PERF-2).
+**Suggested first three issues for a new contributor:** #171 (ERR-1), #170 (PERF-2), #167 (ARCH-1).
