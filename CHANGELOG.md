@@ -41,13 +41,13 @@ Tracked in [docs/ROADMAP.md](docs/ROADMAP.md):
 - Extensibility and hardened core (extension points, fail-safe init, compat patterns)
 - Performance pass
 - Error reporting: full test matrix; default-on + first-run opt-in/out prompt (today default is off, ADR-0010)
-- Root `CONTEXT.md` agent glossary (DOCS-1, #174)
 
 GitHub backlog: issues #163-#175, table in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 </details>
 
 ### Added
+- **Domain glossary:** root [`CONTEXT.md`](CONTEXT.md) (DOCS-1, #174): behavior-first vocabulary (`run` vs `match`, tension sub-features, psychotic break audio names, compat terms) and agent file map
 - **Verify automation:** `scripts/verify-dread.ps1` (Tier 0 static, optional Tier 1 TCP, Tier 2 log patterns), `docs/agents/verify-dread.md` runbook, `docs/agents/verify-dread-checklist.json`
 - **Debug APIs:** `TestCrashSystem.TriggerForDebug()`, `PsychoticBreakSystem.ForceEpisodeForDebug()` for debug server / MCP
 - **Debug overlay:** `DebugOverlaySystem` IMGUI HUD (section 11. Debug Overlay, `DebugOverlayEnabled` default off). Shows nearest enemy distance, tension/adrenaline/panic sprint, psychotic break readiness with block reasons, audio clip count and next play ETA, config flags, and Dread Harmony patch count. F10 toggles visibility at runtime when enabled. Hidden on menu levels via `SemiFunc.MenuLevel()`.
@@ -64,6 +64,7 @@ GitHub backlog: issues #163-#175, table in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ### Changed
 - **Debug server / MCP:** `get_config` returns flat keys plus grouped `sections` with `debugKey`; `set_config` supports all DreadConfig entries including `debugServer.*`, `overlay.enabled`, `compatibility.*`, `testing.crash`, `logging.level`
+- **Docs:** README psychotic break audio table uses shipped clip names (`scream_peak`, `scream_distant`, `scream_threat`); tension feature titled **Low stamina sound** (canonical term in `CONTEXT.md`)
 - **Docs:** README and THUNDERSTORE compatibility sections no longer claim conflict-free operation; `mod-profile-conflicts.md` points to `mod-compatibility.md`
 - **Error reporting:** default `ErrorReportingEnabled` to **false** (opt-in); hooks `Application.logMessageReceived` instead of Harmony on `Debug.LogError` / `Debug.LogException` (ADR-0010)
 - **Debug console guard:** config-toggle `DebugConsoleGuardEnabled` (default on), wired in `Plugin.cs`

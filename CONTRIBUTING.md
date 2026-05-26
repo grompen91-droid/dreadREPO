@@ -9,9 +9,9 @@
 | [docs/agents/domain.md](docs/agents/domain.md) | How agents should read ADRs, overlay, REPOConfig compat |
 | [docs/agents/triage-labels.md](docs/agents/triage-labels.md) | Label vocabulary (`to-do`, `ready-for-agent`, etc.) |
 | [AGENTS.md](AGENTS.md) | Build, release, and repo conventions for coding agents |
-| `CONTEXT.md` (planned, [#174](https://github.com/grompen91-droid/dreadREPO/issues/174)) | Root glossary and bounded context for contributors and agents |
+| [`CONTEXT.md`](CONTEXT.md) | Root glossary and bounded context for contributors and agents (DOCS-1) |
 
-**Picking work:** Use [docs/ROADMAP.md](docs/ROADMAP.md) **Execution order** (P0 first, then P1/P2). Prefer the linked [GitHub issue](https://github.com/grompen91-droid/dreadREPO/issues) for that row. Comment on the issue before large changes. Reference the roadmap ID in your PR (e.g. `DBG-1`, `ARCH-1`). Suggested starters: #174, #171, #170.
+**Picking work:** Use [docs/ROADMAP.md](docs/ROADMAP.md) **Execution order** (P0 first, then P1/P2). Prefer the linked [GitHub issue](https://github.com/grompen91-droid/dreadREPO/issues) for that row. Comment on the issue before large changes. Reference the roadmap ID in your PR (e.g. `DBG-1`, `ARCH-1`). Suggested starters: #171, #170, #167.
 
 **Verify locally (optional):**
 
@@ -175,7 +175,7 @@ dotnet build Dread.csproj -c Release \
 - **Mod compatibility** ([docs/mod-compatibility.md](docs/mod-compatibility.md)): update when Harmony or optional-mod behavior changes.
 - **REPOConfig slider workaround** ([docs/repo-config-slider-labels-investigation.md](docs/repo-config-slider-labels-investigation.md)): temporary compat in `Systems/RepoConfigSliderLabelCompat.cs`; prefer upstream fixes (roadmap DBG-4, [#166](https://github.com/grompen91-droid/dreadREPO/issues/166)).
 - **Roadmap** ([docs/ROADMAP.md](docs/ROADMAP.md)): add planned items here and open a matching GitHub issue; close both when shipped.
-- **`CONTEXT.md`** ([#174](https://github.com/grompen91-droid/dreadREPO/issues/174)): root glossary for agents; link from `docs/agents/domain.md` when added.
+- **[`CONTEXT.md`](CONTEXT.md):** root domain glossary; use its terms in issues and PRs. See [`docs/agents/domain.md`](docs/agents/domain.md) for how agents consume it.
 
 ## Reporting bugs
 
