@@ -43,6 +43,28 @@ Or use MCP tools (preferred for agents):
 
 Patterns: `[Dread]`, `Systems initialized`, `[Dread DebugServer] LISTENING`.
 
+## Tier 3: Error reporting (ERR-1)
+
+### Automated (Worker unit tests)
+
+```bash
+cd workers/error-reporter && npm test
+```
+
+Runs 12 Vitest integration tests against the Cloudflare Worker in a local `workerd` runtime. Covers: health endpoint, issue creation, deduplication, reopen on closed, rate limiting, validation, CORS, payload format, and markdown escaping.
+
+### Live smoke test (deployed Worker)
+
+```bash
+bash scripts/test-error-reporter.sh
+```
+
+Hits the production Worker at `dread-error-reporter.nox-heights.workers.dev`. Verifies `/health` returns 200 and a synthetic test report is accepted. Optional `--verify-issue` flag checks GitHub issue creation via `gh` CLI.
+
+### Manual (in-game)
+
+See [`error-reporting-test-checklist.md`](error-reporting-test-checklist.md) for the full test matrix covering: TestCrash button, MCP trigger, real exceptions, opt-out, deduplication, rate limiting, spam filter, and payload shape.
+
 ## Config keys for `dread_set_config`
 
 Split `debugKey` from `dread_get_config` sections on the first dot:

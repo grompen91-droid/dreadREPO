@@ -47,6 +47,9 @@ GitHub backlog: issues #163-#175, table in [docs/ROADMAP.md](docs/ROADMAP.md).
 </details>
 
 ### Added
+- Cloudflare Worker integration tests (Vitest) for error reporting pipeline (ERR-1)
+- Manual error reporting test checklist (`docs/agents/error-reporting-test-checklist.md`)
+- Live smoke test script for deployed Worker (`scripts/test-error-reporter.sh`)
 - **Domain glossary:** root [`CONTEXT.md`](CONTEXT.md) (DOCS-1, #174): behavior-first vocabulary (`run` vs `match`, tension sub-features, psychotic break audio names, compat terms) and agent file map
 - **Verify automation:** `scripts/verify-dread.ps1` (Tier 0 static, optional Tier 1 TCP, Tier 2 log patterns), `docs/agents/verify-dread.md` runbook, `docs/agents/verify-dread-checklist.json`
 - **Debug APIs:** `TestCrashSystem.TriggerForDebug()`, `PsychoticBreakSystem.ForceEpisodeForDebug()` for debug server / MCP
