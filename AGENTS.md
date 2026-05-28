@@ -106,3 +106,41 @@ Default five-role vocabulary (needs-triage, needs-info, ready-for-agent, ready-f
 ### Domain docs
 
 Single-context layout. Read `CONTEXT.md` (glossary) and `docs/agents/domain.md` before exploring code. Backlog: `docs/ROADMAP.md`.
+
+## Cursor Cloud specific instructions
+
+### System dependencies
+
+The VM needs **.NET SDK 8.0.x** and **PowerShell 7+** (`pwsh`) installed before any build commands work. The update script handles `dotnet restore` and stub generation; system-level installs are done once per VM snapshot.
+
+### Building without the game
+
+Since R.E.P.O. is not installed in the cloud VM, always build against generated stubs:
+
+```bash
+pwsh -NoProfile .github/scripts/gen-stubs.ps1
+dotnet build Dread.csproj -c Release \
+  -p:GameDir=.github/stubs/refs \
+  -p:BepInExDir=.github/stubs/refs \
+  -p:DeployToProfile=false \
+  -p:DeployToDist=false
+```
+
+Stubs are cached in `.github/stubs/refs/` and only need regeneration when stub source files change.
+
+### MCP server
+
+```bash
+cd dread-mcp-server && npm install && npm run build
+```
+
+Output lands in `dread-mcp-server/dist/index.js`.
+
+### Lint and format
+
+- **Code analysis:** CI runs grep-based checks for null-forgiving operators, hardcoded Windows paths, trailing whitespace, tabs, lines >120 chars, and BOM markers. See `.github/workflows/ci.yml` `analyze` job.
+- **Format check:** `dotnet format --verify-no-changes --no-restore`
+
+### Known issue on master
+
+`ErrorReporterSystem.cs` uses `String.Contains(string, StringComparison)` which is not available in .NET Framework 4.8. This causes 5 CS1501 build errors. The CI also fails on this. This is a code issue, not an environment issue.
