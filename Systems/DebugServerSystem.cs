@@ -493,20 +493,36 @@ namespace Dread.Systems
                     Entry("ErrorReportingEnabled", "errorReporting", DreadConfig.ErrorReportingEnabled)),
                 Section("6. Psychotic Break",
                     Entry("PsychoticBreakEnabled", "psychoticBreak.enabled", DreadConfig.PsychoticBreakEnabled),
-                    Entry("PsychoticBreakTriggerChance", "psychoticBreak.triggerChance", DreadConfig.PsychoticBreakTriggerChance),
+                    Entry(
+                        "PsychoticBreakTriggerChance",
+                        "psychoticBreak.triggerChance",
+                        DreadConfig.PsychoticBreakTriggerChance),
                     Entry("PsychoticBreakDuration", "psychoticBreak.duration", DreadConfig.PsychoticBreakDuration),
-                    Entry("PsychoticBreakOncePerMatch", "psychoticBreak.oncePerMatch", DreadConfig.PsychoticBreakOncePerMatch)),
+                    Entry(
+                        "PsychoticBreakOncePerMatch",
+                        "psychoticBreak.oncePerMatch",
+                        DreadConfig.PsychoticBreakOncePerMatch)),
                 Section("7. Testing",
                     Entry("Crash Game", "testing.crash", DreadConfig.TestCrashButton)),
                 Section("8. Debug Server",
-                    Entry("DebugServerEnabled", "debugServer.enabled", DreadConfig.DebugServerEnabled, restartRequired: true),
+                    Entry(
+                        "DebugServerEnabled",
+                        "debugServer.enabled",
+                        DreadConfig.DebugServerEnabled,
+                        restartRequired: true),
                     Entry("DebugServerPort", "debugServer.port", DreadConfig.DebugServerPort, restartRequired: true)),
                 Section("9. Logging",
                     Entry("LogLevel", "logging.level", DreadConfig.LogLevelEntry)),
                 Section("10. Compatibility",
                     Entry("CompatibilityMode", "compatibility.mode", DreadConfig.CompatibilityMode),
-                    Entry("SkipConflictingPatches", "compatibility.skipConflictingPatches", DreadConfig.CompatibilitySkipConflictingPatches),
-                    Entry("DebugConsoleGuardEnabled", "compatibility.debugConsoleGuard", DreadConfig.DebugConsoleGuardEnabled)),
+                    Entry(
+                        "SkipConflictingPatches",
+                        "compatibility.skipConflictingPatches",
+                        DreadConfig.CompatibilitySkipConflictingPatches),
+                    Entry(
+                        "DebugConsoleGuardEnabled",
+                        "compatibility.debugConsoleGuard",
+                        DreadConfig.DebugConsoleGuardEnabled)),
                 Section("11. Debug Overlay",
                     Entry("DebugOverlayEnabled", "overlay.enabled", DreadConfig.DebugOverlayEnabled)),
             };
@@ -517,7 +533,11 @@ namespace Dread.Systems
             return new ConfigSectionEntry { section = section, keys = keys };
         }
 
-        private static ConfigKeyEntry Entry(string key, string debugKey, ConfigEntryBase entry, bool restartRequired = false)
+        private static ConfigKeyEntry Entry(
+            string key,
+            string debugKey,
+            ConfigEntryBase entry,
+            bool restartRequired = false)
         {
             string type = entry is ConfigEntry<bool> ? "bool"
                 : entry is ConfigEntry<float> ? "float"

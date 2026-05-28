@@ -18,7 +18,9 @@ namespace Dread.Systems
             "active", "Active", "isActive", "IsActive"
         };
 
-        /// <summary>True when the local avatar is in a tumble/fallen hide state (counts as crouching for triggers).</summary>
+        /// <summary>
+        /// True when the local avatar is in a tumble/fallen hide state (counts as crouching for triggers).
+        /// </summary>
         public static bool IsInTumble(PlayerController pc)
         {
             var tumble = ResolveTumble(pc);

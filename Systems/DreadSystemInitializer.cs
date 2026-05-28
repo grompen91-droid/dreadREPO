@@ -50,7 +50,8 @@ namespace Dread.Systems
                 if (component == null)
                 {
                     LoggingService.LogError(
-                        $"Failed to add {typeof(T).Name} component: Unity could not instantiate the script (check BepInEx log for TypeLoadException)");
+                        $"Failed to add {typeof(T).Name} component: Unity could not instantiate the script "
+                        + "(check BepInEx log for TypeLoadException)");
                     return 0;
                 }
 

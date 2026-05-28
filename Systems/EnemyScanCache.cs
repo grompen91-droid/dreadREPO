@@ -80,12 +80,6 @@ namespace Dread.Systems
                 return;
             }
 
-            if (write == found.Length)
-            {
-                _enemies = found;
-                return;
-            }
-
             var trimmed = new EnemyHealth[write];
             System.Array.Copy(found, trimmed, write);
             _enemies = trimmed;
