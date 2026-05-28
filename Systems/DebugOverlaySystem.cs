@@ -10,14 +10,16 @@ namespace Dread.Systems
     {
         private bool _visible;
         private float _nextPatchRefresh;
+        private bool _loggedDisabledWhileRunning;
         private GUIStyle? _boxStyle;
         private GUIStyle? _labelStyle;
         private readonly List<string> _lines = new(24);
 
-        private void Start()
+        private void Awake()
         {
             _visible = DreadConfig.DebugOverlayEnabled.Value;
             DreadConfig.DebugOverlayEnabled.SettingChanged += OnOverlayConfigChanged;
+            enabled = DreadConfig.DebugOverlayEnabled.Value;
         }
 
         private void OnDestroy()
@@ -28,15 +30,19 @@ namespace Dread.Systems
         private void OnOverlayConfigChanged(object? sender, System.EventArgs e)
         {
             _visible = DreadConfig.DebugOverlayEnabled.Value;
+            enabled = DreadConfig.DebugOverlayEnabled.Value;
         }
 
         private void Update()
         {
-            if (!DreadConfig.DebugOverlayEnabled.Value || SemiFunc.MenuLevel())
+            if (!GuardOverlayEnabled())
                 return;
 
             if (Input.GetKeyDown(KeyCode.F10))
                 _visible = !_visible;
+
+            if (!IsOverlayVisible())
+                return;
 
             if (Time.time >= _nextPatchRefresh)
             {
@@ -47,7 +53,10 @@ namespace Dread.Systems
 
         private void OnGUI()
         {
-            if (!_visible || !DreadConfig.DebugOverlayEnabled.Value || SemiFunc.MenuLevel())
+            if (!GuardOverlayEnabled())
+                return;
+
+            if (!IsOverlayVisible())
                 return;
 
             EnsureStyles();
@@ -67,6 +76,23 @@ namespace Dread.Systems
                 GUI.Label(new Rect(rect.x + padding, y, width - padding * 2f, lineHeight), _lines[i], _labelStyle!);
                 y += lineHeight;
             }
+        }
+
+        private bool IsOverlayVisible() => _visible && !SemiFunc.MenuLevel();
+
+        private bool GuardOverlayEnabled()
+        {
+            if (DreadConfig.DebugOverlayEnabled.Value)
+                return true;
+
+            if (!_loggedDisabledWhileRunning)
+            {
+                _loggedDisabledWhileRunning = true;
+                LoggingService.LogError(
+                    "DebugOverlaySystem ran while DebugOverlayEnabled is false: enable/disable wiring regressed (PERF-2).");
+            }
+
+            return false;
         }
 
         private void EnsureStyles()
