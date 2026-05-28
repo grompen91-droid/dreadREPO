@@ -262,7 +262,9 @@ Open conflicts only. Resolved terms live in **Language** above.
 | Runtime systems | `Systems/*.cs` |
 | OGG assets | `audio/` |
 | Architecture decisions | `docs/adr/` |
-| Agent doc consumption | `docs/agents/domain.md` |
+| Agent orchestration hub | `docs/agents/README.md` |
+| Agent workflows (verify, PR, subagents) | `docs/agents/orchestration.md` |
+| Agent domain consumption | `docs/agents/domain.md` |
 | MCP bridge (debug protocol) | `dread-mcp-server/` |
 | Error ingest worker | `workers/error-reporter/` |
 | Build and Thunderstore package | `build.ps1`, `manifest.json` |
