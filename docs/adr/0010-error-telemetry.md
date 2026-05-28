@@ -20,16 +20,24 @@ Several questions drove the design:
 
 ## Decision
 
-Add an `ErrorReporterSystem` MonoBehaviour that hooks Unity's `Application.logMessageReceivedThreaded` and sends error reports to a Cloudflare Worker. The Worker acts as a proxy that creates GitHub Issues on the repo.
+Add an `ErrorReporterSystem` MonoBehaviour that hooks Unity's `Application.logMessageReceived` and sends error reports to a Cloudflare Worker. The Worker acts as a proxy that creates GitHub Issues on the repo.
+
+TestCrash verification uses a separate synchronous POST path (ADR-0012). JSON serialization uses `ErrorReportJson` (ADR-0015), not `JsonUtility`.
 
 ### Architecture
 
 ```
 Game (Unity/BepInEx)
   |-- ErrorReporterSystem (C# MonoBehaviour)
-  |     |-- Hooks logMessageReceivedThreaded
-  |     |-- Buffers errors (max 50, flushed every 300s)
-  |     |-- POSTs JSON to Cloudflare Worker
+  |     |-- Hooks Application.logMessageReceived
+  |     |-- Enqueues errors on log callback; processes on Update() (main thread)
+  |     |-- Buffers reports (max 50 per batch, flushed every 300s)
+  |     |-- Serializes via ErrorReportJson.SerializePayload()
+  |     |-- POSTs JSON to Cloudflare Worker (UnityWebRequest)
+  |     |-- Re-queues batch on failed send (see Send failure handling)
+  |
+  |-- TestCrashSystem (ADR-0012)
+  |     |-- Sync POST via HttpWebRequest before Process.Kill()
   |
   v
 Cloudflare Worker (JavaScript)
@@ -46,14 +54,27 @@ GitHub Issues
   |-- Body: formatted tables + raw JSON
 ```
 
-### Thread Safety (Key Design Detail)
+### Log capture (main thread)
 
-`Application.logMessageReceivedThreaded` fires on an arbitrary thread. The initial implementation crashed by calling Unity APIs from this thread. The fix uses a two-phase approach:
+The mod hooks `Application.logMessageReceived` (not the threaded variant). The callback only enqueues lightweight `RawLogEntry` records into a static queue (cap 100) under `lock`. No `CaptureGameState()` or other Unity scene APIs run inside the callback.
 
-1. **Background thread:** `HandleLog` enqueues only raw strings (`RawLogEntry { logString, stackTrace, type }`) into a `Queue` with a 100-entry cap. No Unity API calls.
-2. **Main thread:** `Update()` dequeues and calls `CaptureGameState()` (which uses `FindObjectsOfType`, `SceneManager`, etc.) and `FlushNow()`.
+`Update()` on the main thread:
 
-The transmit buffer uses `lock (_buffer)` for thread-safe swap, and `StartCoroutine` for `UnityWebRequest` is only called from the main thread.
+1. Dequeues up to `MaxProcessPerFrame` pending logs per frame.
+2. Captures game state, system info, display, and config once per dequeue batch (via `Capture*Safe` helpers where APIs may be missing on stubs).
+3. Appends `ErrorReport` entries to `_buffer` and may set `_shouldFlush` when the buffer reaches `MaxBatchSize`.
+
+`FlushNow()` copies the buffer, clears it, and starts `SendBatch` as a coroutine. `_sendInProgress` prevents overlapping flushes.
+
+### Send failure handling
+
+If `ErrorReportJson.SerializePayload()` does not produce a `Reports` array, or if `UnityWebRequest` fails, `SendBatch` calls `RequeueFailedBatch()` to append the batch back to `_buffer` for a later flush (next interval, new error, or scene load).
+
+### Serialization (ADR-0015)
+
+DTOs live in `ErrorReportTypes.cs`. `ErrorReportJson.SerializePayload()` emits the Worker contract shape. Do not use `JsonUtility` for outbound error payloads: runtime testing showed it omitted the `Reports` array.
+
+CI runs `tests/Dread.ErrorReportJson.Tests` (`dotnet test`) to guard JSON shape.
 
 ### Payload Design
 
@@ -85,6 +106,14 @@ The JSON payload sent to the Worker includes:
 - **Negative:** In-memory rate limiting is per-isolate -- a user hitting different Cloudflare edges could bypass the 5/hr limit.
 - **Negative:** GitHub API rate limits (5000 req/hr) and Search API limits apply. At very high error volumes, some reports may be silently dropped.
 - **Negative:** The Worker URL is hardcoded in the mod DLL. If the Worker needs to be migrated, a mod update is required.
+- **Negative:** Failed batches are re-queued but not persisted to disk; a crash before the next successful flush still loses those reports.
+
+---
+
+## Related ADRs
+
+- [ADR-0012](0012-test-crash-button.md): TestCrash button and sync POST before process exit
+- [ADR-0015](0015-error-report-json-serialization.md): Manual JSON serializer and golden tests
 
 ---
 

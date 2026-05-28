@@ -45,6 +45,14 @@ Patterns: `[Dread]`, `Systems initialized`, `[Dread DebugServer] LISTENING`.
 
 ## Tier 3: Error reporting (ERR-1)
 
+### Automated (mod JSON serializer)
+
+```bash
+dotnet test tests/Dread.ErrorReportJson.Tests/Dread.ErrorReportJson.Tests.csproj -c Release --nologo
+```
+
+Golden tests for `ErrorReportJson.SerializePayload()` (ADR-0015). CI runs this after the mod build.
+
 ### Automated (Worker unit tests)
 
 ```bash

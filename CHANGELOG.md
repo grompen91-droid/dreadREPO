@@ -79,7 +79,9 @@ GitHub backlog: issues #163-#175, table in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ### Fixed
 - **REPOConfig sliders (temporary):** when REPOConfig + MenuLib are present, `RepoConfigSliderLabelCompat` restores slider setting names for empty descriptions (label at x=100, compact row); upstream REPOConfig/MenuLib fix preferred; skipped when REPOConfig is absent. See `docs/repo-config-slider-labels-investigation.md`
-- **TestCrash:** trigger on `SettingChanged` for ConfigurationManager button (no longer relies on `Update` polling)
+- **TestCrash:** defer from `SettingChanged`, synchronous HTTP POST via `ReportTestCrashAndWait` (completes before `Process.Kill()`)
+- **Error reporting:** top-level DTOs in `ErrorReportTypes.cs` plus `ErrorReportJson` manual serializer (runtime: JsonUtility emitted only Mod/Game/Unity fields, omitted `Reports[]`); safe `CaptureSystemInfoSafe` / `CaptureDisplayInfoSafe` for prod path; re-queue batch on failed send; xUnit golden tests in `tests/Dread.ErrorReportJson.Tests`
+- **Docs:** ADR-0015 (error report JSON); ADR-0010/0012 updated; ERR-1 checklist dedupe vs TestCrash clarified; ROADMAP ERR-1 marked done
 - **PsychoticBreak / AudioDread:** seed `_sceneLoaded` from active scene on `Start` so audio loads without waiting for a second scene load
 - **CI stubs:** `UnityEngine.UI.dll` stub for `RawImage` / `RectTransform`; `JsonUtility.FromJson`; cross-platform `build.ps1` stub detection (PR #146, #161)
 - **Init (Proton):** `DreadSystemInitializer` defers until `UnityEngine.UI` loads; PsychoticBreak uses runtime `RawImage` and layer mask `-1` instead of stub-only `Physics.DefaultRaycastLayers`

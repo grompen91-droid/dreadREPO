@@ -29,10 +29,15 @@ Add a **clickable button** in the BepInEx ConfigurationManager UI that crashes t
 
 - **Config entry:** `DreadConfig.TestCrashButton` (type `bool`, default `false`), bound under section "7. Testing" with `ConfigurationManagerAttributes { ShowAsButton = true }`.
 - **No hard dependency on ConfigurationManager:** The `ShowAsButton` attribute is read via reflection. If ConfigurationManager is not installed, the entry is a plain editable field.
-- **TestCrashSystem (MonoBehaviour):** Polls `DreadConfig.TestCrashButton.Value` in `Update()`. When `true`:
-  1. Resets it to `false`.
-  2. Throws `InvalidOperationException` with a clearly identifiable message.
-- **ErrorReporterSystem** (from ADR-0010) catches the exception automatically and sends it to the Cloudflare Worker, which creates a GitHub Issue.
+- **TestCrashSystem (MonoBehaviour):** Subscribes to `SettingChanged` on `DreadConfig.TestCrashButton`. When the user clicks the button:
+  1. Resets the config value to `false` immediately.
+  2. Queues a deferred crash on the next `Update()` (avoids BepInEx swallowing exceptions inside `SettingChanged`).
+  3. Logs `InvalidOperationException` with a clearly identifiable `[Dread TestCrash]` message.
+  4. Runs `ErrorReporterSystem.ReportTestCrashAndWait()` (synchronous HTTP POST via `ErrorReportJson`) so the report completes before the process exits.
+  5. Calls `Process.Kill()` on the game process (skipped in the Unity Editor).
+- **Production errors** still use the ADR-0010 log hook, buffer, and async `UnityWebRequest` batch flush. TestCrash is intentionally a separate, synchronous path for verification.
+- Each TestCrash click uses a unique hash suffix (`|testcrash|` + `DateTime.UtcNow.Ticks`) so repeated button tests create **distinct** GitHub issues. Do not use TestCrash to verify Worker deduplication (see error-reporting checklist section F).
+- JSON body is built with `ErrorReportJson` (ADR-0015), not `JsonUtility`.
 
 ### Why a Button (Not a Keybind or Toggle)
 
@@ -61,3 +66,10 @@ Add a **clickable button** in the BepInEx ConfigurationManager UI that crashes t
 - **In-game GUI button:** Requires rendering a UI overlay for a dev-only feature. Unnecessary complexity.
 - **Console command / dev menu:** No existing dev console in the mod. Creating one for one command is overkill.
 - **Temporary code injection (edit source, test, revert):** The prior approach. Error prone and easy to forget to revert.
+
+---
+
+## Related ADRs
+
+- [ADR-0010](0010-error-telemetry.md): Production log hook, batch flush, Worker contract
+- [ADR-0015](0015-error-report-json-serialization.md): Payload serialization

@@ -26,7 +26,8 @@ Issue: [#171](https://github.com/grompen91-droid/dreadREPO/issues/171)
 - [ ] Open ConfigurationManager (F1)
 - [ ] Click "Crash Game" button under section 7. Testing
 - [ ] Confirm game crashes with `[Dread TestCrash]` in BepInEx log
-- [ ] Check GitHub repo issues: new issue with label `auto-reported` + `bug`, title `[auto] InvalidOperationException in <Scene>`
+- [ ] Check BepInEx log for `[ErrorReporter] Sending test crash report` and no `GitHub step failed` / `401` in the worker response line
+- [ ] Check GitHub repo issues: new issue with label `auto-reported` + `bug`, title `[auto] InvalidOperationException in <Scene>` (if worker returns 401, fix Cloudflare `TOKEN` secret via `wrangler secret put TOKEN`)
 - [ ] Verify issue body has: Error Report table, Error Details code block, System Information, Display, Game State, Configuration tables, raw JSON payload in details block
 - [ ] Verify `<!-- hash:XXXXXXXXXXXXXXXX -->` comment is present at bottom of issue body
 
@@ -49,33 +50,39 @@ Issue: [#171](https://github.com/grompen91-droid/dreadREPO/issues/171)
 - [ ] Confirm NO `[ErrorReporter] Sending report` appears in BepInEx log
 - [ ] Confirm no new GitHub issue created
 
-### E. Deduplication
+### E. TestCrash creates a new issue each click
 
-- [ ] With error reporting on, trigger TestCrash
-- [ ] Note the GitHub issue number created
-- [ ] Restart game, trigger TestCrash again (same crash = same hash)
-- [ ] Confirm second occurrence adds a COMMENT to the existing issue, not a new issue
+- [ ] With error reporting on, trigger TestCrash twice (same session or after restart)
+- [ ] Confirm **two separate** GitHub issues are created (TestCrash hash includes `|testcrash|` + ticks; see ADR-0012)
+- [ ] This is expected: TestCrash is for pipeline verification, not dedupe testing
+
+### F. Deduplication (production errors, not TestCrash)
+
+- [ ] With error reporting on, cause the **same real error twice** (section C: e.g. repeat the audio rename trigger, or another stable exception)
+- [ ] Note the GitHub issue number from the first report
+- [ ] Trigger the same error again without changing stack/message materially
+- [ ] Confirm the second occurrence adds a **comment** on the existing issue, not a new issue
 - [ ] Comment should contain: Exception, Message, Scene, Timestamp fields
 
-### F. Reopen on closed duplicate
+### G. Reopen on closed duplicate
 
-- [ ] Close the auto-reported issue from step E on GitHub
-- [ ] Trigger same TestCrash again
-- [ ] Confirm the closed issue is REOPENED (state changes to open)
+- [ ] Close the auto-reported issue from section F on GitHub
+- [ ] Trigger the **same production error** again (not TestCrash)
+- [ ] Confirm the closed issue is **reopened** (state changes to open)
 - [ ] Confirm a comment is also added
 
-### G. Rate limiting
+### H. Rate limiting
 
 - [ ] Trigger 6+ crashes rapidly (within 1 hour window)
 - [ ] After 5th report, confirm Worker returns 429 status
 - [ ] Check BepInEx log for `Error report failed` warning message
 
-### H. Spam filter
+### I. Spam filter
 
 - [ ] Confirm errors containing `DebugConsoleUI` in message or stack trace are NOT reported
 - [ ] Confirm errors containing `DebugTester` / `SemiFunc.DebugTester` are NOT reported
 
-### I. Payload shape verification
+### J. Payload shape verification
 
 - [ ] Open any auto-reported issue on GitHub
 - [ ] Verify all sections present:
