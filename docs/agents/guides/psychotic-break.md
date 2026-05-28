@@ -75,4 +75,4 @@ Do not share enemy caches with `TensionSystem`; psychotic break owns its own `Fi
 ## Verify
 
 - Tier 1: `dread_get_runtime_state` shows `psychoticBreak*` fields
-- Manual: [error-reporting-test-checklist.md](../error-reporting-test-checklist.md) only if testing crashes; episode testing via MCP force command
+- Manual episode: MCP `dread_force_psychotic_break` ([debug-tooling.md](debug-tooling.md))

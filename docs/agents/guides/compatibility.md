@@ -10,8 +10,8 @@ When **true**:
 
 | Still runs | Disabled |
 |------------|----------|
-| Audio Dread (ambient) | Monster Harmony patches |
-| | Adrenaline / panic sprint mutation |
+| Audio Dread (ambient) | Monster Harmony patches (aggression / investigate) |
+| Monster audio scan (`MonsterAudioEnabled`) | Adrenaline / panic sprint mutation |
 | | Psychotic break |
 
 Use when a profile breaks with full Dread enabled. Document in issue if recommending to users.

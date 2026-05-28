@@ -26,7 +26,7 @@ Config section: `1. Audio Dread` in `DreadConfig.cs`.
 | Step | Detail |
 |------|--------|
 | Path | `{pluginDir}/audio/{fileName}` |
-| Cache | Static dictionary per file name; cleared on scene load via `ClearCache()` from tension/psychotic break |
+| Cache | Static dictionary per file name; cleared on scene load via `ClearCache()` from `TensionSystem` |
 | Primary load | NVorbis decode to `AudioClip` (Linux-friendly) |
 | Fallback | `UnityWebRequestMultimedia` with `file://` URI |
 | Missing file | Warning log, `onLoaded(null)` |
