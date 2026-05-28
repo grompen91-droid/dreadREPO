@@ -27,7 +27,7 @@ Entry point for coding agents (Cursor, Claude Code, Cloud Agents, and similar). 
 | [../../.cursor/mcp.json](../../.cursor/mcp.json) | MCP stdio config for `dread` debug tools |
 | [../../dread-mcp-server/](../../dread-mcp-server/) | TypeScript MCP bridge (build before Tier 1) |
 | [../../.claude/](../../.claude/) | Subagent prompt templates (implementer + reviewers) |
-| [guides/](guides/README.md) | Current implementation guides (architecture, tension, Harmony, monsters) |
+| [guides/](guides/README.md) | Full implementation guide set (all runtime systems + tooling) |
 | [archive/superpowers/](archive/superpowers/) | Archived superpowers plans/specs (do not execute) |
 
 ## MCP debug bridge

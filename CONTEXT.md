@@ -263,7 +263,7 @@ Open conflicts only. Resolved terms live in **Language** above.
 | OGG assets | `audio/` |
 | Architecture decisions | `docs/adr/` |
 | Agent orchestration hub | `docs/agents/README.md` |
-| Agent implementation guides | `docs/agents/guides/` |
+| Agent implementation guides | `docs/agents/guides/README.md` (index of all systems) |
 | Agent workflows (verify, PR, subagents) | `docs/agents/orchestration.md` |
 | Agent domain consumption | `docs/agents/domain.md` |
 | MCP bridge (debug protocol) | `dread-mcp-server/` |

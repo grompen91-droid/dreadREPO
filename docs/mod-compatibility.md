@@ -108,6 +108,7 @@ Use this checklist before a release or after Harmony changes.
 
 - [ADR-0013: Debug server and MCP verification](adr/0013-debug-server.md)
 - [Agent verify runbook](agents/verify-dread.md)
+- [Agent compatibility guide](agents/guides/compatibility.md)
 - [ADR-0004: Host-authoritative monster changes](adr/0004-host-authoritative-monster-changes.md)
 - [ADR-0009: Toggleable Harmony patches](adr/0009-toggleable-harmony-patches.md)
 - [ADR-0010: Error telemetry](adr/0010-error-telemetry.md)

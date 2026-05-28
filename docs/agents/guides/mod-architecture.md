@@ -81,6 +81,7 @@ Use `SemiFunc.MenuLevel()` for menu/main UI. `MonsterOverhaulSystem` also tracks
 | Systems | `Systems/*.cs` |
 | Audio assets | `audio/*.ogg` |
 | ADRs | `docs/adr/` |
+| Per-system agent guides | `docs/agents/guides/README.md` |
 | Agent verify | `scripts/verify-dread.ps1`, `docs/agents/verify-dread.md` |
 
 ## Adding a new runtime system
