@@ -15,6 +15,11 @@ namespace Dread.Systems
         private GUIStyle? _labelStyle;
         private readonly List<string> _lines = new(24);
 
+        // Cached empty content. Avoids GUIContent.none, which the build resolves
+        // against a stub property getter (get_none) that does not exist in the
+        // game's real UnityEngine, throwing MissingMethodException in OnGUI.
+        private static readonly GUIContent EmptyContent = new();
+
         private void Awake()
         {
             _visible = DreadConfig.DebugOverlayEnabled.Value;
@@ -68,7 +73,7 @@ namespace Dread.Systems
             float height = padding * 2f + _lines.Count * lineHeight;
 
             var rect = new Rect(10f, 10f, width, height);
-            GUI.Box(rect, GUIContent.none, _boxStyle!);
+            GUI.Box(rect, EmptyContent, _boxStyle!);
 
             var y = rect.y + padding;
             for (int i = 0; i < _lines.Count; i++)

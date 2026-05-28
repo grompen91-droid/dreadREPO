@@ -67,6 +67,22 @@ if (Test-Path $dllPath) {
     Write-Host "[gen-stubs] Created UnityEngine.dll ($size KB)"
 }
 
+# Build UnityEngine.IMGUIModule stubs (GUI/GUIStyle/GUIContent/GUISkin, depends on UnityEngine)
+$imguiCsproj = Write-StubProject -Name "UnityEngine.IMGUIModule" -SourceFile "$PSScriptRoot/UnityEngine.IMGUIModule_stubs.cs" -Directory $stubsDir -References @("UnityEngine")
+Write-Host "[gen-stubs] Compiling UnityEngine.IMGUIModule stubs..."
+$output = dotnet build $imguiCsproj -c Release --nologo 2>&1
+$exitCode = $LASTEXITCODE
+$output | Out-String | ForEach-Object { Write-Host "$_" }
+if ($exitCode -ne 0) {
+    Write-Host "::error::[gen-stubs] Failed to compile UnityEngine.IMGUIModule stubs (exit $exitCode)"
+    exit 1
+}
+$imguiDllPath = "$stubsDir/UnityEngine.IMGUIModule.dll"
+if (Test-Path $imguiDllPath) {
+    $size = (Get-Item $imguiDllPath).Length / 1KB
+    Write-Host "[gen-stubs] Created UnityEngine.IMGUIModule.dll ($size KB)"
+}
+
 # Build the Assembly-CSharp stubs (game-specific types, depends on UnityEngine stubs)
 $acCsproj = Write-StubProject -Name "Assembly-CSharp" -SourceFile "$PSScriptRoot/Assembly-CSharp_stubs.cs" -Directory $stubsDir -References @("UnityEngine")
 Write-Host "[gen-stubs] Compiling Assembly-CSharp stubs..."
