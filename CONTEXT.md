@@ -79,8 +79,8 @@ _Implements:_ `PsychoticBreakSystem`
 _Avoid_: "hallucination event", "cutscene"
 
 **Error reporting**:
-Captures serious game errors and can file deduplicated reports for the developer; subject to player opt-in and config.
-_Implements:_ `ErrorReporterSystem`
+Captures serious game errors and can file deduplicated reports for the developer; subject to player opt-in and config. Payload JSON via `ErrorReportJson` (ADR-0010, ADR-0015).
+_Implements:_ `ErrorReporterSystem`, `ErrorReportJson`
 _Avoid_: "telemetry" without noting opt-in/config
 
 **Test crash**:

@@ -26,6 +26,8 @@ See [docs/agents/verify-dread.md](docs/agents/verify-dread.md). Tier 1+ needs a 
 ### Prerequisites
 
 - .NET 8+ SDK (for build tooling; the project targets `net48`)
+- .NET 10 SDK (for `tests/Dread.ErrorReportJson.Tests`, run in CI after the mod build)
+- Node.js 20+ (for `workers/error-reporter` Vitest suite: `npm ci && npm test`)
 - PowerShell 7+ (`pwsh`)
 
 > The `net48` target works cross-platform via the `Microsoft.NETFramework.ReferenceAssemblies`

@@ -47,6 +47,9 @@ GitHub backlog: issues #163-#175, table in [docs/ROADMAP.md](docs/ROADMAP.md).
 </details>
 
 ### Added
+- Cloudflare Worker integration tests (Vitest) for error reporting pipeline (ERR-1)
+- Manual error reporting test checklist (`docs/agents/error-reporting-test-checklist.md`)
+- Live smoke test script for deployed Worker (`scripts/test-error-reporter.sh`)
 - **Domain glossary:** root [`CONTEXT.md`](CONTEXT.md) (DOCS-1, #174): behavior-first vocabulary (`run` vs `match`, tension sub-features, psychotic break audio names, compat terms) and agent file map
 - **Verify automation:** `scripts/verify-dread.ps1` (Tier 0 static, optional Tier 1 TCP, Tier 2 log patterns), `docs/agents/verify-dread.md` runbook, `docs/agents/verify-dread-checklist.json`
 - **Debug APIs:** `TestCrashSystem.TriggerForDebug()`, `PsychoticBreakSystem.ForceEpisodeForDebug()` for debug server / MCP
@@ -63,6 +66,8 @@ GitHub backlog: issues #163-#175, table in [docs/ROADMAP.md](docs/ROADMAP.md).
 - `breath2.ogg`, `breath3.ogg`: audio files for TensionSystem breath variant loading (referenced since v1.4.0 but missing)
 
 ### Changed
+- **Error reporting:** re-queue reports when the Worker returns per-report GitHub failures; ignore TestCrash log spam in the async pipeline (sync POST still sends)
+- **CI:** run `workers/error-reporter` Vitest in CI and before Worker deploy
 - **Debug server / MCP:** `get_config` returns flat keys plus grouped `sections` with `debugKey`; `set_config` supports all DreadConfig entries including `debugServer.*`, `overlay.enabled`, `compatibility.*`, `testing.crash`, `logging.level`
 - **Docs:** README psychotic break audio table uses shipped clip names (`scream_peak`, `scream_distant`, `scream_threat`); tension feature titled **Low stamina sound** (canonical term in `CONTEXT.md`)
 - **Docs:** README and THUNDERSTORE compatibility sections no longer claim conflict-free operation; `mod-profile-conflicts.md` points to `mod-compatibility.md`
@@ -76,7 +81,9 @@ GitHub backlog: issues #163-#175, table in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ### Fixed
 - **REPOConfig sliders (temporary):** when REPOConfig + MenuLib are present, `RepoConfigSliderLabelCompat` restores slider setting names for empty descriptions (label at x=100, compact row); upstream REPOConfig/MenuLib fix preferred; skipped when REPOConfig is absent. See `docs/repo-config-slider-labels-investigation.md`
-- **TestCrash:** trigger on `SettingChanged` for ConfigurationManager button (no longer relies on `Update` polling)
+- **TestCrash:** defer from `SettingChanged`, synchronous HTTP POST via `ReportTestCrashAndWait` (completes before `Process.Kill()`)
+- **Error reporting:** top-level DTOs in `ErrorReportTypes.cs` plus `ErrorReportJson` manual serializer (runtime: JsonUtility emitted only Mod/Game/Unity fields, omitted `Reports[]`); safe `CaptureSystemInfoSafe` / `CaptureDisplayInfoSafe` for prod path; re-queue batch on failed send; xUnit golden tests in `tests/Dread.ErrorReportJson.Tests`
+- **Docs:** ADR-0015 (error report JSON); ADR-0010/0012 updated; ERR-1 checklist dedupe vs TestCrash clarified; ROADMAP ERR-1 marked done
 - **PsychoticBreak / AudioDread:** seed `_sceneLoaded` from active scene on `Start` so audio loads without waiting for a second scene load
 - **CI stubs:** `UnityEngine.UI.dll` stub for `RawImage` / `RectTransform`; `JsonUtility.FromJson`; cross-platform `build.ps1` stub detection (PR #146, #161)
 - **Init (Proton):** `DreadSystemInitializer` defers until `UnityEngine.UI` loads; PsychoticBreak uses runtime `RawImage` and layer mask `-1` instead of stub-only `Physics.DefaultRaycastLayers`

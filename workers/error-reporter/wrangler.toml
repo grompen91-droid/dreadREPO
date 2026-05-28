@@ -5,4 +5,7 @@ compatibility_date = "2026-05-22"
 [vars]
 GITHUB_OWNER = "grompen91-droid"
 GITHUB_REPO = "dreadREPO"
+# TOKEN is set via `wrangler secret put TOKEN` in production.
+# For local dev/test, override with --var TOKEN:test-token or set below.
+TOKEN = "test-token-local"
 

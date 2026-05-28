@@ -26,6 +26,11 @@ jobs:
           cache: npm
           cache-dependency-path: workers/error-reporter/package-lock.json
 
+      - name: Test worker
+        run: |
+          npm ci
+          npm test
+
       - name: Deploy to Cloudflare Workers
         run: npx wrangler deploy
         env:

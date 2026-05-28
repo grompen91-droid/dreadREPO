@@ -111,3 +111,5 @@ Use this checklist before a release or after Harmony changes.
 - [ADR-0004: Host-authoritative monster changes](adr/0004-host-authoritative-monster-changes.md)
 - [ADR-0009: Toggleable Harmony patches](adr/0009-toggleable-harmony-patches.md)
 - [ADR-0010: Error telemetry](adr/0010-error-telemetry.md)
+- [ADR-0012: Test crash button](adr/0012-test-crash-button.md)
+- [ADR-0015: Error report JSON serialization](adr/0015-error-report-json-serialization.md)

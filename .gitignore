@@ -11,3 +11,4 @@ Directory.Build.targets
 .antigravitycli/
 .agents/
 .specify/
+workers/error-reporter/node_modules/

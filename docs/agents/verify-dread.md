@@ -43,6 +43,36 @@ Or use MCP tools (preferred for agents):
 
 Patterns: `[Dread]`, `Systems initialized`, `[Dread DebugServer] LISTENING`.
 
+## Tier 3: Error reporting (ERR-1)
+
+### Automated (mod JSON serializer)
+
+```bash
+dotnet test tests/Dread.ErrorReportJson.Tests/Dread.ErrorReportJson.Tests.csproj -c Release --nologo
+```
+
+Golden tests for `ErrorReportJson.SerializePayload()` (ADR-0015). CI runs this after the mod build.
+
+### Automated (Worker unit tests)
+
+```bash
+cd workers/error-reporter && npm test
+```
+
+Runs 12 Vitest integration tests against the Cloudflare Worker in a local `workerd` runtime. Covers: health endpoint, issue creation, deduplication, reopen on closed, rate limiting, validation, CORS, payload format, and markdown escaping.
+
+### Live smoke test (deployed Worker)
+
+```bash
+bash scripts/test-error-reporter.sh
+```
+
+Hits the production Worker at `dread-error-reporter.nox-heights.workers.dev`. Verifies `/health` returns 200 and a synthetic test report is accepted. Optional `--verify-issue` flag checks GitHub issue creation via `gh` CLI.
+
+### Manual (in-game)
+
+See [`error-reporting-test-checklist.md`](error-reporting-test-checklist.md) for the full test matrix covering: TestCrash button, MCP trigger, real exceptions, opt-out, deduplication, rate limiting, spam filter, and payload shape.
+
 ## Config keys for `dread_set_config`
 
 Split `debugKey` from `dread_get_config` sections on the first dot:
@@ -74,8 +104,8 @@ After forcing psychotic break, call `dread_get_runtime_state` and confirm `psych
 1. Run `./scripts/verify-dread.ps1` (Tier 0).
 2. Ask user to launch REPO with debug server enabled, or enable via config and restart.
 3. `dread_ping` until success.
-4. `dread_verify` — all checks should pass in a loaded run (audio/psychotic clips may fail on main menu before level load).
-5. `dread_get_runtime_state` — inspect block reasons for psychotic break.
+4. `dread_verify`: all checks should pass in a loaded run (audio/psychotic clips may fail on main menu before level load).
+5. `dread_get_runtime_state`: inspect block reasons for psychotic break.
 6. Optional: `dread_set_config` section=`overlay` key=`enabled` value=`true`, then confirm overlay host via verify.
 7. `dread_shutdown` when done (optional).
 

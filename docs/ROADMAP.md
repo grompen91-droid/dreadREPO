@@ -30,8 +30,8 @@ Work top to bottom within each phase. Do not skip **Depends on** unless the issu
 
 | Order | ID | Priority | Issue | Depends on | Why first |
 |-------|-----|----------|-------|------------|-----------|
-| 1 | ERR-1 | **P0** | [#171](https://github.com/grompen91-droid/dreadREPO/issues/171) | — | Must prove telemetry works before default-on or public promises |
-| 2 | PERF-2 | P1 | [#170](https://github.com/grompen91-droid/dreadREPO/issues/170) | — | Quick regression guard on overlay perf fix already in `master` |
+| 1 | ERR-1 | **P0** | [#171](https://github.com/grompen91-droid/dreadREPO/issues/171) | None | Must prove telemetry works before default-on or public promises |
+| 2 | PERF-2 | P1 | [#170](https://github.com/grompen91-droid/dreadREPO/issues/170) | None | Quick regression guard on overlay perf fix already in `master` |
 
 ### Phase 2: Structure (before extensibility and large features)
 
@@ -136,7 +136,7 @@ See also: `docs/repo-config-slider-labels-investigation.md`.
 
 | ID | Priority | Item | Notes | Status | Issue |
 |----|----------|------|-------|--------|-------|
-| ERR-1 | P0 | **Test error reporting end-to-end** | TestCrash, MCP, real exceptions (ADR-0010) | idea | [#171](https://github.com/grompen91-droid/dreadREPO/issues/171) |
+| ERR-1 | P0 | **Test error reporting end-to-end** | TestCrash, MCP, real exceptions (ADR-0010, ADR-0012, ADR-0015); checklist in `docs/agents/error-reporting-test-checklist.md` | done | [#171](https://github.com/grompen91-droid/dreadREPO/issues/171) |
 | ERR-2 | P1 | **Default on + first-run prompt** | Default `ErrorReportingEnabled` true | idea | [#172](https://github.com/grompen91-droid/dreadREPO/issues/172) |
 | ERR-3 | P1 | **Privacy copy** | In-game text: what is sent, how to disable | idea | [#173](https://github.com/grompen91-droid/dreadREPO/issues/173) |
 
