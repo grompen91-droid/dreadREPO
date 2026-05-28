@@ -8,12 +8,6 @@ namespace Dread.Systems
     /// <summary>
     /// REPOConfig-only MenuLib compat. Without REPOConfig, Dread uses BepInEx cfg / ConfigurationManager (no patch).
     /// When REPOConfig passes an empty slider description, restore the setting name and keep the compact row.
-    /// <para>
-    /// TEMPORARY FIX: Remove this class (and its call sites in Plugin.Start and DreadSystemInitializer) when
-    /// DBG-4 upstream lands — i.e. REPOConfig passes a non-empty description to CreateREPOSlider, or MenuLib
-    /// aligns the slider label column with toggle labels. See GitHub #166 and
-    /// docs/repo-config-slider-labels-investigation.md.
-    /// </para>
     /// </summary>
     internal static class RepoConfigSliderLabelCompat
     {
@@ -21,7 +15,6 @@ namespace Dread.Systems
         private const float LabelColumnLocalX = 100f;
 
         private static bool _applied;
-        private static bool _handleDescriptionPatched;
 
         internal static void TryApply(Harmony harmony)
         {
@@ -58,19 +51,15 @@ namespace Dread.Systems
                 patched++;
             }
 
-            if (!_handleDescriptionPatched)
+            var repoSliderType = FindRepoSliderType();
+            if (repoSliderType != null)
             {
-                var repoSliderType = FindRepoSliderType();
-                if (repoSliderType != null)
+                var handleDescription = AccessTools.Method(repoSliderType, "HandleDescription");
+                if (handleDescription != null)
                 {
-                    var handleDescription = AccessTools.Method(repoSliderType, "HandleDescription");
-                    if (handleDescription != null)
-                    {
-                        harmony.Patch(
-                            handleDescription,
-                            postfix: new HarmonyMethod(typeof(RepoConfigSliderLabelCompat), nameof(AfterHandleDescription)));
-                        _handleDescriptionPatched = true;
-                    }
+                    harmony.Patch(
+                        handleDescription,
+                        postfix: new HarmonyMethod(typeof(RepoConfigSliderLabelCompat), nameof(AfterHandleDescription)));
                 }
             }
 

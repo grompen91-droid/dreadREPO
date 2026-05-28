@@ -32,7 +32,6 @@ namespace Dread.Systems
             count += TryAddSystem<DebugServerSystem>("DreadDebugHost");
             count += TryAddSystem<DebugOverlaySystem>("DreadDebugOverlayHost");
 
-            // TODO(DBG-4): Remove when upstream REPOConfig/MenuLib fix lands. See #166.
             RepoConfigSliderLabelCompat.TryApply(Plugin.HarmonyInstance);
 
             if (count > 0)
