@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Dread.Config;
@@ -8,17 +9,41 @@ namespace Dread.Systems
 {
     public class DebugOverlaySystem : MonoBehaviour
     {
+        private const byte RowNormal = 0;
+        private const byte RowHeader = 1;
+        private const byte RowSep = 2;
+
         private bool _visible;
-        private float _nextPatchRefresh;
         private bool _loggedDisabledWhileRunning;
+
+        // Performance sampling.
+        private float _smoothedDelta;
+        private float _minFps;
+        private float _minFpsResetAt;
+        private float _memMB;
+        private float _nextStatRefresh;
+
+        private Texture2D? _bgTex;
+        private Texture2D? _sepTex;
         private GUIStyle? _boxStyle;
+        private GUIStyle? _headerStyle;
+        private GUIStyle? _hintStyle;
         private GUIStyle? _labelStyle;
-        private readonly List<string> _lines = new(24);
+        private GUIStyle? _valueStyle;
+        private GUIStyle? _sepStyle;
+        private readonly List<RowData> _rows = new(16);
 
         // Cached empty content. Avoids GUIContent.none, which the build resolves
         // against a stub property getter (get_none) that does not exist in the
         // game's real UnityEngine, throwing MissingMethodException in OnGUI.
         private static readonly GUIContent EmptyContent = new();
+
+        private static readonly Color ColAccent = new(0.96f, 0.55f, 0.38f);
+        private static readonly Color ColDim = new(0.62f, 0.64f, 0.70f);
+        private static readonly Color ColValue = new(0.92f, 0.93f, 0.96f);
+        private static readonly Color ColGood = new(0.48f, 0.90f, 0.55f);
+        private static readonly Color ColWarn = new(0.97f, 0.84f, 0.42f);
+        private static readonly Color ColBad = new(0.96f, 0.46f, 0.46f);
 
         private void Awake()
         {
@@ -43,16 +68,41 @@ namespace Dread.Systems
             if (!GuardOverlayEnabled())
                 return;
 
+            SampleFrameStats();
+
             if (Input.GetKeyDown(KeyCode.F10))
                 _visible = !_visible;
 
             if (!IsOverlayVisible())
                 return;
 
-            if (Time.time >= _nextPatchRefresh)
+            if (Time.realtimeSinceStartup >= _nextStatRefresh)
             {
-                _nextPatchRefresh = Time.time + 0.5f;
+                _nextStatRefresh = Time.realtimeSinceStartup + 0.5f;
                 DreadRuntimeState.DreadPatchCount = CountDreadPatches();
+                _memMB = GC.GetTotalMemory(false) / (1024f * 1024f);
+            }
+        }
+
+        // Runs every frame (even while toggled off) so FPS is accurate the instant the HUD is shown.
+        private void SampleFrameStats()
+        {
+            float dt = Time.unscaledDeltaTime;
+            if (dt <= 0f)
+                return;
+
+            _smoothedDelta = _smoothedDelta <= 0f ? dt : _smoothedDelta + (dt - _smoothedDelta) * 0.1f;
+
+            float fps = 1f / dt;
+            float now = Time.realtimeSinceStartup;
+            if (now >= _minFpsResetAt)
+            {
+                _minFps = fps;
+                _minFpsResetAt = now + 2f;
+            }
+            else if (fps < _minFps)
+            {
+                _minFps = fps;
             }
         }
 
@@ -65,22 +115,118 @@ namespace Dread.Systems
                 return;
 
             EnsureStyles();
-            BuildLines();
+            BuildRows();
 
-            const float width = 420f;
-            const float lineHeight = 18f;
-            const float padding = 8f;
-            float height = padding * 2f + _lines.Count * lineHeight;
+            const float width = 320f;
+            const float pad = 10f;
+            const float lineH = 18f;
+            const float labelW = 82f;
+            float height = pad * 2f + _rows.Count * lineH;
 
-            var rect = new Rect(10f, 10f, width, height);
-            GUI.Box(rect, EmptyContent, _boxStyle!);
+            var panel = new Rect(10f, 10f, width, height);
+            GUI.Box(panel, EmptyContent, _boxStyle!);
 
-            var y = rect.y + padding;
-            for (int i = 0; i < _lines.Count; i++)
+            float x = panel.x + pad;
+            float y = panel.y + pad;
+            float innerW = width - pad * 2f;
+
+            for (int i = 0; i < _rows.Count; i++)
             {
-                GUI.Label(new Rect(rect.x + padding, y, width - padding * 2f, lineHeight), _lines[i], _labelStyle!);
-                y += lineHeight;
+                var row = _rows[i];
+                if (row.Kind == RowSep)
+                {
+                    GUI.Box(new Rect(x, y + lineH * 0.5f - 1f, innerW, 1f), EmptyContent, _sepStyle!);
+                }
+                else if (row.Kind == RowHeader)
+                {
+                    GUI.Label(new Rect(x, y, innerW, lineH), row.Left, _headerStyle!);
+                    GUI.Label(new Rect(x + innerW - 36f, y + 2f, 36f, lineH), row.Right, _hintStyle!);
+                }
+                else
+                {
+                    GUI.Label(new Rect(x, y, labelW, lineH), row.Left, _labelStyle!);
+                    _valueStyle!.normal.textColor = row.Color;
+                    GUI.Label(new Rect(x + labelW, y, innerW - labelW, lineH), row.Right, _valueStyle!);
+                }
+
+                y += lineH;
             }
+        }
+
+        private void BuildRows()
+        {
+            _rows.Clear();
+
+            AddHeader("DREAD " + Dread.Plugin.VERSION, "F10");
+            AddSep();
+
+            float fps = _smoothedDelta > 0f ? 1f / _smoothedDelta : 0f;
+            float ms = _smoothedDelta * 1000f;
+            Color fpsCol = fps >= 60f ? ColGood : fps >= 30f ? ColWarn : ColBad;
+            AddRow("FPS", $"{fps:F0}   min {_minFps:F0}   {ms:F1} ms", fpsCol);
+            AddRow("Memory", $"{_memMB:F0} MB", ColValue);
+            AddSep();
+
+            float nearest = DreadRuntimeState.NearestEnemyDist;
+            string enemy = nearest >= float.MaxValue * 0.5f ? "none" : $"{nearest:F1} m";
+            AddRow("Enemy", enemy, ColValue);
+
+            AddRow("Tension",
+                $"adr {OnOff(DreadRuntimeState.AdrenalineActive)}  "
+                + $"panic {OnOff(DreadRuntimeState.PanicSprintActive)} {DreadRuntimeState.PanicSprintCooldown:F0}s",
+                ColValue);
+
+            AddRow("Break", BreakSummary(), ColValue);
+            AddRow("Audio", AudioSummary(), ColValue);
+
+            AddRow("Config",
+                $"compat{PlusMinus(DreadConfig.CompatibilityMode.Value)} "
+                + $"aggr{PlusMinus(DreadConfig.MonsterAggressionEnabled.Value)} "
+                + $"maud{PlusMinus(DreadConfig.MonsterAudioEnabled.Value)} "
+                + $"aud{PlusMinus(DreadConfig.AudioEnabled.Value)} "
+                + $"srv{PlusMinus(DreadConfig.DebugServerEnabled.Value)}",
+                ColDim);
+
+            AddRow("Patches", DreadRuntimeState.DreadPatchCount.ToString(), ColValue);
+        }
+
+        private void AddRow(string left, string right, Color color)
+            => _rows.Add(new RowData { Left = left, Right = right, Color = color, Kind = RowNormal });
+
+        private void AddHeader(string left, string right)
+            => _rows.Add(new RowData { Left = left, Right = right, Kind = RowHeader });
+
+        private void AddSep()
+            => _rows.Add(new RowData { Left = string.Empty, Right = string.Empty, Kind = RowSep });
+
+        private static string BreakSummary()
+        {
+            if (!DreadRuntimeState.PsychoticBreakEnabled)
+                return "off";
+
+            if (DreadRuntimeState.PsychoticBreakEpisodeActive)
+            {
+                float remaining = DreadRuntimeState.PsychoticBreakEpisodeDuration
+                    - DreadRuntimeState.PsychoticBreakEpisodeTimer;
+                return $"ACTIVE {remaining:F1}s";
+            }
+
+            if (!DreadRuntimeState.PsychoticBreakCanTrigger
+                && !string.IsNullOrEmpty(DreadRuntimeState.PsychoticBreakBlockReason))
+            {
+                return $"blocked: {DreadRuntimeState.PsychoticBreakBlockReason}";
+            }
+
+            return $"ready  next {DreadRuntimeState.PsychoticBreakNextCheckIn:F0}s  "
+                + $"threat {DreadRuntimeState.PsychoticBreakThreatCount}";
+        }
+
+        private static string AudioSummary()
+        {
+            string next = DreadRuntimeState.AudioNextPlayIn >= 0f
+                ? $"next {DreadRuntimeState.AudioNextPlayIn:F0}s"
+                : "next n/a";
+            return $"{DreadRuntimeState.AudioClipCount}/4  {next}";
         }
 
         private bool IsOverlayVisible() => _visible && !SemiFunc.MenuLevel();
@@ -105,79 +251,39 @@ namespace Dread.Systems
             if (_boxStyle != null)
                 return;
 
-            _boxStyle = new GUIStyle(GUI.skin.box);
+            _bgTex = MakeTexture(new Color(0.05f, 0.05f, 0.07f, 0.88f));
+            _sepTex = MakeTexture(new Color(0.45f, 0.47f, 0.52f, 0.5f));
 
-            _labelStyle = new GUIStyle(GUI.skin.label)
-            {
-                fontSize = 13,
-                normal = { textColor = Color.white },
-                wordWrap = false
-            };
+            _boxStyle = new GUIStyle(GUI.skin.box);
+            _boxStyle.normal.background = _bgTex;
+
+            _headerStyle = new GUIStyle(GUI.skin.label) { fontSize = 15, wordWrap = false };
+            _headerStyle.normal.textColor = ColAccent;
+
+            _hintStyle = new GUIStyle(GUI.skin.label) { fontSize = 11, wordWrap = false };
+            _hintStyle.normal.textColor = ColDim;
+
+            _labelStyle = new GUIStyle(GUI.skin.label) { fontSize = 13, wordWrap = false };
+            _labelStyle.normal.textColor = ColDim;
+
+            _valueStyle = new GUIStyle(GUI.skin.label) { fontSize = 13, wordWrap = false };
+            _valueStyle.normal.textColor = ColValue;
+
+            _sepStyle = new GUIStyle(GUI.skin.box);
+            _sepStyle.normal.background = _sepTex;
         }
 
-        private void BuildLines()
+        private static Texture2D MakeTexture(Color color)
         {
-            _lines.Clear();
-
-            _lines.Add($"Dread {Dread.Plugin.VERSION}  |  F10 toggle  |  refresh 0.5s");
-            _lines.Add("");
-
-            float nearest = DreadRuntimeState.NearestEnemyDist;
-            string nearestText = nearest >= float.MaxValue * 0.5f ? "none" : $"{nearest:F1}m";
-            _lines.Add($"Nearest enemy: {nearestText}");
-
-            _lines.Add("");
-            _lines.Add("Tension");
-            _lines.Add($"  nearest: {nearestText}  (range 15m)");
-            _lines.Add($"  adrenaline: {OnOff(DreadRuntimeState.AdrenalineActive)}");
-            _lines.Add($"  panic sprint: {OnOff(DreadRuntimeState.PanicSprintActive)}"
-                + $"  cd: {DreadRuntimeState.PanicSprintCooldown:F0}s");
-
-            _lines.Add("");
-            _lines.Add("PsychoticBreak");
-            _lines.Add($"  enabled: {OnOff(DreadRuntimeState.PsychoticBreakEnabled)}");
-            if (DreadRuntimeState.PsychoticBreakEpisodeActive)
-            {
-                float remaining = DreadRuntimeState.PsychoticBreakEpisodeDuration
-                    - DreadRuntimeState.PsychoticBreakEpisodeTimer;
-                _lines.Add($"  episode: ACTIVE  {remaining:F1}s left");
-            }
-            else
-            {
-                _lines.Add($"  canTrigger: {OnOff(DreadRuntimeState.PsychoticBreakCanTrigger)}");
-                if (!DreadRuntimeState.PsychoticBreakCanTrigger
-                    && !string.IsNullOrEmpty(DreadRuntimeState.PsychoticBreakBlockReason))
-                {
-                    _lines.Add($"  reason: {DreadRuntimeState.PsychoticBreakBlockReason}");
-                }
-
-                _lines.Add($"  next check: {DreadRuntimeState.PsychoticBreakNextCheckIn:F1}s");
-                _lines.Add($"  threat memory: {DreadRuntimeState.PsychoticBreakThreatCount}");
-            }
-
-            _lines.Add($"  clips loaded: {OnOff(DreadRuntimeState.PsychoticBreakClipsLoaded)}");
-
-            _lines.Add("");
-            _lines.Add("AudioDread");
-            _lines.Add($"  clips: {DreadRuntimeState.AudioClipCount}/4");
-            if (DreadRuntimeState.AudioNextPlayIn >= 0f)
-                _lines.Add($"  next play: {DreadRuntimeState.AudioNextPlayIn:F0}s");
-            else
-                _lines.Add("  next play: n/a");
-
-            _lines.Add("");
-            _lines.Add("Config");
-            _lines.Add($"  CompatibilityMode: {OnOff(DreadConfig.CompatibilityMode.Value)}");
-            _lines.Add($"  MonsterAggression: {OnOff(DreadConfig.MonsterAggressionEnabled.Value)}");
-            _lines.Add($"  MonsterAudio: {OnOff(DreadConfig.MonsterAudioEnabled.Value)}");
-            _lines.Add($"  AudioEnabled: {OnOff(DreadConfig.AudioEnabled.Value)}");
-            _lines.Add($"  DebugServer: {OnOff(DreadConfig.DebugServerEnabled.Value)}");
-
-            _lines.Add("");
-            _lines.Add($"Harmony patches (Dread): {DreadRuntimeState.DreadPatchCount}");
+            var tex = new Texture2D(1, 1);
+            tex.SetPixel(0, 0, color);
+            tex.Apply();
+            return tex;
         }
 
         private static string OnOff(bool value) => value ? "ON" : "off";
+
+        private static string PlusMinus(bool value) => value ? "+" : "-";
 
         private static int CountDreadPatches()
         {
@@ -206,6 +312,14 @@ namespace Dread.Systems
             }
 
             return count;
+        }
+
+        private struct RowData
+        {
+            public string Left;
+            public string Right;
+            public Color Color;
+            public byte Kind;
         }
     }
 }

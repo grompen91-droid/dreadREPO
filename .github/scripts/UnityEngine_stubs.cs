@@ -135,8 +135,10 @@ namespace UnityEngine
     public static class Time
     {
         public static float deltaTime { get; }
+        public static float unscaledDeltaTime { get; }
         public static float time { get; }
         public static float realtimeSinceStartup { get; }
+        public static int frameCount { get; }
     }
     public static class Random
     {
@@ -188,6 +190,7 @@ namespace UnityEngine
 
     public class Texture2D : Object
     {
+        public Texture2D(int width, int height) { }
         public Texture2D(int width, int height, TextureFormat format, bool mipChain) { }
         public void SetPixel(int x, int y, Color color) { }
         public void Apply() { }

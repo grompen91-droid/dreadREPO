@@ -68,6 +68,7 @@ GitHub backlog: issues #163-#175, table in [docs/ROADMAP.md](docs/ROADMAP.md).
 - `breath2.ogg`, `breath3.ogg`: audio files for TensionSystem breath variant loading (referenced since v1.4.0 but missing)
 
 ### Changed
+- **Debug overlay (redesign):** more concise grouped layout (one line per system) on a semi-transparent panel with an accent header and separators. Adds a performance section: smoothed **FPS** (color-coded green/amber/red), rolling **min FPS**, frame time in ms, and managed **memory** (MB) via `GC.GetTotalMemory`. Mod state condensed to Enemy / Tension / Break / Audio / Config / Patches rows
 - **Debug overlay (PERF-2):** `DebugOverlaySystem` is now fully dormant when `DebugOverlayEnabled` is off (component disabled, so Unity invokes neither `Update` nor `OnGUI`); `enabled` tracks the config flag live. Adds a one-shot logged guard if the disabled-state invariant is ever violated. (#170)
 - **Error reporting:** re-queue reports when the Worker returns per-report GitHub failures; ignore TestCrash log spam in the async pipeline (sync POST still sends)
 - **CI:** run `workers/error-reporter` Vitest in CI and before Worker deploy
