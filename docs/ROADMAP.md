@@ -31,7 +31,7 @@ Work top to bottom within each phase. Do not skip **Depends on** unless the issu
 | Order | ID | Priority | Issue | Depends on | Why first |
 |-------|-----|----------|-------|------------|-----------|
 | 1 | ERR-1 | **P0** | [#171](https://github.com/grompen91-droid/dreadREPO/issues/171) | None | Must prove telemetry works before default-on or public promises |
-| 2 | PERF-2 | P1 | [#170](https://github.com/grompen91-droid/dreadREPO/issues/170) | None | Quick regression guard on overlay perf fix already in `master` |
+| 2 | PERF-2 | P1 | [#170](https://github.com/grompen91-droid/dreadREPO/issues/170) | None | Done: component disabled when off; guard + manual checklist |
 
 ### Phase 2: Structure (before extensibility and large features)
 
@@ -128,7 +128,7 @@ See also: `docs/repo-config-slider-labels-investigation.md`.
 | ID | Priority | Item | Notes | Status | Issue |
 |----|----------|------|-------|--------|-------|
 | PERF-1 | P2 | **Performance pass** | Profile overlay, tension/audio, enemy cache, Harmony | idea | [#169](https://github.com/grompen91-droid/dreadREPO/issues/169) |
-| PERF-2 | P1 | **Overlay when hidden** | Verify no `OnGUI` when HUD hidden | idea | [#170](https://github.com/grompen91-droid/dreadREPO/issues/170) |
+| PERF-2 | P1 | **Overlay when hidden** | Component disabled when off (no `Update`/`OnGUI`); guard + checklist `docs/agents/overlay-perf-checklist.md` | done | [#170](https://github.com/grompen91-droid/dreadREPO/issues/170) |
 
 ---
 

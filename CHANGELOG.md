@@ -66,6 +66,7 @@ GitHub backlog: issues #163-#175, table in [docs/ROADMAP.md](docs/ROADMAP.md).
 - `breath2.ogg`, `breath3.ogg`: audio files for TensionSystem breath variant loading (referenced since v1.4.0 but missing)
 
 ### Changed
+- **Debug overlay (PERF-2):** `DebugOverlaySystem` is now fully dormant when `DebugOverlayEnabled` is off (component disabled, so Unity invokes neither `Update` nor `OnGUI`); `enabled` tracks the config flag live. Adds a one-shot logged guard if the disabled-state invariant is ever violated. (#170)
 - **Error reporting:** re-queue reports when the Worker returns per-report GitHub failures; ignore TestCrash log spam in the async pipeline (sync POST still sends)
 - **CI:** run `workers/error-reporter` Vitest in CI and before Worker deploy
 - **Debug server / MCP:** `get_config` returns flat keys plus grouped `sections` with `debugKey`; `set_config` supports all DreadConfig entries including `debugServer.*`, `overlay.enabled`, `compatibility.*`, `testing.crash`, `logging.level`
@@ -80,6 +81,7 @@ GitHub backlog: issues #163-#175, table in [docs/ROADMAP.md](docs/ROADMAP.md).
 - Logging: hot-path guards, level demotions, prefix consistency across systems and `dread-mcp-server`
 
 ### Fixed
+- **Debug overlay (PERF-2):** Harmony patch-count reflection no longer runs while the HUD is toggled off with F10; it runs only when the overlay is actually visible. (#170)
 - **REPOConfig sliders (temporary):** when REPOConfig + MenuLib are present, `RepoConfigSliderLabelCompat` restores slider setting names for empty descriptions (label at x=100, compact row); upstream REPOConfig/MenuLib fix preferred; skipped when REPOConfig is absent. See `docs/repo-config-slider-labels-investigation.md`
 - **TestCrash:** defer from `SettingChanged`, synchronous HTTP POST via `ReportTestCrashAndWait` (completes before `Process.Kill()`)
 - **Error reporting:** top-level DTOs in `ErrorReportTypes.cs` plus `ErrorReportJson` manual serializer (runtime: JsonUtility emitted only Mod/Game/Unity fields, omitted `Reports[]`); safe `CaptureSystemInfoSafe` / `CaptureDisplayInfoSafe` for prod path; re-queue batch on failed send; xUnit golden tests in `tests/Dread.ErrorReportJson.Tests`
