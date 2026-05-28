@@ -29,6 +29,7 @@ namespace UnityEngine
         public Component AddComponent(Type componentType) => null;
         public T[] GetComponentsInChildren<T>() where T : class => null;
         public Transform transform { get; }
+        public bool activeInHierarchy { get; }
     }
     public class Transform : Component
     {
@@ -202,11 +203,6 @@ namespace UnityEngine
         public static int GetMask(params string[] layerNames) => 0;
     }
     public class Light : Behaviour { }
-    public class Canvas : Behaviour
-    {
-        public RenderMode renderMode { get; set; }
-        public int sortingOrder { get; set; }
-    }
     public static class Debug
     {
         public static void LogError(object message) { }
@@ -221,6 +217,7 @@ namespace UnityEngine
         public static RuntimePlatform platform { get; }
         public delegate void LogCallback(string logString, string stackTrace, LogType type);
         public static event LogCallback logMessageReceived;
+        public static event Action quitting;
     }
     public enum RuntimePlatform { WindowsPlayer, OSXPlayer, LinuxPlayer }
     public static class JsonUtility

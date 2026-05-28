@@ -94,11 +94,18 @@ GitHub backlog: issues #163-#175, table in [docs/ROADMAP.md](docs/ROADMAP.md).
 - **PsychoticBreak / AudioDread:** seed `_sceneLoaded` from active scene on `Start` so audio loads without waiting for a second scene load
 - **CI stubs:** `UnityEngine.UI.dll` stub for `RawImage` / `RectTransform`; `JsonUtility.FromJson`; cross-platform `build.ps1` stub detection (PR #146, #161)
 - **Init (Proton):** `DreadSystemInitializer` defers until `UnityEngine.UI` loads; PsychoticBreak uses runtime `RawImage` and layer mask `-1` instead of stub-only `Physics.DefaultRaycastLayers`
+- **CI stubs:** `Canvas` moved from `UnityEngine.dll` to `UnityEngine.UIModule.dll` stub; PsychoticBreak overlay uses `GameObject` + runtime `Canvas` resolution (fixes `could not be instantiated` on stub-built packages)
+- **Psychotic Break (compat):** port from `fix/debug-server-mcp` (`PlayerControllerCompat`, `EnemyHealthCompat`, `OverlayTextureUtil`): multi-field crouch detection (`Crouching`/`Crawling`/avatar), tumble-as-hiding, Proton-safe vignette textures (fixes false "not crouching" and MCP `force_psychotic_break` texture errors on REPO v0.4.x)
+- **Psychotic Break (threat):** threat memory uses `EnemyScanCache`, player position for range checks, and no `IsAlive` gate on threat registration (fixes permanent "no recent threat" when `EnemyHealthCompat` misread health); `EnemyHealthCompat` tries direct `CurrentHealth` plus float field fallbacks
+- **Psychotic Break (trigger/episode):** single `_threatMemoryUntil` timestamp (no per-frame list growth); threat refresh every frame; visibility skips dead enemies via `EnemyHealthCompat`; block reason `not hiding`; `AudioClipLoader` for episode clips; `PlayerTumbleCompat` for forced tumble; episode ends on timer even if overlay failed; debug force ignores menu and does not consume once-per-match
+- **Psychotic Break (docs/MCP):** agent guide updated for `EnemyScanCache` and threat seconds; `get_runtime_state` includes `psychoticBreakEnemyCount`
+- **Psychotic Break (enemy scan):** guard destroyed `EnemyHealth` references, drop direct `CurrentHealth` and collider reflection spam, filter cache on refresh, throttle visibility checks (0.25s)
 - **Audio (Proton):** NVorbis disk load with dependency DLLs and `PluginDependencyResolver`; Wine `file://` path mapping; PCM via `AudioClip.Create` (no `SetData`); correct PCM read position (no stutter); menu/startup guards for ambient and fake footsteps
 - **Harmony:** runtime `AccessTools.TypeByName` + `object` patch args (no `BadImageFormatException` on stub-built DLLs); monster pitch tweaks skip playing sources
 - **Debug / MCP:** player HP/stamina via Traverse; nested `logs` / `patches` JSON parsing
 - **ErrorReporter:** ignore `DebugConsoleUI` / `DebugTester` spam, dedupe reports, cap processing per frame, capture game state once per batch (fixes lag when other mods flood `Debug.LogException`)
 - **Debug console:** Harmony finalizer on `DebugConsoleUI.Update` suppresses broken `SemiFunc.DebugTester` `NullReferenceException` spam (stops console flood at source)
+- **Debug server / MCP:** non-blocking accept loop, `Application.quitting` shutdown, pending command release, and socket close on exit (fixes game freeze on quit when debug server enabled or MCP connected)
 
 ## [1.5.1] - 2026-05-21
 

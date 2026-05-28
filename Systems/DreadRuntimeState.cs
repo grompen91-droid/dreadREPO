@@ -19,7 +19,9 @@ namespace Dread.Systems
         public static float PsychoticBreakEpisodeTimer { get; internal set; }
         public static float PsychoticBreakEpisodeDuration { get; internal set; }
         public static float PsychoticBreakNextCheckIn { get; internal set; }
+        /// <summary>Seconds remaining on recent-threat memory (0 = none).</summary>
         public static int PsychoticBreakThreatCount { get; internal set; }
+        public static int PsychoticBreakEnemyCount { get; internal set; }
         public static bool PsychoticBreakClipsLoaded { get; internal set; }
 
         public static int AudioClipCount { get; internal set; }

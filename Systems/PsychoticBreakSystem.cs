@@ -1,12 +1,9 @@
 using System.Collections;
-using System.Collections.Generic;
 using System;
-using System.IO;
 using System.Reflection;
 using Dread.Config;
 using HarmonyLib;
 using UnityEngine;
-using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 using Random = UnityEngine.Random;
 
@@ -25,7 +22,7 @@ namespace Dread.Systems
         private float _episodeTimer;
         private Camera? _mainCam;
 
-        private readonly List<float> _recentThreatTimestamps = new();
+        private float _threatMemoryUntil;
         private const float ThreatMemoryDuration = 30f;
         private const float ThreatRange = 15f;
         private const float SoloRange = 30f;
@@ -38,18 +35,23 @@ namespace Dread.Systems
         private AudioSource? _distantScreamSource;
         private bool _hasPlayedPeakScream;
 
-        private Canvas? _overlayCanvas;
+        private GameObject? _overlayRoot;
         private Component? _darknessImage;
         private Component? _vignetteImage;
         private Texture2D? _vignetteTexture;
 
         private EnemyHealth[]? _cachedEnemies;
         private float _phantomSoundAccumulator;
+        private float _tumbleMaintainTimer;
         private bool _sceneLoaded;
         private bool _typeInitFailed;
+        private string _lastLoggedBlockReason = "";
+        private bool _cachedAnyEnemyVisible;
+        private float _nextVisibilityRefresh;
 
         // -1 = all layers; avoids stub-only Physics.DefaultRaycastLayers at type init
         private const int VisionBlockMask = -1;
+        private const float VisibilityRefreshInterval = 0.25f;
 
         private void Start()
         {
@@ -115,19 +117,13 @@ namespace Dread.Systems
         {
             _sceneLoaded = true;
             if (_episodeActive)
-            {
-                var pc = PlayerController.instance;
-                if ((object)pc != null)
-                {
-                    RestoreFlashlight(pc);
-                    UnlockInput(pc);
-                }
-            }
+                RestorePlayerControl(PlayerController.instance);
 
             _episodeActive = false;
-            _recentThreatTimestamps.Clear();
+            _threatMemoryUntil = 0f;
             _cachedEnemies = null;
             _mainCam = Camera.main;
+            EnemyScanCache.Invalidate();
             CleanupOverlay();
             CleanupFootstepSource();
             CleanupDistantScreamSource();
@@ -178,14 +174,14 @@ namespace Dread.Systems
                 return;
             }
 
+            UpdateThreatTimestamps();
+
             if (Time.time < _nextTriggerCheck)
             {
                 PublishRuntimeState();
                 return;
             }
             _nextTriggerCheck = Time.time + 2f;
-
-            UpdateThreatTimestamps();
 
             if (!CanTrigger())
             {
@@ -207,7 +203,8 @@ namespace Dread.Systems
             DreadRuntimeState.PsychoticBreakEpisodeDuration = _episodeDuration;
             var nextCheck = _nextTriggerCheck - Time.time;
             DreadRuntimeState.PsychoticBreakNextCheckIn = nextCheck < 0f ? 0f : nextCheck;
-            DreadRuntimeState.PsychoticBreakThreatCount = _recentThreatTimestamps.Count;
+            DreadRuntimeState.PsychoticBreakThreatCount = GetThreatMemorySecondsRemaining();
+            DreadRuntimeState.PsychoticBreakEnemyCount = EnemyScanCache.Count;
             DreadRuntimeState.PsychoticBreakClipsLoaded = AreClipsLoaded();
 
             if (_episodeActive)
@@ -220,6 +217,14 @@ namespace Dread.Systems
             var blockReason = GetTriggerBlockReason();
             DreadRuntimeState.PsychoticBreakBlockReason = blockReason ?? "";
             DreadRuntimeState.PsychoticBreakCanTrigger = blockReason == null;
+
+            var reasonKey = blockReason ?? "ready";
+            if (reasonKey != _lastLoggedBlockReason)
+            {
+                _lastLoggedBlockReason = reasonKey;
+                if (blockReason != null)
+                    LoggingService.LogInfo($"[PsychoticBreak] Blocked: {blockReason}");
+            }
         }
 
         private bool AreClipsLoaded()
@@ -246,31 +251,64 @@ namespace Dread.Systems
                 return "no player";
             if (!IsSolo(pc))
                 return "not solo";
-            if (_recentThreatTimestamps.Count == 0)
+            if (!HasRecentThreat())
                 return "no recent threat";
-            if (IsAnyEnemyVisible(_cachedEnemies))
+            if (IsAnyEnemyVisibleCached())
                 return "visible enemy";
-            if (!IsCrouching(pc))
-                return "not crouching";
+            if (!IsHidingVulnerable(pc))
+                return "not hiding";
 
             return null;
         }
 
         private void UpdateThreatTimestamps()
         {
-            var cam = _mainCam;
-            if (cam == null) return;
+            if (_mainCam == null)
+                _mainCam = Camera.main;
 
-            _recentThreatTimestamps.RemoveAll(t => Time.time - t > ThreatMemoryDuration);
+            var origin = GetThreatScanOrigin();
+            if (!origin.HasValue)
+                return;
 
-            _cachedEnemies = FindObjectsOfType<EnemyHealth>();
+            _cachedEnemies = EnemyScanCache.GetEnemies();
             foreach (var e in _cachedEnemies)
             {
-                if (e == null) continue;
-                float d = Vector3.Distance(cam.transform.position, e.transform.position);
+                if (!EnemyHealthCompat.IsValid(e))
+                    continue;
+
+                float d = Vector3.Distance(origin.Value, EnemyScanCache.GetFocusPosition(e));
                 if (d < ThreatRange)
-                    _recentThreatTimestamps.Add(Time.time);
+                {
+                    _threatMemoryUntil = Time.time + ThreatMemoryDuration;
+                    return;
+                }
             }
+        }
+
+        private bool HasRecentThreat() => Time.time < _threatMemoryUntil;
+
+        private int GetThreatMemorySecondsRemaining()
+        {
+            if (!HasRecentThreat())
+                return 0;
+            return (int)Math.Ceiling(_threatMemoryUntil - Time.time);
+        }
+
+        private Vector3? GetThreatScanOrigin()
+        {
+            var pc = PlayerController.instance;
+            if ((object)pc != null)
+            {
+                try
+                {
+                    return pc.transform.position;
+                }
+                catch { }
+            }
+
+            if (_mainCam == null)
+                _mainCam = Camera.main;
+            return _mainCam != null ? _mainCam.transform.position : null;
         }
 
         private bool CanTrigger()
@@ -280,17 +318,30 @@ namespace Dread.Systems
             if ((object)pc == null) return false;
 
             if (!IsSolo(pc)) return false;
-            if (_recentThreatTimestamps.Count == 0) return false;
-            if (IsAnyEnemyVisible(_cachedEnemies)) return false;
-            if (!IsCrouching(pc)) return false;
+            if (!HasRecentThreat()) return false;
+            if (IsAnyEnemyVisibleCached()) return false;
+            if (!IsHidingVulnerable(pc)) return false;
             if (!AreClipsLoaded()) return false;
 
             return true;
         }
 
+        private static PlayerController[]? _cachedPlayers;
+        private static float _nextPlayerRefresh;
+
         private static bool IsSolo(PlayerController pc)
         {
-            foreach (var other in FindObjectsOfType<PlayerController>())
+            if (Time.time >= _nextPlayerRefresh)
+            {
+                _nextPlayerRefresh = Time.time + 2f;
+                _cachedPlayers = FindObjectsOfType<PlayerController>();
+            }
+
+            var players = _cachedPlayers;
+            if (players == null)
+                return true;
+
+            foreach (var other in players)
             {
                 if ((object)other == null || (object)other == (object)pc) continue;
                 if (!IsPlayerAlive(other)) continue;
@@ -300,10 +351,17 @@ namespace Dread.Systems
             return true;
         }
 
-        private static bool IsPlayerAlive(PlayerController pc)
+        private static bool IsPlayerAlive(PlayerController pc) =>
+            PlayerControllerCompat.IsAlive(pc);
+
+        private bool IsAnyEnemyVisibleCached()
         {
-            try { return pc.Health > 0f; }
-            catch { return false; }
+            if (Time.time < _nextVisibilityRefresh)
+                return _cachedAnyEnemyVisible;
+
+            _nextVisibilityRefresh = Time.time + VisibilityRefreshInterval;
+            _cachedAnyEnemyVisible = IsAnyEnemyVisible(_cachedEnemies);
+            return _cachedAnyEnemyVisible;
         }
 
         private bool IsAnyEnemyVisible(EnemyHealth[]? enemies)
@@ -311,35 +369,52 @@ namespace Dread.Systems
             var cam = _mainCam;
             if (cam == null || enemies == null) return false;
 
-            var origin = cam.transform.position;
-            foreach (var e in enemies)
-            {
-                if (e == null) continue;
-                var target = e.transform.position;
-                if (Vector3.Distance(origin, target) < 1f) return true;
-
-                if (Physics.Linecast(origin, target, out var hit, VisionBlockMask, QueryTriggerInteraction.Ignore))
-                {
-                    if (hit.collider != null && hit.collider.transform.IsChildOf(e.transform))
-                        return true;
-                    continue;
-                }
-                return true;
-            }
-            return false;
-        }
-
-        private static bool IsCrouching(PlayerController pc)
-        {
+            Vector3 origin;
             try
             {
-                return Traverse.Create(pc).Field<bool>("crouching").Value;
+                origin = cam.transform.position;
             }
             catch
             {
                 return false;
             }
+
+            for (int i = 0; i < enemies.Length; i++)
+            {
+                var e = enemies[i];
+                if (!EnemyHealthCompat.IsValid(e))
+                    continue;
+
+                try
+                {
+                    if (!EnemyHealthCompat.IsAliveForVisibility(e))
+                        continue;
+
+                    var target = EnemyScanCache.GetFocusPosition(e);
+
+                    if (Vector3.Distance(origin, target) < 0.75f)
+                        return true;
+
+                    if (Physics.Linecast(origin, target, out var hit, VisionBlockMask, QueryTriggerInteraction.Ignore))
+                    {
+                        if (hit.collider != null && hit.collider.transform.IsChildOf(e.transform))
+                            return true;
+                        continue;
+                    }
+
+                    return true;
+                }
+                catch
+                {
+                    continue;
+                }
+            }
+
+            return false;
         }
+
+        private static bool IsHidingVulnerable(PlayerController pc) =>
+            PlayerControllerCompat.IsHidingVulnerable(pc);
 
         private void CleanupDistantScreamSource()
         {
@@ -350,30 +425,35 @@ namespace Dread.Systems
             }
         }
 
-        /// <summary>Debug server / MCP entry point to force-start an episode.</summary>
+        /// <summary>
+        /// Debug server / MCP only (loopback, <c>DebugServerEnabled</c>).
+        /// Skips trigger guards; does not consume once-per-match.
+        /// </summary>
         public void ForceEpisodeForDebug()
         {
             if (_episodeActive)
                 return;
+            if (SemiFunc.MenuLevel())
+            {
+                LoggingService.LogWarning("[PsychoticBreak] ForceEpisode ignored on menu level");
+                return;
+            }
 
-            StartEpisode();
+            StartEpisode(countAsMatchTrigger: false);
         }
 
-        private void StartEpisode()
+        private void StartEpisode(bool countAsMatchTrigger = true)
         {
             _episodeActive = true;
-            _hasTriggeredThisMatch = true;
+            if (countAsMatchTrigger)
+                _hasTriggeredThisMatch = true;
             _episodeTimer = 0f;
             _phantomSoundAccumulator = 0f;
+            _tumbleMaintainTimer = 0f;
             _nextTriggerCheck = Time.time + 10f;
             _hasPlayedPeakScream = false;
 
-            var pc = PlayerController.instance;
-            if ((object)pc != null)
-            {
-                DisableFlashlight(pc);
-                LockInput(pc);
-            }
+            LockPlayerForEpisode(PlayerController.instance);
 
             CreateOverlay();
             PlayCirclingFootsteps();
@@ -387,7 +467,18 @@ namespace Dread.Systems
             _episodeTimer += Time.deltaTime;
             float raw = _episodeTimer;
 
-            if (_overlayCanvas == null) return;
+            if (raw >= _episodeDuration)
+            {
+                EndEpisode();
+                return;
+            }
+
+            _tumbleMaintainTimer -= Time.deltaTime;
+            if (_tumbleMaintainTimer <= 0f)
+            {
+                _tumbleMaintainTimer = 0.4f;
+                MaintainPlayerFallenState(PlayerController.instance);
+            }
 
             float p1 = _episodeDuration * 0.15f;
             float p2 = _episodeDuration * 0.50f;
@@ -478,12 +569,9 @@ namespace Dread.Systems
             SetVignetteAlpha(0f);
 
             var pc = PlayerController.instance;
+            RestorePlayerControl(pc);
             if ((object)pc != null)
-            {
-                RestoreFlashlight(pc);
-                UnlockInput(pc);
                 StartCoroutine(DoStumble());
-            }
 
             CleanupFootstepSource();
             CleanupDistantScreamSource();
@@ -518,7 +606,7 @@ namespace Dread.Systems
 
         private void CreateOverlay()
         {
-            if (_overlayCanvas != null) return;
+            if (_overlayRoot != null) return;
 
             var rawImageType = ResolveRawImageType();
             if (rawImageType == null)
@@ -527,12 +615,19 @@ namespace Dread.Systems
                 return;
             }
 
+            var canvasType = ResolveCanvasType();
+            if (canvasType == null)
+            {
+                LoggingService.LogError("[PsychoticBreak] UnityEngine.Canvas not available");
+                return;
+            }
+
             var go = new GameObject("DreadPsychoticBreakOverlay");
             DontDestroyOnLoad(go);
+            _overlayRoot = go;
 
-            _overlayCanvas = go.AddComponent<Canvas>();
-            _overlayCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            _overlayCanvas.sortingOrder = 999;
+            var canvas = AddRuntimeComponent(go, canvasType);
+            ConfigureCanvas(canvas);
 
             var darkGo = new GameObject("Darkness");
             darkGo.transform.SetParent(go.transform, false);
@@ -546,19 +641,13 @@ namespace Dread.Systems
             SetRawImageColor(_vignetteImage, new Color(0, 0, 0, 0));
             StretchToParent(_vignetteImage);
 
-            _vignetteTexture = new Texture2D(256, 256, TextureFormat.RGBA32, false);
-            for (int x = 0; x < 256; x++)
+            _vignetteTexture = OverlayTextureUtil.CreateVignette(256);
+            if (_vignetteTexture == null)
             {
-                for (int y = 0; y < 256; y++)
-                {
-                    float dx = (x / 255f) - 0.5f;
-                    float dy = (y / 255f) - 0.5f;
-                    float dist = Mathf.Sqrt(dx * dx + dy * dy) * 2f;
-                    float alpha = Mathf.Clamp01((dist - 0.3f) / 0.7f);
-                    _vignetteTexture.SetPixel(x, y, new Color(0, 0, 0, alpha));
-                }
+                LoggingService.LogWarning("[PsychoticBreak] Vignette texture unavailable; overlay may be incomplete");
+                return;
             }
-            _vignetteTexture.Apply();
+
             SetRawImageTexture(_vignetteImage, _vignetteTexture);
         }
 
@@ -572,6 +661,31 @@ namespace Dread.Systems
             }
 
             return Type.GetType("UnityEngine.UI.RawImage, UnityEngine.UI");
+        }
+
+        private static Type? ResolveCanvasType()
+        {
+            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                var name = asm.GetName().Name;
+                if (name is not ("UnityEngine.UIModule" or "UnityEngine"))
+                    continue;
+                var canvas = asm.GetType("UnityEngine.Canvas");
+                if (canvas != null)
+                    return canvas;
+            }
+
+            return Type.GetType("UnityEngine.Canvas, UnityEngine.UIModule")
+                ?? Type.GetType("UnityEngine.Canvas, UnityEngine");
+        }
+
+        private static void ConfigureCanvas(Component canvas)
+        {
+            var renderModeProp = canvas.GetType().GetProperty("renderMode");
+            renderModeProp?.SetValue(canvas, RenderMode.ScreenSpaceOverlay, null);
+
+            var sortingOrderProp = canvas.GetType().GetProperty("sortingOrder");
+            sortingOrderProp?.SetValue(canvas, 999, null);
         }
 
         private static Component AddRuntimeComponent(GameObject go, Type componentType)
@@ -610,10 +724,10 @@ namespace Dread.Systems
 
         private void CleanupOverlay()
         {
-            if (_overlayCanvas != null)
+            if (_overlayRoot != null)
             {
-                Destroy(_overlayCanvas.gameObject);
-                _overlayCanvas = null;
+                Destroy(_overlayRoot);
+                _overlayRoot = null;
             }
             _darknessImage = null;
             _vignetteImage = null;
@@ -635,6 +749,36 @@ namespace Dread.Systems
         {
             if (_vignetteImage != null)
                 SetRawImageColor(_vignetteImage, new Color(0, 0, 0, Mathf.Clamp01(alpha)));
+        }
+
+        private static void LockPlayerForEpisode(PlayerController? pc)
+        {
+            if ((object)pc == null)
+                return;
+
+            DisableFlashlight(pc);
+            LockInput(pc);
+            if (!PlayerTumbleCompat.ApplyForcedTumble(pc))
+                LoggingService.LogVerbose("[PsychoticBreak] Tumble lock unavailable; input lock only");
+        }
+
+        private static void MaintainPlayerFallenState(PlayerController? pc)
+        {
+            if ((object)pc == null)
+                return;
+
+            PlayerTumbleCompat.MaintainForcedTumble(pc);
+            LockInput(pc);
+        }
+
+        private static void RestorePlayerControl(PlayerController? pc)
+        {
+            PlayerTumbleCompat.ReleaseForcedTumble(pc);
+            if ((object)pc == null)
+                return;
+
+            UnlockInput(pc);
+            RestoreFlashlight(pc);
         }
 
         private static void DisableFlashlight(PlayerController pc)
@@ -691,56 +835,38 @@ namespace Dread.Systems
         private IEnumerator LoadAudioClips()
         {
             while (!_sceneLoaded || SemiFunc.MenuLevel()) yield return null;
-            var audioDir = Path.Combine(
-                Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
-                "audio");
 
-            var clipDefs = new (string file, string label, System.Action<AudioClip?> setter)[]
+            var files = new[]
             {
-                ("scream_peak.ogg",     "PeakScream",     c => _peakScreamClip = c),
-                ("scream_distant.ogg",  "DistantScream",   c => _distantScreamClip = c),
-                ("scream_threat.ogg",   "ThreatScream",    c => _threatScreamClip = c),
-                ("footsteps.ogg", "Footsteps",     c => _footstepClip = c),
+                "scream_peak.ogg",
+                "scream_distant.ogg",
+                "scream_threat.ogg",
+                "footsteps.ogg",
             };
 
-            foreach (var (file, label, setter) in clipDefs)
+            yield return AudioClipLoader.LoadClips(files, (name, clip) =>
             {
-                var path = Path.GetFullPath(Path.Combine(audioDir, file));
-                if (!File.Exists(path))
+                switch (name)
                 {
-                    LoggingService.LogWarning($"[PsychoticBreak] Missing audio: {path}");
-                    continue;
+                    case "scream_peak.ogg":
+                        _peakScreamClip = clip;
+                        break;
+                    case "scream_distant.ogg":
+                        _distantScreamClip = clip;
+                        break;
+                    case "scream_threat.ogg":
+                        _threatScreamClip = clip;
+                        break;
+                    case "footsteps.ogg":
+                        _footstepClip = clip;
+                        break;
                 }
 
-                if (AudioClipLoader.TryLoadWithNvorbis(path, file, out var clip))
-                {
-                    setter(clip);
-                    LoggingService.LogInfo($"[PsychoticBreak] Loaded {label}: {file}");
-                    continue;
-                }
-
-                using var req = UnityWebRequestMultimedia.GetAudioClip(
-                    AudioClipLoader.ToFileUri(path), AudioType.OGGVORBIS);
-                yield return req.SendWebRequest();
-
-                if (req.result == UnityWebRequest.Result.Success)
-                {
-                    var webClip = DownloadHandlerAudioClip.GetContent(req);
-                    webClip.name = file;
-                    setter(webClip);
-                    LoggingService.LogInfo($"[PsychoticBreak] Loaded {label}: {file}");
-                }
+                if (clip != null)
+                    LoggingService.LogInfo($"[PsychoticBreak] Loaded {name}");
                 else
-                {
-                    var handlerError = AudioClipLoader.GetRequestHandlerError(req);
-                    var errorMsg = !string.IsNullOrEmpty(req.error)
-                        ? req.error
-                        : !string.IsNullOrEmpty(handlerError)
-                            ? handlerError
-                            : "no error details";
-                    LoggingService.LogWarning($"[PsychoticBreak] Failed {label}: {errorMsg}");
-                }
-            }
+                    LoggingService.LogWarning($"[PsychoticBreak] Missing or failed: {name}");
+            });
         }
 
         private void PlayCirclingFootsteps()

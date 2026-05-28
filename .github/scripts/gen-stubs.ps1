@@ -131,6 +131,22 @@ if (Test-Path $uiDllPath) {
     Write-Host "[gen-stubs] Created UnityEngine.UI.dll ($size KB)"
 }
 
+# Build UnityEngine.UIModule stubs (Canvas; depends on UnityEngine)
+$uiModuleCsproj = Write-StubProject -Name "UnityEngine.UIModule" -SourceFile "$PSScriptRoot/UnityEngine.UIModule_stubs.cs" -Directory $stubsDir -References @("UnityEngine")
+Write-Host "[gen-stubs] Compiling UnityEngine.UIModule stubs..."
+$output = dotnet build $uiModuleCsproj -c Release --nologo 2>&1
+$exitCode = $LASTEXITCODE
+$output | Out-String | ForEach-Object { Write-Host "$_" }
+if ($exitCode -ne 0) {
+    Write-Host "::error::[gen-stubs] Failed to compile UnityEngine.UIModule stubs (exit $exitCode)"
+    exit 1
+}
+$uiModuleDllPath = "$stubsDir/UnityEngine.UIModule.dll"
+if (Test-Path $uiModuleDllPath) {
+    $size = (Get-Item $uiModuleDllPath).Length / 1KB
+    Write-Host "[gen-stubs] Created UnityEngine.UIModule.dll ($size KB)"
+}
+
 # Generate empty stub assemblies (no MSBuild restore needed, fast sequential builds)
 $emptyAssemblies = @(
     'UnityEngine.CoreModule',
@@ -139,7 +155,6 @@ $emptyAssemblies = @(
     'UnityEngine.ImageConversionModule',
 
     'UnityEngine.AIModule',
-    'UnityEngine.UIModule',
     'PhotonUnityNetworking',
     'Photon3Unity3D'
 )

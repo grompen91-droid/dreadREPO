@@ -47,11 +47,22 @@ namespace Dread.Systems
             try
             {
                 var component = CreateSystemHost(hostName).AddComponent<T>();
-                return component != null ? 1 : 0;
+                if (component == null)
+                {
+                    LoggingService.LogError(
+                        $"Failed to add {typeof(T).Name} component: Unity could not instantiate the script "
+                        + "(check BepInEx log for TypeLoadException)");
+                    return 0;
+                }
+
+                return 1;
             }
             catch (Exception ex)
             {
-                LoggingService.LogError($"Failed to add {typeof(T).Name} component: {ex.Message}");
+                var detail = ex is TypeLoadException or ReflectionTypeLoadException
+                    ? ex.InnerException?.Message ?? ex.Message
+                    : ex.Message;
+                LoggingService.LogError($"Failed to add {typeof(T).Name} component: {detail}");
                 return 0;
             }
         }

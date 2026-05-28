@@ -8,35 +8,40 @@ Rare **client-local Episode** when the player meets tension and stealth conditio
 |------|---------|
 | **Episode** | Active psychotic break window (`PsychoticBreakDuration` seconds) |
 | **Solo** | No other alive player within 30m |
-| **Recent threat** | Enemy within 15m in last 30s (threat memory list) |
-| **LoS lost** | No enemy visible via line-of-sight from camera |
+| **Recent threat** | Any `EnemyHealth` within 15m in the last 30s (single memory timestamp, refreshed while in range) |
+| **LoS lost** | No living enemy visible via line-of-sight from camera |
+| **Hiding** | Crouch/crawl or REPO tumble/fallen pose (`PlayerControllerCompat.IsHidingVulnerable`) |
 | **Interaction lockdown** | Episode disables player interaction (episode logic) |
 
 Full definitions: [CONTEXT.md](../../../CONTEXT.md).
 
 ## Trigger loop
 
-Every **2 seconds** when enabled:
+While enabled in a level:
 
-1. Skip if disabled, **Compatibility mode**, menu, or **once per match** already fired
-2. `UpdateThreatTimestamps()` scans `EnemyHealth`, records times within 15m
-3. `CanTrigger()` requires: solo, recent threat, no visible enemy, crouching, clips loaded
-4. Roll `Random.value < PsychoticBreakTriggerChance` (default 1%)
+1. **`UpdateThreatTimestamps()`** runs every frame: if any enemy is within 15m of the player, extend threat memory by 30s.
+2. Every **2 seconds**, when not blocked by menu/compat/once-per-match:
+   - `CanTrigger()` requires: solo, recent threat, no visible living enemy, hiding, clips loaded
+   - Roll `Random.value < PsychoticBreakTriggerChance` (default 1%)
 
-Block reasons exposed on `DreadRuntimeState.PsychoticBreakBlockReason` (overlay + `dread_get_runtime_state`).
+Block reasons on `DreadRuntimeState.PsychoticBreakBlockReason` (overlay + `dread_get_runtime_state`). `PsychoticBreakThreatCount` is **seconds left** on threat memory (0 = none).
+
+## Enemy scan
+
+Uses shared **`EnemyScanCache`** (0.5s refresh, same pattern as tension proximity). Do not add a second static enemy list for psychotic break.
 
 ## Audio clips
 
-Loaded from `audio/`:
+Loaded from `audio/` via **`AudioClipLoader`** (shared cache with tension/ambient):
 
 - `scream_peak.ogg`, `scream_distant.ogg`, `scream_threat.ogg`
-- Footstep clip for phantom steps during episode
+- `footsteps.ogg` (circling steps during episode)
 
-`AreClipsLoaded()` must pass before trigger. Menu-level load is deferred like other systems.
+`AreClipsLoaded()` must pass before a natural trigger. Menu-level load is deferred like other systems.
 
 ## UI overlay
 
-Builds a runtime `Canvas` with darkness/vignette images (Unity UI types resolved via reflection for stub builds). `FlashlightStateTracker` is a separate MonoBehaviour (not nested) so `AddComponent` works.
+Runtime `Canvas` + `RawImage` (reflection for stub/Proton builds). `OverlayTextureUtil` for vignette textures. Episode ends on timer even if overlay creation fails.
 
 ## Config (`6. Psychotic Break`)
 
@@ -56,7 +61,7 @@ Builds a runtime `Canvas` with darkness/vignette images (Unity UI types resolved
 | Force episode | `PsychoticBreakSystem.ForceEpisodeForDebug()` |
 | TCP / MCP | `force_psychotic_break` / `dread_force_psychotic_break` |
 
-Requires debug server enabled and in-level init.
+Requires debug server enabled, in-level (not menu). Force skips trigger guards and does **not** consume once-per-match. Local loopback only.
 
 ## Netcode
 
@@ -68,11 +73,10 @@ Client-local only. Other players do not see the overlay. Host monster state unch
 |--------|------|
 | Tune conditions | `CanTrigger`, `GetTriggerBlockReason`, constants at top of class |
 | New block reason | Update `GetTriggerBlockReason` + publish in `PublishRuntimeState` |
-| Audio timing | Episode coroutines inside `StartEpisode` / update loop |
-
-Do not share enemy caches with `TensionSystem`; psychotic break owns its own `FindObjectsOfType` for threat/visibility.
+| Audio timing | Episode update loop / `StartEpisode` |
+| Threat memory | `_threatMemoryUntil`, `UpdateThreatTimestamps` |
 
 ## Verify
 
-- Tier 1: `dread_get_runtime_state` shows `psychoticBreak*` fields
+- Tier 1: `dread_get_runtime_state` shows `psychoticBreak*` fields (including `psychoticBreakEnemyCount`, threat seconds)
 - Manual episode: MCP `dread_force_psychotic_break` ([debug-tooling.md](debug-tooling.md))

@@ -23,7 +23,8 @@ namespace Dread.Systems
 
             if (!IsRepoConfigLoaded())
             {
-                LoggingService.LogVerbose("[Dread] REPOConfig not loaded; slider label compat skipped (use elytraking.dread.cfg)");
+                LoggingService.LogVerbose(
+                    "[Dread] REPOConfig not loaded; slider label compat skipped (use elytraking.dread.cfg)");
                 return;
             }
 
@@ -59,7 +60,9 @@ namespace Dread.Systems
                 {
                     harmony.Patch(
                         handleDescription,
-                        postfix: new HarmonyMethod(typeof(RepoConfigSliderLabelCompat), nameof(AfterHandleDescription)));
+                        postfix: new HarmonyMethod(
+                            typeof(RepoConfigSliderLabelCompat),
+                            nameof(AfterHandleDescription)));
                 }
             }
 
@@ -162,7 +165,9 @@ namespace Dread.Systems
             if (rectTransform == null)
                 return;
 
-            var sizeDeltaProp = rectTransform.GetType().GetProperty("sizeDelta", BindingFlags.Instance | BindingFlags.Public);
+            var sizeDeltaProp = rectTransform.GetType().GetProperty(
+                "sizeDelta",
+                BindingFlags.Instance | BindingFlags.Public);
             if (sizeDeltaProp?.GetValue(rectTransform) is Vector2 size)
             {
                 size.x = width;
@@ -216,7 +221,9 @@ namespace Dread.Systems
                 if (labelTmp is Component component)
                 {
                     var rect = component.transform;
-                    var sizeDeltaProp = rect.GetType().GetProperty("sizeDelta", BindingFlags.Instance | BindingFlags.Public);
+                    var sizeDeltaProp = rect.GetType().GetProperty(
+                        "sizeDelta",
+                        BindingFlags.Instance | BindingFlags.Public);
                     if (sizeDeltaProp?.GetValue(rect) is Vector2 size)
                     {
                         size.x = Math.Max(size.x, 180f);
