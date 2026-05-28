@@ -39,7 +39,7 @@ Example: `cursor/improve-agent-orchestration-3dd3`
 Use for larger features where implement and review should stay separate.
 
 ```
-Issue + plan (optional: docs/superpowers/plans/*.md)
+Issue + guide (optional: docs/agents/guides/*.md)
     -> Subagent 1: implementer (.claude/implementer-prompt.md)
     -> Subagent 2: spec reviewer (.claude/spec-reviewer-prompt.md)
     -> Subagent 3: code quality reviewer (.claude/code-quality-reviewer-prompt.md)
@@ -98,6 +98,8 @@ Full mapping: [triage-labels.md](triage-labels.md). CLI: [issue-tracker.md](issu
 
 Put ADRs in `docs/adr/`. Mention conflicts in PR body if code diverges from an ADR.
 
-## Superpowers plans
+## Implementation guides
 
-Older feature plans live under `docs/superpowers/plans/`. They are **historical** checklists, not the live backlog. Prefer ROADMAP + GitHub issues for current work. Plans may still help for step-by-step refactors when an issue explicitly references them.
+Polished, current-state docs live under `docs/agents/guides/`. Use them for architecture, tension/proximity, Harmony patches, and monster overhaul.
+
+Archived checkbox plans from `docs/superpowers/` are under `docs/agents/archive/superpowers/`. Do not execute archived tasks (Windows paths, removed systems, already-shipped work). Prefer ROADMAP + GitHub issues for backlog.

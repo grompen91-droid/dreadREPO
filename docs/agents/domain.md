@@ -2,7 +2,7 @@
 
 How agents and skills should consume this repo's domain documentation when exploring the codebase.
 
-**Orchestration hub:** [README.md](README.md) and [orchestration.md](orchestration.md).
+**Orchestration hub:** [README.md](README.md) and [orchestration.md](orchestration.md). **Implementation patterns:** [guides/README.md](guides/README.md).
 
 ## Before exploring, read these
 
