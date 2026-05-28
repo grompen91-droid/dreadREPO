@@ -75,7 +75,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .github/stubs/refs
-          key: stubs-${{ hashFiles('.github/scripts/gen-stubs.ps1', '.github/scripts/UnityEngine_stubs.cs', '.github/scripts/UnityEngine.UI_stubs.cs', '.github/scripts/Assembly-CSharp_stubs.cs', '.github/scripts/UnityEngine.UnityWebRequestModule_stubs.cs', '.github/scripts/UnityEngine.UnityWebRequestAudioModule_stubs.cs', '.github/scripts/verify-stubs/Program.cs', '.github/scripts/verify-stubs/verify-stubs.csproj', 'Dread.csproj') }}
+          key: stubs-${{ hashFiles('.github/scripts/gen-stubs.ps1', '.github/scripts/UnityEngine_stubs.cs', '.github/scripts/UnityEngine.UI_stubs.cs', '.github/scripts/UnityEngine.UIModule_stubs.cs', '.github/scripts/Assembly-CSharp_stubs.cs', '.github/scripts/UnityEngine.UnityWebRequestModule_stubs.cs', '.github/scripts/UnityEngine.UnityWebRequestAudioModule_stubs.cs', '.github/scripts/verify-stubs/Program.cs', '.github/scripts/verify-stubs/verify-stubs.csproj', 'Dread.csproj') }}
 
       - name: Generate stubs
         if: steps.cache-stubs.outputs.cache-hit != 'true'

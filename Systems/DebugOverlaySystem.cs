@@ -190,7 +190,8 @@ namespace Dread.Systems
             AddRow("Break", BreakSummary(), BreakColor());
             AddRow("Break+",
                 $"clips {OnOff(DreadRuntimeState.PsychoticBreakClipsLoaded)}   "
-                + $"threat {DreadRuntimeState.PsychoticBreakThreatCount}   "
+                + $"enemies {DreadRuntimeState.PsychoticBreakEnemyCount}   "
+                + $"threat {DreadRuntimeState.PsychoticBreakThreatCount}s   "
                 + $"next {DreadRuntimeState.PsychoticBreakNextCheckIn:F0}s",
                 ColDim);
 
@@ -236,7 +237,7 @@ namespace Dread.Systems
             }
 
             return $"ready  next {DreadRuntimeState.PsychoticBreakNextCheckIn:F0}s  "
-                + $"threat {DreadRuntimeState.PsychoticBreakThreatCount}";
+                + $"threat {DreadRuntimeState.PsychoticBreakThreatCount}s";
         }
 
         private static Color BreakColor()

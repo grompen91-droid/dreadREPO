@@ -22,10 +22,13 @@ namespace Dread.Systems
         private const int CommandTimeoutMs = 10000;
         private const int MaxLogEntries = 200;
         private const int MaxQueueDepth = 256;
+        private const int AcceptPollMs = 50;
+        private const int ShutdownJoinMs = 250;
 
         private Thread? _serverThread;
         private TcpListener? _listener;
         private volatile bool _running;
+        private volatile bool _shutdownComplete;
 
         private readonly Queue<DebugCommand> _queue = new(32);
         private readonly List<LogEntry> _logBuffer = new(MaxLogEntries);
@@ -106,17 +109,89 @@ namespace Dread.Systems
             _serverThread = new Thread(ServerLoop) { IsBackground = true, Name = "DreadDebugServer" };
             _serverThread.Start();
 
+            Application.quitting += OnApplicationQuit;
+
             Plugin.Logger.LogInfo($"[Dread DebugServer] LISTENING 127.0.0.1:{_boundPort}");
         }
 
+        private void OnApplicationQuit() => ShutdownServer();
+
         private void OnDestroy()
         {
-            if (_logListener != null)
-                Logger.Listeners.Remove(_logListener);
+            Application.quitting -= OnApplicationQuit;
+            ShutdownServer();
+        }
+
+        private void ShutdownServer()
+        {
+            if (_shutdownComplete)
+                return;
+            _shutdownComplete = true;
 
             _running = false;
-            _listener?.Stop();
-            _serverThread?.Join(1000);
+
+            if (_logListener != null)
+            {
+                Logger.Listeners.Remove(_logListener);
+                _logListener = null;
+            }
+
+            ReleasePendingCommands();
+
+            try
+            {
+                _listener?.Server?.Close();
+            }
+            catch { }
+
+            try
+            {
+                _listener?.Stop();
+            }
+            catch { }
+
+            _listener = null;
+
+            var thread = _serverThread;
+            if (thread != null && thread.IsAlive && Thread.CurrentThread != thread)
+                thread.Join(ShutdownJoinMs);
+
+            _serverThread = null;
+        }
+
+        private void ReleasePendingCommands()
+        {
+            lock (_queue)
+            {
+                while (_queue.Count > 0)
+                {
+                    var cmd = _queue.Dequeue();
+                    int errId = 0;
+                    try { errId = JsonUtility.FromJson<RequestEnvelope>(cmd.RequestJson).id; } catch { }
+                    cmd.Response = MakeResponse(errId, false, "server shutting down", -1);
+                    cmd.Done.Set();
+                }
+            }
+        }
+
+        private bool WaitForCommandDone(DebugCommand cmd)
+        {
+            var deadline = Environment.TickCount + CommandTimeoutMs;
+            while (_running)
+            {
+                var remaining = deadline - Environment.TickCount;
+                if (remaining <= 0)
+                    break;
+                var slice = remaining > 100 ? 100 : remaining;
+                if (cmd.Done.Wait(slice))
+                    return true;
+            }
+
+            int errId = 0;
+            try { errId = JsonUtility.FromJson<RequestEnvelope>(cmd.RequestJson).id; } catch { }
+            cmd.Response = MakeResponse(errId, false, "server shutting down", -1);
+            cmd.Done.Set();
+            return false;
         }
 
         private void AddLogEntry(string level, string message)
@@ -140,7 +215,15 @@ namespace Dread.Systems
             {
                 try
                 {
-                    if (_listener == null) break;
+                    if (_listener == null)
+                        break;
+
+                    if (!_listener.Pending())
+                    {
+                        Thread.Sleep(AcceptPollMs);
+                        continue;
+                    }
+
                     using var client = _listener.AcceptTcpClient();
                     client.ReceiveTimeout = ReadTimeoutMs;
                     using var stream = client.GetStream();
@@ -183,8 +266,10 @@ namespace Dread.Systems
                             _queue.Enqueue(cmd);
                         }
 
-                        if (!cmd.Done.Wait(CommandTimeoutMs))
+                        if (!WaitForCommandDone(cmd))
                         {
+                            if (!_running)
+                                break;
                             Plugin.Logger.LogWarning("[Dread DebugServer] Command timed out");
                             break;
                         }
@@ -285,7 +370,10 @@ namespace Dread.Systems
                 case "shutdown":
                     Plugin.Logger.LogInfo("[Dread DebugServer] Shutdown requested via debug command");
                     _running = false;
-                    _listener?.Stop();
+                    try { _listener?.Server?.Close(); } catch { }
+                    try { _listener?.Stop(); } catch { }
+                    _listener = null;
+                    ReleasePendingCommands();
                     return MakeResponse(req.id, true, new ShutdownResponse());
 
                 case "verify":
@@ -609,7 +697,15 @@ namespace Dread.Systems
             if (system == null)
                 return MakeResponse(id, false, "PsychoticBreakSystem not found", -3);
 
-            system.ForceEpisodeForDebug();
+            try
+            {
+                system.ForceEpisodeForDebug();
+            }
+            catch (Exception ex)
+            {
+                return MakeResponse(id, false, ex.Message, -1);
+            }
+
             return MakeResponse(id, true, new TriggerResponse { triggered = true });
         }
 
@@ -627,6 +723,7 @@ namespace Dread.Systems
                 psychoticBreakEpisodeDuration = DreadRuntimeState.PsychoticBreakEpisodeDuration,
                 psychoticBreakNextCheckIn = DreadRuntimeState.PsychoticBreakNextCheckIn,
                 psychoticBreakThreatCount = DreadRuntimeState.PsychoticBreakThreatCount,
+                psychoticBreakEnemyCount = DreadRuntimeState.PsychoticBreakEnemyCount,
                 psychoticBreakClipsLoaded = DreadRuntimeState.PsychoticBreakClipsLoaded,
                 adrenalineActive = DreadRuntimeState.AdrenalineActive,
                 panicSprintActive = DreadRuntimeState.PanicSprintActive,
@@ -846,6 +943,7 @@ namespace Dread.Systems
             public float psychoticBreakEpisodeDuration;
             public float psychoticBreakNextCheckIn;
             public int psychoticBreakThreatCount;
+            public int psychoticBreakEnemyCount;
             public bool psychoticBreakClipsLoaded;
             public bool adrenalineActive;
             public bool panicSprintActive;

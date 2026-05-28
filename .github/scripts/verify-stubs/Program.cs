@@ -60,7 +60,7 @@ if (missing.Count > 0)
 }
 else
 {
-    CheckAssembly("UnityEngine.dll", unityDll, shouldContain: Array.Empty<string>(), shouldNotContain: gameTypes.Concat(new[] { "RawImage", "RectTransform" }).ToArray());
+    CheckAssembly("UnityEngine.dll", unityDll, shouldContain: Array.Empty<string>(), shouldNotContain: gameTypes.Concat(new[] { "RawImage", "RectTransform", "Canvas" }).ToArray());
 
     var uiDll = Path.Combine(stubsDir, "UnityEngine.UI.dll");
     if (!File.Exists(uiDll))
@@ -71,6 +71,17 @@ else
     else
     {
         CheckAssembly("UnityEngine.UI.dll", uiDll, shouldContain: new[] { "RawImage", "RectTransform" }, shouldNotContain: gameTypes);
+    }
+
+    var uiModuleDll = Path.Combine(stubsDir, "UnityEngine.UIModule.dll");
+    if (!File.Exists(uiModuleDll))
+    {
+        Console.WriteLine("::error::UnityEngine.UIModule.dll not found at expected path");
+        failed = true;
+    }
+    else
+    {
+        CheckAssembly("UnityEngine.UIModule.dll", uiModuleDll, shouldContain: new[] { "Canvas" }, shouldNotContain: gameTypes);
     }
     CheckAssembly("Assembly-CSharp.dll", acsDll, shouldContain: gameTypes, shouldNotContain: Array.Empty<string>());
     CheckAssembly("UnityEngine.UnityWebRequestModule.dll", uwrDll, shouldContain: new[] { "UnityWebRequestAsyncOperation", "UnityWebRequest" }, shouldNotContain: new[] { "UnityWebRequestMultimedia", "DownloadHandlerAudioClip" }.Concat(gameTypes).ToArray());
