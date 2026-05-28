@@ -99,6 +99,7 @@ Remote: `https://github.com/grompen91-droid/dreadREPO.git`, branch `master`.
 
 | Topic | Doc |
 |-------|-----|
+| Implementation guides (all systems) | `docs/agents/guides/README.md` |
 | Workflows (solo, subagent, verify, release) | `docs/agents/orchestration.md` |
 | Issue tracker (`gh` CLI) | `docs/agents/issue-tracker.md` |
 | Triage labels | `docs/agents/triage-labels.md` |

@@ -6,21 +6,51 @@ Current-state reference for working in the Dread codebase. These replace the old
 
 **When not to use:** Picking work or release process. Use [orchestration.md](../orchestration.md) and [docs/ROADMAP.md](../../ROADMAP.md) instead.
 
-## Guides
+## Guide index
 
-| Guide | Topics | Supersedes (archive) |
-|-------|--------|----------------------|
-| [mod-architecture.md](mod-architecture.md) | Plugin boot, system hosts, config, netcode | `specs/2026-05-16-dread-design.md`, `plans/2026-05-16-dread.md` |
-| [tension-and-proximity.md](tension-and-proximity.md) | Proximity scan, adrenaline, panic sprint, enemy lookup | `specs/2026-05-17-panic-sprint-design.md`, `specs/2026-05-22-decoupled-enemy-cache-design.md`, related plans |
-| [harmony-and-patches.md](harmony-and-patches.md) | Apply/Remove patches, compat mode, host-only gates | `plans/2026-05-22-toggleable-harmony-patches.md` |
-| [monster-overhaul.md](monster-overhaul.md) | Monster audio loop, aggression patches | Parts of original dread design spec |
+| Guide | Topics |
+|-------|--------|
+| [mod-architecture.md](mod-architecture.md) | Plugin boot, system hosts, netcode, adding systems |
+| [audio-dread-and-loading.md](audio-dread-and-loading.md) | Ambient audio, OGG loading, NVorbis, weights |
+| [monster-overhaul.md](monster-overhaul.md) | Monster audio loop, aggression patches |
+| [tension-and-proximity.md](tension-and-proximity.md) | Proximity scan, adrenaline, panic sprint |
+| [psychotic-break.md](psychotic-break.md) | Episode triggers, solo/LoS/crouch, debug force |
+| [harmony-and-patches.md](harmony-and-patches.md) | Apply/Remove, compat skip, host-only |
+| [error-reporting.md](error-reporting.md) | Worker pipeline, opt-in telemetry, tests |
+| [debug-tooling.md](debug-tooling.md) | TCP debug server, MCP, overlay, TestCrash |
+| [config-and-logging.md](config-and-logging.md) | DreadConfig sections, LoggingService |
+| [compatibility.md](compatibility.md) | Compatibility mode, REPOConfig, optional mods |
 
-## Archive
+## By task type
 
-Original superpowers documents (checkbox plans, Windows paths, pre-ship design) live under [../archive/superpowers/](../archive/superpowers/). Read them only for archaeology or issue context that cites a specific file path.
+| You need to… | Start here |
+|--------------|------------|
+| Orient in repo | [mod-architecture.md](mod-architecture.md) |
+| Change gameplay near enemies | [tension-and-proximity.md](tension-and-proximity.md) or [monster-overhaul.md](monster-overhaul.md) |
+| Patch game methods | [harmony-and-patches.md](harmony-and-patches.md) |
+| Add sounds | [audio-dread-and-loading.md](audio-dread-and-loading.md) |
+| Psychotic break behavior | [psychotic-break.md](psychotic-break.md) |
+| Crashes / GitHub auto-issues | [error-reporting.md](error-reporting.md) |
+| Agent verify / MCP | [debug-tooling.md](debug-tooling.md) + [verify-dread.md](../verify-dread.md) |
+| New config knob | [config-and-logging.md](config-and-logging.md) |
+| Mod conflicts | [compatibility.md](compatibility.md) + [mod-compatibility.md](../../mod-compatibility.md) |
+
+## Archive (superseded)
+
+| Archive path | Replaced by |
+|--------------|-------------|
+| `../archive/superpowers/specs/2026-05-16-dread-design.md` | [mod-architecture.md](mod-architecture.md) |
+| `../archive/superpowers/plans/2026-05-16-dread.md` | [mod-architecture.md](mod-architecture.md) (do not execute tasks) |
+| `../archive/superpowers/specs/2026-05-17-panic-sprint-design.md` | [tension-and-proximity.md](tension-and-proximity.md) |
+| `../archive/superpowers/plans/2026-05-17-panic-sprint.md` | [tension-and-proximity.md](tension-and-proximity.md) |
+| `../archive/superpowers/specs/2026-05-22-decoupled-enemy-cache-design.md` | [tension-and-proximity.md](tension-and-proximity.md) |
+| `../archive/superpowers/plans/2026-05-22-decoupled-enemy-cache.md` | [tension-and-proximity.md](tension-and-proximity.md) |
+| `../archive/superpowers/plans/2026-05-22-toggleable-harmony-patches.md` | [harmony-and-patches.md](harmony-and-patches.md) |
+
+Original superpowers files live under [../archive/superpowers/](../archive/superpowers/). Read only for archaeology.
 
 ## Related
 
 - [CONTEXT.md](../../../CONTEXT.md): glossary terms
 - [domain.md](../domain.md): ADRs and REPOConfig compat
-- [docs/adr/](../../adr/): decisions (debug server, error reporting, removed systems)
+- [docs/adr/](../../adr/): architecture decisions
