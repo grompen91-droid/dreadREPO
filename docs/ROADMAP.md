@@ -157,6 +157,6 @@ See also: `docs/repo-config-slider-labels-investigation.md`.
 1. Pick the next row from **Execution order** (lowest order number not `done`).
 2. Work the linked GitHub issue; reference roadmap ID in PR body (`ARCH-1`, etc.).
 3. When shipped: close issue, update `CHANGELOG.md` `[Unreleased]`, mark `done` here.
-4. Agents: read [`CONTEXT.md`](../CONTEXT.md) and `docs/agents/domain.md` before implementing.
+4. Agents: start at [`docs/agents/README.md`](agents/README.md), then [`CONTEXT.md`](../CONTEXT.md), [`docs/agents/domain.md`](agents/domain.md), and [`docs/agents/orchestration.md`](agents/orchestration.md) before implementing.
 
 **Suggested first three issues for a new contributor:** #171 (ERR-1), #170 (PERF-2), #167 (ARCH-1).

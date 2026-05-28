@@ -95,17 +95,18 @@ Remote: `https://github.com/grompen91-droid/dreadREPO.git`, branch `master`.
 
 ## Agent skills
 
-### Issue tracker
+**Start at `docs/agents/README.md`** for the full orchestration map, verify tiers, and MCP setup.
 
-Issues are tracked as GitHub issues in this repo. See `docs/agents/issue-tracker.md`.
+| Topic | Doc |
+|-------|-----|
+| Workflows (solo, subagent, verify, release) | `docs/agents/orchestration.md` |
+| Issue tracker (`gh` CLI) | `docs/agents/issue-tracker.md` |
+| Triage labels | `docs/agents/triage-labels.md` |
+| Domain + ADRs | `docs/agents/domain.md` + `CONTEXT.md` |
+| Autonomous verify | `docs/agents/verify-dread.md` |
+| Subagent prompts | `.claude/implementer-prompt.md`, `.claude/spec-reviewer-prompt.md`, `.claude/code-quality-reviewer-prompt.md` |
 
-### Triage labels
-
-Default five-role vocabulary (needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix). See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-Single-context layout. Read `CONTEXT.md` (glossary) and `docs/agents/domain.md` before exploring code. Backlog: `docs/ROADMAP.md`.
+Backlog: `docs/ROADMAP.md`. Pick issues labeled `ready-for-agent` unless the task says otherwise.
 
 ## Cursor Cloud specific instructions
 

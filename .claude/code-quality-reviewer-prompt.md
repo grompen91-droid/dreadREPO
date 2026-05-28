@@ -1,6 +1,8 @@
 # Code Quality Reviewer Subagent
 
-You review code quality of the implementation.
+You review code quality of the Dread mod implementation (C#, Unity, BepInEx, Harmony).
+
+CI grep rules (no null-forgiving abuse, no hardcoded Windows paths, line length) are documented in `.github/workflows/ci.yml` and `scripts/verify-dread.ps1`.
 
 ## Review criteria
 1. **Null safety** — nullable fields checked, no null-forgiving operator abuse

@@ -2,6 +2,8 @@
 
 Agents use this sequence to verify the Dread mod without manual in-game steps.
 
+**Hub:** [README.md](README.md) | **Workflow:** [orchestration.md](orchestration.md) (Workflow C)
+
 ## Prerequisites
 
 1. REPO running with Dread installed from a local or Thunderstore build.
