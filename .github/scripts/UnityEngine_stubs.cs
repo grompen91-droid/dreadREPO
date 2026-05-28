@@ -258,17 +258,24 @@ namespace UnityEngine
         public static FullScreenMode fullScreenMode => FullScreenMode.FullScreenWindow;
     }
 
+    // Real Unity Rect exposes x/y/width/height as properties, not fields. The stub
+    // must match that shape or stub-built IL emits field access (ldfld) that throws
+    // MissingFieldException against the real game. Backing fields are assigned
+    // directly in the ctor to avoid struct definite-assignment errors.
     public struct Rect
     {
-        public float x, y, width, height;
-        public float yMin { get; }
+        private float _x, _y, _width, _height;
+        public float x { get => _x; set => _x = value; }
+        public float y { get => _y; set => _y = value; }
+        public float width { get => _width; set => _width = value; }
+        public float height { get => _height; set => _height = value; }
+        public float yMin => _y;
         public Rect(float x, float y, float width, float height)
         {
-            this.x = x;
-            this.y = y;
-            this.width = width;
-            this.height = height;
-            yMin = y;
+            _x = x;
+            _y = y;
+            _width = width;
+            _height = height;
         }
     }
 
