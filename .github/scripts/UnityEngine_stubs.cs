@@ -135,8 +135,10 @@ namespace UnityEngine
     public static class Time
     {
         public static float deltaTime { get; }
+        public static float unscaledDeltaTime { get; }
         public static float time { get; }
         public static float realtimeSinceStartup { get; }
+        public static int frameCount { get; }
     }
     public static class Random
     {
@@ -188,6 +190,7 @@ namespace UnityEngine
 
     public class Texture2D : Object
     {
+        public Texture2D(int width, int height) { }
         public Texture2D(int width, int height, TextureFormat format, bool mipChain) { }
         public void SetPixel(int x, int y, Color color) { }
         public void Apply() { }
@@ -258,62 +261,44 @@ namespace UnityEngine
         public static FullScreenMode fullScreenMode => FullScreenMode.FullScreenWindow;
     }
 
+    // Real Unity Rect exposes x/y/width/height as properties, not fields. The stub
+    // must match that shape or stub-built IL emits field access (ldfld) that throws
+    // MissingFieldException against the real game. Backing fields are assigned
+    // directly in the ctor to avoid struct definite-assignment errors.
     public struct Rect
     {
-        public float x, y, width, height;
-        public float yMin { get; }
+        private float _x, _y, _width, _height;
+        public float x { get => _x; set => _x = value; }
+        public float y { get => _y; set => _y = value; }
+        public float width { get => _width; set => _width = value; }
+        public float height { get => _height; set => _height = value; }
+        public float yMin => _y;
         public Rect(float x, float y, float width, float height)
         {
-            this.x = x;
-            this.y = y;
-            this.width = width;
-            this.height = height;
-            yMin = y;
+            _x = x;
+            _y = y;
+            _width = width;
+            _height = height;
         }
     }
 
-    public class GUIContent
-    {
-        public static GUIContent none { get; } = new GUIContent();
-    }
-
-    public class GUIStyleState
-    {
-        public Texture2D? background { get; set; }
-        public Color textColor { get; set; }
-    }
-
-    public class GUIStyle
-    {
-        public GUIStyleState normal { get; } = new GUIStyleState();
-        public int fontSize { get; set; }
-        public bool wordWrap { get; set; }
-        public GUIStyle() { }
-        public GUIStyle(GUIStyle other) { }
-    }
-
-    public class GUISkin
-    {
-        public GUIStyle box { get; } = new GUIStyle();
-        public GUIStyle label { get; } = new GUIStyle();
-    }
-
-    public static class GUI
-    {
-        public static GUISkin skin { get; } = new GUISkin();
-        public static void Box(Rect position, GUIContent content, GUIStyle style) { }
-        public static void Label(Rect position, string text) { }
-        public static void Label(Rect position, string text, GUIStyle style) { }
-    }
+    // IMGUI types (GUI, GUIStyle, GUIContent, GUISkin, GUIStyleState) moved to
+    // UnityEngine.IMGUIModule_stubs.cs to mirror real Unity, where they live in
+    // UnityEngine.IMGUIModule.dll. Keep them out of this assembly.
 
     public static class Input
     {
         public static bool GetKeyDown(KeyCode key) => false;
     }
 
+    // Values must match real UnityEngine.KeyCode exactly: enum constants are inlined
+    // at compile time, so a wrong value makes the built DLL listen for the wrong key.
     public enum KeyCode
     {
-        F10 = 290
+        F9 = 290,
+        F10 = 291,
+        F11 = 292,
+        F12 = 293
     }
 }
 namespace UnityEngine.Events
