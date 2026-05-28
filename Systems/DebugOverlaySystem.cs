@@ -118,19 +118,21 @@ namespace Dread.Systems
             BuildRows();
 
             const float width = 320f;
-            const float pad = 10f;
+            const float padX = 10f;
+            const float padTop = 6f;
+            const float padBottom = 10f;
             const float lineH = 18f;
             const float labelW = 82f;
             const float marginX = 12f;
             const float marginY = 140f; // moved down from the top so it clears the game's top HUD
-            float height = pad * 2f + _rows.Count * lineH;
+            float height = padTop + padBottom + _rows.Count * lineH;
 
             var panel = new Rect(marginX, marginY, width, height);
             GUI.Box(panel, EmptyContent, _boxStyle!);
 
-            float x = panel.x + pad;
-            float y = panel.y + pad;
-            float innerW = width - pad * 2f;
+            float x = panel.x + padX;
+            float y = panel.y + padTop;
+            float innerW = width - padX * 2f;
 
             for (int i = 0; i < _rows.Count; i++)
             {

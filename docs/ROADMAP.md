@@ -52,21 +52,22 @@ Work top to bottom within each phase. Do not skip **Depends on** unless the issu
 
 | Order | ID | Priority | Issue | Depends on | Why |
 |-------|-----|----------|-------|------------|-----|
-| 9 | DBG-3 | P2 | [#165](https://github.com/grompen91-droid/dreadREPO/issues/165) | PERF-2 | Font/legibility (user feedback: labels look odd vs toggles) |
-| 10 | DBG-1 | P2 | [#163](https://github.com/grompen91-droid/dreadREPO/issues/163) | DBG-3 (soft) | Draggable panel after text renders reliably |
-| 11 | DBG-2 | P2 | [#164](https://github.com/grompen91-droid/dreadREPO/issues/164) | DBG-1 (soft) | Richer cfg once layout UX is settled |
+| 9 | DBG-5 | P2 | (to file) | PERF-2 | Extensible panel API first: lets settings and other features register overlay sections/rows without editing `DebugOverlaySystem` |
+| 10 | DBG-3 | P2 | [#165](https://github.com/grompen91-droid/dreadREPO/issues/165) | PERF-2 | Font/legibility (user feedback: labels look odd vs toggles) |
+| 11 | DBG-1 | P2 | [#163](https://github.com/grompen91-droid/dreadREPO/issues/163) | DBG-3 (soft) | Draggable panel after text renders reliably |
+| 12 | DBG-2 | P2 | [#164](https://github.com/grompen91-droid/dreadREPO/issues/164) | DBG-1, DBG-5 (soft) | Richer cfg once layout UX is settled |
 
 ### Phase 5: Performance optimization
 
 | Order | ID | Priority | Issue | Depends on | Why |
 |-------|-----|----------|-------|------------|-----|
-| 12 | PERF-1 | P2 | [#169](https://github.com/grompen91-droid/dreadREPO/issues/169) | ARCH-1, PERF-2 | Profile stable codebase; avoid optimizing files about to move |
+| 13 | PERF-1 | P2 | [#169](https://github.com/grompen91-droid/dreadREPO/issues/169) | ARCH-1, PERF-2 | Profile stable codebase; avoid optimizing files about to move |
 
 ### Phase 6: Upstream / cleanup
 
 | Order | ID | Priority | Issue | Depends on | Why |
 |-------|-----|----------|-------|------------|-----|
-| 13 | DBG-4 | P3 | [#166](https://github.com/grompen91-droid/dreadREPO/issues/166) | REPOConfig or MenuLib fix | Remove temporary slider compat; **blocked** on upstream |
+| 14 | DBG-4 | P3 | [#166](https://github.com/grompen91-droid/dreadREPO/issues/166) | REPOConfig or MenuLib fix | Remove temporary slider compat; **blocked** on upstream |
 
 ```mermaid
 flowchart TD
@@ -78,6 +79,7 @@ flowchart TD
   ARCH3[ARCH-3 Extensible core]
   ERR3[ERR-3 Privacy copy]
   ERR2[ERR-2 Default on prompt]
+  DBG5[DBG-5 Extensible panel API]
   DBG3[DBG-3 Fonts]
   DBG1[DBG-1 Draggable panel]
   DBG2[DBG-2 Overlay cfg]
@@ -91,9 +93,11 @@ flowchart TD
   ARCH1 --> ARCH2
   ARCH1 --> ARCH3
   ERR1 --> ARCH3
+  PERF2 --> DBG5
   PERF2 --> DBG3
   DBG3 --> DBG1
   DBG1 --> DBG2
+  DBG5 --> DBG2
   ARCH1 --> PERF1
   DBG4
 ```
@@ -108,6 +112,7 @@ flowchart TD
 | DBG-2 | P2 | **Richer overlay configuration** | Forgiving defaults; cfg/REPOConfig layout | idea | [#164](https://github.com/grompen91-droid/dreadREPO/issues/164) |
 | DBG-3 | P2 | **Font fixes** | Proton/Linux font fallback and sizing | idea | [#165](https://github.com/grompen91-droid/dreadREPO/issues/165) |
 | DBG-4 | P3 | **REPOConfig slider labels (upstream)** | Remove `RepoConfigSliderLabelCompat` | blocked | [#166](https://github.com/grompen91-droid/dreadREPO/issues/166) |
+| DBG-5 | P2 | **Extensible overlay panel API** | Make it trivial for other features to add overlay content without editing `DebugOverlaySystem`: a data-driven section/row registry (e.g. `IOverlayPanel` / `RegisterSection`) supporting read-only rows and interactive controls (toggles/sliders) so settings and future systems plug in. Decouples row data from rendering. | idea | (to file) |
 
 See also: `docs/repo-config-slider-labels-investigation.md`.
 
