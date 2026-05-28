@@ -1,6 +1,8 @@
 # Domain Docs
 
-How the engineering skills should consume this repo's domain documentation when exploring the codebase.
+How agents and skills should consume this repo's domain documentation when exploring the codebase.
+
+**Orchestration hub:** [README.md](README.md) and [orchestration.md](orchestration.md).
 
 ## Before exploring, read these
 

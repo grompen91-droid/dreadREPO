@@ -5,9 +5,11 @@
 | Resource | Purpose |
 |----------|---------|
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Planned backlog with roadmap IDs and GitHub issue links (#163-#175) |
+| [docs/agents/README.md](docs/agents/README.md) | Agent orchestration hub (start here for autonomous work) |
+| [docs/agents/orchestration.md](docs/agents/orchestration.md) | Solo, subagent, verify, and PR workflows |
 | [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md) | Create and triage issues with `gh` |
 | [docs/agents/domain.md](docs/agents/domain.md) | How agents should read ADRs, overlay, REPOConfig compat |
-| [docs/agents/triage-labels.md](docs/agents/triage-labels.md) | Label vocabulary (`to-do`, `ready-for-agent`, etc.) |
+| [docs/agents/triage-labels.md](docs/agents/triage-labels.md) | Label vocabulary (`ready-for-agent`, etc.) |
 | [AGENTS.md](AGENTS.md) | Build, release, and repo conventions for coding agents |
 | [`CONTEXT.md`](CONTEXT.md) | Root glossary and bounded context for contributors and agents (DOCS-1) |
 

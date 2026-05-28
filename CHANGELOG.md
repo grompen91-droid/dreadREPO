@@ -47,6 +47,7 @@ GitHub backlog: issues #163-#175, table in [docs/ROADMAP.md](docs/ROADMAP.md).
 </details>
 
 ### Added
+- **Agent orchestration:** `docs/agents/README.md` hub, `docs/agents/orchestration.md` workflows; cross-links across agent docs, `AGENTS.md`, `CONTEXT.md`, and `.claude/` subagent prompts
 - Cloudflare Worker integration tests (Vitest) for error reporting pipeline (ERR-1)
 - Manual error reporting test checklist (`docs/agents/error-reporting-test-checklist.md`)
 - Live smoke test script for deployed Worker (`scripts/test-error-reporter.sh`)

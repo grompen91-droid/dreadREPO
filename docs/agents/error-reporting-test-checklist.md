@@ -1,6 +1,8 @@
 # Error reporting test checklist (ERR-1)
 
 Manual test matrix for verifying the Dread error reporting pipeline end-to-end.
+
+**Hub:** [README.md](README.md) | **Verify tiers:** [verify-dread.md](verify-dread.md) (Tier 3)
 Covers: TestCrash button, MCP trigger, real exceptions, opt-out, deduplication,
 rate limiting, spam filter, and payload shape.
 
