@@ -68,7 +68,7 @@ GitHub backlog: issues #163-#175, table in [docs/ROADMAP.md](docs/ROADMAP.md).
 - `breath2.ogg`, `breath3.ogg`: audio files for TensionSystem breath variant loading (referenced since v1.4.0 but missing)
 
 ### Changed
-- **Debug overlay (redesign):** more concise grouped layout (one line per system) on a semi-transparent panel with an accent header and separators. Adds a performance section: smoothed **FPS** (color-coded green/amber/red), rolling **min FPS**, frame time in ms, and managed **memory** (MB) via `GC.GetTotalMemory`. Mod state condensed to Enemy / Tension / Break / Audio / Config / Patches rows
+- **Debug overlay (redesign):** more concise grouped layout (one line per system) on a semi-transparent panel with an accent header and separators. Adds a performance/system section: smoothed **FPS** (color-coded green/amber/red), rolling **min FPS**, frame time (ms), managed **memory** (MB) via `GC.GetTotalMemory`, **GC** collection counts, **screen** resolution, and **frame** count. Mod state shown across Enemy / Tension / Sprint / Break / Break+ / Audio / Config / Patches rows; the panel is positioned lower so it clears the game's top HUD
 - **Debug overlay (PERF-2):** `DebugOverlaySystem` is now fully dormant when `DebugOverlayEnabled` is off (component disabled, so Unity invokes neither `Update` nor `OnGUI`); `enabled` tracks the config flag live. Adds a one-shot logged guard if the disabled-state invariant is ever violated. (#170)
 - **Error reporting:** re-queue reports when the Worker returns per-report GitHub failures; ignore TestCrash log spam in the async pipeline (sync POST still sends)
 - **CI:** run `workers/error-reporter` Vitest in CI and before Worker deploy
@@ -84,6 +84,7 @@ GitHub backlog: issues #163-#175, table in [docs/ROADMAP.md](docs/ROADMAP.md).
 - Logging: hot-path guards, level demotions, prefix consistency across systems and `dread-mcp-server`
 
 ### Fixed
+- **Debug overlay (F10 toggle):** F10 now actually toggles the overlay. The stub `KeyCode.F10` value was `290` (real Unity F9); since enum constants are inlined at compile time, the built DLL listened for the wrong key. Corrected the stub F-key values to match real Unity (`F10 = 291`)
 - **Debug overlay (F10 crash):** overlay no longer throws `MissingMethodException: GUIContent.get_none()` or `MissingFieldException: Rect.y` when shown. IMGUI types (`GUI`, `GUIStyle`, `GUIContent`, `GUISkin`) now resolve from `UnityEngine.IMGUIModule` (where the game actually defines them) instead of being lumped into the `UnityEngine` stub assembly; the box draw uses a cached empty `GUIContent` rather than the stub-only `GUIContent.none` property; and the stub `Rect` now models `x`/`y`/`width`/`height` as properties (matching real Unity) so stub-built IL does not emit field access that fails at runtime
 - **Debug overlay (PERF-2):** Harmony patch-count reflection no longer runs while the HUD is toggled off with F10; it runs only when the overlay is actually visible. (#170)
 - **REPOConfig sliders (temporary):** when REPOConfig + MenuLib are present, `RepoConfigSliderLabelCompat` restores slider setting names for empty descriptions (label at x=100, compact row); upstream REPOConfig/MenuLib fix preferred; skipped when REPOConfig is absent. See `docs/repo-config-slider-labels-investigation.md`

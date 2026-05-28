@@ -121,9 +121,11 @@ namespace Dread.Systems
             const float pad = 10f;
             const float lineH = 18f;
             const float labelW = 82f;
+            const float marginX = 12f;
+            const float marginY = 140f; // moved down from the top so it clears the game's top HUD
             float height = pad * 2f + _rows.Count * lineH;
 
-            var panel = new Rect(10f, 10f, width, height);
+            var panel = new Rect(marginX, marginY, width, height);
             GUI.Box(panel, EmptyContent, _boxStyle!);
 
             float x = panel.x + pad;
@@ -160,25 +162,38 @@ namespace Dread.Systems
             AddHeader("DREAD " + Dread.Plugin.VERSION, "F10");
             AddSep();
 
+            // Performance
             float fps = _smoothedDelta > 0f ? 1f / _smoothedDelta : 0f;
             float ms = _smoothedDelta * 1000f;
             Color fpsCol = fps >= 60f ? ColGood : fps >= 30f ? ColWarn : ColBad;
-            AddRow("FPS", $"{fps:F0}   min {_minFps:F0}   {ms:F1} ms", fpsCol);
+            AddRow("FPS", $"{fps:F0}", fpsCol);
+            AddRow("Frame", $"{ms:F1} ms   min {_minFps:F0} fps", ColValue);
             AddRow("Memory", $"{_memMB:F0} MB", ColValue);
+            AddRow("GC", $"g0 {GC.CollectionCount(0)}  g1 {GC.CollectionCount(1)}  g2 {GC.CollectionCount(2)}", ColDim);
+            AddRow("Screen", $"{Screen.width}x{Screen.height}", ColDim);
+            AddRow("Frames", Time.frameCount.ToString(), ColDim);
             AddSep();
 
+            // Mod state
             float nearest = DreadRuntimeState.NearestEnemyDist;
-            string enemy = nearest >= float.MaxValue * 0.5f ? "none" : $"{nearest:F1} m";
+            string enemy = nearest >= float.MaxValue * 0.5f ? "none" : $"{nearest:F1} m  (range 15m)";
             AddRow("Enemy", enemy, ColValue);
 
-            AddRow("Tension",
-                $"adr {OnOff(DreadRuntimeState.AdrenalineActive)}  "
-                + $"panic {OnOff(DreadRuntimeState.PanicSprintActive)} {DreadRuntimeState.PanicSprintCooldown:F0}s",
+            AddRow("Tension", $"adrenaline {OnOff(DreadRuntimeState.AdrenalineActive)}", ColValue);
+            AddRow("Sprint",
+                $"panic {OnOff(DreadRuntimeState.PanicSprintActive)}   cd {DreadRuntimeState.PanicSprintCooldown:F0}s",
                 ColValue);
 
-            AddRow("Break", BreakSummary(), ColValue);
+            AddRow("Break", BreakSummary(), BreakColor());
+            AddRow("Break+",
+                $"clips {OnOff(DreadRuntimeState.PsychoticBreakClipsLoaded)}   "
+                + $"threat {DreadRuntimeState.PsychoticBreakThreatCount}   "
+                + $"next {DreadRuntimeState.PsychoticBreakNextCheckIn:F0}s",
+                ColDim);
+
             AddRow("Audio", AudioSummary(), ColValue);
 
+            AddSep();
             AddRow("Config",
                 $"compat{PlusMinus(DreadConfig.CompatibilityMode.Value)} "
                 + $"aggr{PlusMinus(DreadConfig.MonsterAggressionEnabled.Value)} "
@@ -219,6 +234,17 @@ namespace Dread.Systems
 
             return $"ready  next {DreadRuntimeState.PsychoticBreakNextCheckIn:F0}s  "
                 + $"threat {DreadRuntimeState.PsychoticBreakThreatCount}";
+        }
+
+        private static Color BreakColor()
+        {
+            if (!DreadRuntimeState.PsychoticBreakEnabled)
+                return ColDim;
+            if (DreadRuntimeState.PsychoticBreakEpisodeActive)
+                return ColBad;
+            if (!DreadRuntimeState.PsychoticBreakCanTrigger)
+                return ColWarn;
+            return ColGood;
         }
 
         private static string AudioSummary()

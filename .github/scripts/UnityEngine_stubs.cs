@@ -291,9 +291,14 @@ namespace UnityEngine
         public static bool GetKeyDown(KeyCode key) => false;
     }
 
+    // Values must match real UnityEngine.KeyCode exactly: enum constants are inlined
+    // at compile time, so a wrong value makes the built DLL listen for the wrong key.
     public enum KeyCode
     {
-        F10 = 290
+        F9 = 290,
+        F10 = 291,
+        F11 = 292,
+        F12 = 293
     }
 }
 namespace UnityEngine.Events
