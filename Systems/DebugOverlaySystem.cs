@@ -149,8 +149,9 @@ namespace Dread.Systems
                 else
                 {
                     GUI.Label(new Rect(x, y, labelW, lineH), row.Left, _labelStyle!);
-                    _valueStyle!.normal.textColor = row.Color;
-                    GUI.Label(new Rect(x + labelW, y, innerW - labelW, lineH), row.Right, _valueStyle!);
+                    GUIStyle valueStyle = _valueStyle;
+                    valueStyle.normal.textColor = row.Color;
+                    GUI.Label(new Rect(x + labelW, y, innerW - labelW, lineH), row.Right, valueStyle);
                 }
 
                 y += lineH;
@@ -268,7 +269,8 @@ namespace Dread.Systems
             {
                 _loggedDisabledWhileRunning = true;
                 LoggingService.LogError(
-                    "DebugOverlaySystem ran while DebugOverlayEnabled is false: enable/disable wiring regressed (PERF-2).");
+                    "DebugOverlaySystem ran while DebugOverlayEnabled is false: "
+                    + "enable/disable wiring regressed (PERF-2).");
             }
 
             return false;
