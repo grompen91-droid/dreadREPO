@@ -93,15 +93,15 @@ namespace Dread.Systems
 
         private static bool IsIgnoredSpam(string message, string stackTrace)
         {
-            if (message.Contains("[Dread TestCrash]", StringComparison.Ordinal)
-                || stackTrace.Contains("TestCrashSystem", StringComparison.Ordinal))
+            if (message.IndexOf("[Dread TestCrash]", StringComparison.Ordinal) >= 0
+                || stackTrace.IndexOf("TestCrashSystem", StringComparison.Ordinal) >= 0)
                 return true;
-            if (message.Contains("DebugConsoleUI", StringComparison.Ordinal)
-                || stackTrace.Contains("DebugConsoleUI", StringComparison.Ordinal))
+            if (message.IndexOf("DebugConsoleUI", StringComparison.Ordinal) >= 0
+                || stackTrace.IndexOf("DebugConsoleUI", StringComparison.Ordinal) >= 0)
                 return true;
-            if (message.Contains("DebugTester", StringComparison.Ordinal)
-                || stackTrace.Contains("SemiFunc.DebugTester", StringComparison.Ordinal)
-                || stackTrace.Contains("DebugTester", StringComparison.Ordinal))
+            if (message.IndexOf("DebugTester", StringComparison.Ordinal) >= 0
+                || stackTrace.IndexOf("SemiFunc.DebugTester", StringComparison.Ordinal) >= 0
+                || stackTrace.IndexOf("DebugTester", StringComparison.Ordinal) >= 0)
                 return true;
             return false;
         }
