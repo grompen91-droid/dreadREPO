@@ -61,4 +61,4 @@ See [docs/mod-compatibility.md](../../mod-compatibility.md) for player-facing ma
 
 ## Historical docs
 
-Archive: `docs/agents/archive/superpowers/specs/2026-05-16-dread-design.md` (System 4), `plans/2026-05-16-dread.md` (Tasks 6+). Design spec described HP multiplier and visual monster effects not present in current code; treat archive as aspirational history.
+Archive: `docs/agents/archive/superpowers/specs/2026-05-16-dread-design.md` (System 4), `docs/agents/archive/superpowers/plans/2026-05-16-dread.md` (Tasks 6+). Design spec described HP multiplier and visual monster effects not present in current code; treat archive as aspirational history.

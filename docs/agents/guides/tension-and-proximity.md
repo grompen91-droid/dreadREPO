@@ -70,4 +70,4 @@ Do not:
 
 ## Historical docs
 
-Archive: `docs/agents/archive/superpowers/specs/2026-05-17-panic-sprint-design.md`, `specs/2026-05-22-decoupled-enemy-cache-design.md`, and matching `plans/` files.
+Archive: `docs/agents/archive/superpowers/specs/2026-05-17-panic-sprint-design.md`, `docs/agents/archive/superpowers/specs/2026-05-22-decoupled-enemy-cache-design.md`, and matching files under `docs/agents/archive/superpowers/plans/`.

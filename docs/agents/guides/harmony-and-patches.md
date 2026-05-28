@@ -4,7 +4,7 @@ How Dread applies Harmony patches at load time and toggles them from config. Fix
 
 ## Principles
 
-1. **No `[HarmonyPatch]` attributes** on production patch classes in `MonsterOverhaulSystem.cs` (explicit `Apply` / `Remove` instead).
+1. **No `[HarmonyPatch]` attributes** on production patch classes (explicit `Apply` / `Remove` instead). Monster and player patches live in `MonsterOverhaulSystem.cs`; `DebugConsoleGuardPatch` is in `Systems/DebugConsoleGuardPatch.cs`.
 2. **Idempotent `Apply`:** guard with `if (_original != null) return;` before patching.
 3. **`Remove` clears `_original`** so re-apply works after config toggle.
 4. **Config-driven lifecycle** in `Plugin.cs` via `SettingChanged` handlers.
@@ -18,7 +18,7 @@ How Dread applies Harmony patches at load time and toggles them from config. Fix
 | `EnemyDirectorSetInvestigatePatch` | `EnemyDirector.SetInvestigate` | Same | Yes (prefix, 1.5x radius) |
 | `PlayerControllerAwakePatch` | `PlayerController.Awake` | `CrouchSpeedBoostEnabled` | No |
 | `DebugConsoleGuardPatch` | (debug console guard) | `DebugConsoleGuardEnabled` | No |
-| `RepoConfigSliderLabelCompat` | REPOConfig slider UI | After MenuLib loads | N/A |
+| `RepoConfigSliderLabelCompat` | REPOConfig slider UI | `Plugin.Start()` and `DreadSystemInitializer` when REPOConfig/MenuLib are loaded | N/A |
 
 Monster patches are grouped in `Plugin.ApplyMonsterPatches()`.
 

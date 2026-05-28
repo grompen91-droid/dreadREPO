@@ -23,4 +23,4 @@ Original superpowers documents (checkbox plans, Windows paths, pre-ship design) 
 
 - [CONTEXT.md](../../../CONTEXT.md): glossary terms
 - [domain.md](../domain.md): ADRs and REPOConfig compat
-- [docs/adr/](../../../docs/adr/): decisions (debug server, error reporting, removed systems)
+- [docs/adr/](../../adr/): decisions (debug server, error reporting, removed systems)
