@@ -119,6 +119,33 @@ jobs:
           path: ${{ runner.temp }}/msbuild.log
           retention-days: 7
 
+  worker:
+    name: Worker tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [relevance]
+    if: needs.relevance.outputs.passed == 'true'
+
+    defaults:
+      run:
+        working-directory: workers/error-reporter
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: workers/error-reporter/package-lock.json
+
+      - name: Install and test error reporter worker
+        run: |
+          npm ci
+          npm test
+
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
@@ -180,7 +207,7 @@ jobs:
     name: Summary
     runs-on: ubuntu-latest
     timeout-minutes: 3
-    needs: [relevance, build, analyze]
+    needs: [relevance, build, worker, analyze]
 
     if: always()
 
@@ -195,7 +222,7 @@ jobs:
 
           exit_code=0
 
-          for job in relevance build analyze; do
+          for job in relevance build worker analyze; do
             result="${{ needs[job].result }}"
             case "$result" in
               success) status=":green_circle: Passed" ;;

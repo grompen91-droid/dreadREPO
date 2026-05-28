@@ -64,6 +64,30 @@ namespace Dread.Tests.ErrorReportJson
         }
 
         [Fact]
+        public void SerializePayload_escapes_special_characters_in_strings()
+        {
+            var json = Systems.ErrorReportJson.SerializePayload(new ErrorPayload
+            {
+                ModVersion = "1.0.0",
+                Reports = new[]
+                {
+                    new ErrorReport
+                    {
+                        Hash = "hash\"1",
+                        Message = "line1\nline2\t\"quoted\"",
+                        StackTrace = "at Foo\\Bar()",
+                        Scene = "Test\\Scene"
+                    }
+                }
+            });
+
+            Assert.Contains("\"Hash\":\"hash\\\"1\"", json);
+            Assert.Contains("\"Message\":\"line1\\nline2\\t\\\"quoted\\\"\"", json);
+            Assert.Contains("\"StackTrace\":\"at Foo\\\\Bar()\"", json);
+            Assert.Contains("\"Scene\":\"Test\\\\Scene\"", json);
+        }
+
+        [Fact]
         public void SerializePayload_null_report_entry_does_not_throw()
         {
             var json = Systems.ErrorReportJson.SerializePayload(new ErrorPayload

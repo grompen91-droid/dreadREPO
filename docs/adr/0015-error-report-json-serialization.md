@@ -37,7 +37,9 @@ Validation before POST: payload must contain `"Reports":[` (non-empty array allo
 
 ### Send failure handling
 
-If batch serialization fails or `UnityWebRequest` fails, `RequeueFailedBatch()` appends the batch back to `_buffer` and logs a warning. `FlushNow()` skips starting a new send while `_sendInProgress` is true.
+If batch serialization fails, `UnityWebRequest` fails, or the Worker returns HTTP 200 with per-report `status: "error"` in `results`, `RequeueFailedBatch()` appends the affected report(s) back to `_buffer` and logs a warning. `FlushNow()` skips starting a new send while `_sendInProgress` is true.
+
+TestCrash log lines are ignored in `IsIgnoredSpam()` so `Debug.LogException` does not enqueue a duplicate async report; the sync POST path still sends the deliberate test payload.
 
 ### Safe capture helpers
 

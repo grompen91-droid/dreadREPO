@@ -66,6 +66,8 @@ GitHub backlog: issues #163-#175, table in [docs/ROADMAP.md](docs/ROADMAP.md).
 - `breath2.ogg`, `breath3.ogg`: audio files for TensionSystem breath variant loading (referenced since v1.4.0 but missing)
 
 ### Changed
+- **Error reporting:** re-queue reports when the Worker returns per-report GitHub failures; ignore TestCrash log spam in the async pipeline (sync POST still sends)
+- **CI:** run `workers/error-reporter` Vitest in CI and before Worker deploy
 - **Debug server / MCP:** `get_config` returns flat keys plus grouped `sections` with `debugKey`; `set_config` supports all DreadConfig entries including `debugServer.*`, `overlay.enabled`, `compatibility.*`, `testing.crash`, `logging.level`
 - **Docs:** README psychotic break audio table uses shipped clip names (`scream_peak`, `scream_distant`, `scream_threat`); tension feature titled **Low stamina sound** (canonical term in `CONTEXT.md`)
 - **Docs:** README and THUNDERSTORE compatibility sections no longer claim conflict-free operation; `mod-profile-conflicts.md` points to `mod-compatibility.md`

@@ -93,6 +93,9 @@ namespace Dread.Systems
 
         private static bool IsIgnoredSpam(string message, string stackTrace)
         {
+            if (message.Contains("[Dread TestCrash]", StringComparison.Ordinal)
+                || stackTrace.Contains("TestCrashSystem", StringComparison.Ordinal))
+                return true;
             if (message.Contains("DebugConsoleUI", StringComparison.Ordinal)
                 || stackTrace.Contains("DebugConsoleUI", StringComparison.Ordinal))
                 return true;
@@ -140,11 +143,10 @@ namespace Dread.Systems
 
                 if (TryPostPayloadSync(payload, out var responseBody, out var postError))
                 {
-                    if (responseBody.IndexOf("\"status\":\"error\"", StringComparison.Ordinal) >= 0
-                        || responseBody.IndexOf("\"status\": \"error\"", StringComparison.Ordinal) >= 0)
+                    if (HasWorkerReportFailures(responseBody, payload.Reports))
                     {
                         LoggingService.LogWarning(
-                            $"Error report reached worker but GitHub step failed. Response: {responseBody}");
+                            $"Test crash report reached worker but GitHub step failed. Response: {responseBody}");
                     }
                     else
                     {
@@ -309,6 +311,81 @@ namespace Dread.Systems
                 $"[ErrorReporter] Re-queued {batch.Count} report(s) after failed send.");
         }
 
+        private void HandleWorkerResponse(string body, List<ErrorReport> batch)
+        {
+            var failed = CollectFailedReports(body, batch);
+            if (failed.Count > 0)
+            {
+                LoggingService.LogWarning(
+                    $"[ErrorReporter] Worker reported {failed.Count} GitHub failure(s). Response: {body}");
+                RequeueFailedBatch(failed);
+                return;
+            }
+
+            if (HasUnmappedWorkerErrors(body))
+            {
+                LoggingService.LogWarning(
+                    $"[ErrorReporter] Worker returned errors; re-queuing full batch. Response: {body}");
+                RequeueFailedBatch(batch);
+                return;
+            }
+
+            LoggingService.LogInfo($"Sent {batch.Count} error report(s). Response: {body}");
+        }
+
+        private static List<ErrorReport> CollectFailedReports(string body, List<ErrorReport> batch)
+        {
+            var failed = new List<ErrorReport>();
+            foreach (var report in batch)
+            {
+                if (IsReportFailedInResponse(body, report.Hash))
+                    failed.Add(report);
+            }
+
+            return failed;
+        }
+
+        private static bool HasWorkerReportFailures(string body, ErrorReport[] reports)
+        {
+            if (string.IsNullOrEmpty(body))
+                return false;
+
+            foreach (var report in reports)
+            {
+                if (report != null && IsReportFailedInResponse(body, report.Hash))
+                    return true;
+            }
+
+            return HasUnmappedWorkerErrors(body);
+        }
+
+        private static bool HasUnmappedWorkerErrors(string body)
+        {
+            return body.IndexOf("\"status\":\"error\"", StringComparison.Ordinal) >= 0
+                || body.IndexOf("\"status\": \"error\"", StringComparison.Ordinal) >= 0;
+        }
+
+        private static bool IsReportFailedInResponse(string body, string hash)
+        {
+            if (string.IsNullOrEmpty(body) || string.IsNullOrEmpty(hash))
+                return false;
+
+            var hashNeedle = "\"hash\":\"" + hash + "\"";
+            var idx = 0;
+            while ((idx = body.IndexOf(hashNeedle, idx, StringComparison.Ordinal)) >= 0)
+            {
+                var windowEnd = Math.Min(body.Length, idx + 256);
+                var slice = body.Substring(idx, windowEnd - idx);
+                if (slice.IndexOf("\"status\":\"error\"", StringComparison.Ordinal) >= 0
+                    || slice.IndexOf("\"status\": \"error\"", StringComparison.Ordinal) >= 0)
+                    return true;
+
+                idx += hashNeedle.Length;
+            }
+
+            return false;
+        }
+
         private IEnumerator SendBatch(List<ErrorReport> batch)
         {
             _sendInProgress = true;
@@ -349,16 +426,7 @@ namespace Dread.Systems
                 else
                 {
                     var body = request.downloadHandler?.text ?? string.Empty;
-                    if (body.IndexOf("\"status\":\"error\"", StringComparison.Ordinal) >= 0
-                        || body.IndexOf("\"status\": \"error\"", StringComparison.Ordinal) >= 0)
-                    {
-                        LoggingService.LogWarning(
-                            $"Error report reached worker but GitHub step failed. Response: {body}");
-                    }
-                    else
-                    {
-                        LoggingService.LogInfo($"Sent {batch.Count} error report(s). Response: {body}");
-                    }
+                    HandleWorkerResponse(body, batch);
                 }
             }
             finally
