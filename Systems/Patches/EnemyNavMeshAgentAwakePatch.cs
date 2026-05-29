@@ -16,8 +16,8 @@ namespace Dread.Systems
             if (_original != null || DreadConfig.CompatibilityMode.Value)
                 return;
 
-            var type = AccessTools.TypeByName("EnemyNavMeshAgent");
-            _original = type != null ? AccessTools.Method(type, "Awake") : null;
+            var type = typeof(EnemyNavMeshAgent);
+            _original = AccessTools.Method(type, "Awake");
             if (_original == null)
             {
                 LoggingService.LogWarning("[Dread] EnemyNavMeshAgent.Awake not found; aggression patch skipped");
@@ -38,7 +38,7 @@ namespace Dread.Systems
         }
 
         [HarmonyPriority(Priority.Last)]
-        private static void Postfix(object __instance)
+        private static void Postfix(EnemyNavMeshAgent __instance)
         {
             if (!DreadConfig.MonsterAggressionEnabled.Value || DreadConfig.CompatibilityMode.Value)
                 return;
@@ -47,7 +47,7 @@ namespace Dread.Systems
 
             try
             {
-                var agent = Traverse.Create(__instance).Field<NavMeshAgent>("Agent").Value;
+                var agent = __instance.Agent;
                 if (agent == null) return;
 
                 agent.speed *= 1.2f;

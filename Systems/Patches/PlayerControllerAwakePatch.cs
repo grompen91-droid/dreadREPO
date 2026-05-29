@@ -15,8 +15,8 @@ namespace Dread.Systems
             if (_original != null)
                 return;
 
-            var type = AccessTools.TypeByName("PlayerController");
-            _original = type != null ? AccessTools.Method(type, "Awake") : null;
+            var type = typeof(PlayerController);
+            _original = AccessTools.Method(type, "Awake");
             if (_original == null)
             {
                 LoggingService.LogWarning("[Dread] PlayerController.Awake not found; crouch speed patch skipped");
@@ -33,16 +33,13 @@ namespace Dread.Systems
             _original = null;
         }
 
-        private static void Postfix(object __instance)
+        private static void Postfix(PlayerController __instance)
         {
             if (!DreadConfig.CrouchSpeedBoostEnabled.Value) return;
 
             try
             {
-                var field = AccessTools.Field(__instance.GetType(), "CrouchSpeed");
-                if (field == null || field.FieldType != typeof(float)) return;
-                var speed = (float)field.GetValue(__instance)!;
-                field.SetValue(__instance, speed * 1.3f);
+                __instance.CrouchSpeed *= 1.3f;
             }
             catch (Exception ex)
             {

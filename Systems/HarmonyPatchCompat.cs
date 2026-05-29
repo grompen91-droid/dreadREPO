@@ -13,20 +13,17 @@ namespace Dread.Systems
     internal static class HarmonyPatchCompat
     {
         private static readonly HashSet<string> SkipWarningsLogged = new(StringComparer.Ordinal);
+        private static readonly MethodInfo? IsMasterClientMethod =
+            AccessTools.Method(typeof(SemiFunc), "IsMasterClient");
 
         internal static bool IsMasterClient()
         {
             try
             {
-                var semiFunc = AccessTools.TypeByName("SemiFunc");
-                if (semiFunc == null)
+                if (IsMasterClientMethod == null)
                     return true;
 
-                var method = AccessTools.Method(semiFunc, "IsMasterClient");
-                if (method == null)
-                    return true;
-
-                return method.Invoke(null, null) is bool isMaster && isMaster;
+                return IsMasterClientMethod.Invoke(null, null) is bool isMaster && isMaster;
             }
             catch
             {

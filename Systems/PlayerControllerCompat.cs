@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 
@@ -6,6 +7,7 @@ namespace Dread.Systems
 {
     internal static class PlayerControllerCompat
     {
+        private static readonly Dictionary<Type, FieldInfo[]> CrouchBoolFieldsByType = new();
         // REPO v0.4.x: PlayerController.Crouching/Crawling; PlayerAvatar.isCrouching/isCrawling
         private static readonly string[] CrouchMemberNames =
         {
@@ -99,17 +101,8 @@ namespace Dread.Systems
                     return true;
             }
 
-            foreach (var field in target.GetType().GetFields(
-                         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+            foreach (var field in GetCrouchBoolFields(target.GetType()))
             {
-                if (field.FieldType != typeof(bool))
-                    continue;
-
-                var name = field.Name;
-                if (name.IndexOf("crouch", StringComparison.OrdinalIgnoreCase) < 0
-                    && name.IndexOf("crawl", StringComparison.OrdinalIgnoreCase) < 0)
-                    continue;
-
                 try
                 {
                     if ((bool)field.GetValue(target)!)
@@ -119,6 +112,34 @@ namespace Dread.Systems
             }
 
             return false;
+        }
+
+        private static FieldInfo[] GetCrouchBoolFields(Type type)
+        {
+            lock (CrouchBoolFieldsByType)
+            {
+                if (CrouchBoolFieldsByType.TryGetValue(type, out var cached))
+                    return cached;
+
+                var matches = new List<FieldInfo>();
+                foreach (var field in type.GetFields(
+                             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+                {
+                    if (field.FieldType != typeof(bool))
+                        continue;
+
+                    var name = field.Name;
+                    if (name.IndexOf("crouch", StringComparison.OrdinalIgnoreCase) < 0
+                        && name.IndexOf("crawl", StringComparison.OrdinalIgnoreCase) < 0)
+                        continue;
+
+                    matches.Add(field);
+                }
+
+                var result = matches.ToArray();
+                CrouchBoolFieldsByType[type] = result;
+                return result;
+            }
         }
 
         private static bool TryGetBoolMember(object target, string name, out bool value)

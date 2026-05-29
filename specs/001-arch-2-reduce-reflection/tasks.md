@@ -24,8 +24,8 @@
 
 **Purpose**: Branch hygiene and baseline before changes
 
-- [ ] T001 Rebase `001-arch-2-reduce-reflection` onto `origin/master` and confirm ARCH-1 (#167) is merged
-- [ ] T002 Record baseline stub build output (pass/fail) in PR description or `specs/001-arch-2-reduce-reflection/quickstart.md` notes per [quickstart.md](./quickstart.md)
+- [x] T001 Rebase `001-arch-2-reduce-reflection` onto `origin/master` and confirm ARCH-1 (#167) is merged
+- [x] T002 Record baseline stub build output (pass/fail) in PR description or `specs/001-arch-2-reduce-reflection/quickstart.md` notes per [quickstart.md](./quickstart.md)
 
 ---
 
@@ -35,9 +35,9 @@
 
 **CRITICAL**: Do not start T012-T015 until T005-T006 are complete
 
-- [ ] T003 Run baseline verification: `pwsh -NoProfile .github/scripts/gen-stubs.ps1` then stub `dotnet build` and `pwsh -NoProfile ./scripts/verify-dread.ps1` per [contracts/build-profiles.md](./contracts/build-profiles.md)
-- [ ] T004 [P] Create `docs/agents/guides/reflection-inventory.md` with full table (file, method, trigger, optional-mod gate, stub/full, disposition, rationale) for all `Systems/**/*.cs` reflection and `AccessTools` sites per [data-model.md](./data-model.md)
-- [ ] T005 [P] Add stub vs full build section to `docs/agents/guides/mod-architecture.md` from [contracts/build-profiles.md](./contracts/build-profiles.md) and link [quickstart.md](./quickstart.md)
+- [x] T003 Run baseline verification: `pwsh -NoProfile .github/scripts/gen-stubs.ps1` then stub `dotnet build` and `pwsh -NoProfile ./scripts/verify-dread.ps1` per [contracts/build-profiles.md](./contracts/build-profiles.md)
+- [x] T004 [P] Create `docs/agents/guides/reflection-inventory.md` with full table (file, method, trigger, optional-mod gate, stub/full, disposition, rationale) for all `Systems/**/*.cs` reflection and `AccessTools` sites per [data-model.md](./data-model.md)
+- [x] T005 [P] Add stub vs full build section to `docs/agents/guides/mod-architecture.md` from [contracts/build-profiles.md](./contracts/build-profiles.md) and link [quickstart.md](./quickstart.md)
 
 **Checkpoint**: Inventory and build docs ready; reduction work can begin
 
@@ -51,9 +51,9 @@
 
 ### Implementation for User Story 1
 
-- [ ] T006 [US1] After all code changes, run stub Release build with `-p:GameDir=.github/stubs/refs` on `Dread.csproj` per [contracts/build-profiles.md](./contracts/build-profiles.md)
-- [ ] T007 [US1] Run `pwsh -NoProfile ./scripts/verify-dread.ps1` and confirm Tier 0 passes
-- [ ] T008 [US1] Run `dotnet test tests/Dread.ErrorReportJson.Tests/Dread.ErrorReportJson.Tests.csproj -c Release --nologo`
+- [x] T006 [US1] After all code changes, run stub Release build with `-p:GameDir=.github/stubs/refs` on `Dread.csproj` per [contracts/build-profiles.md](./contracts/build-profiles.md)
+- [x] T007 [US1] Run `pwsh -NoProfile ./scripts/verify-dread.ps1` and confirm Tier 0 passes
+- [x] T008 [US1] Run `dotnet test tests/Dread.ErrorReportJson.Tests/Dread.ErrorReportJson.Tests.csproj -c Release --nologo`
 
 **Checkpoint**: US1 satisfied; CI-equivalent path green
 
@@ -67,8 +67,8 @@
 
 ### Implementation for User Story 2
 
-- [ ] T009 [US2] Add full-profile MSBuild example (Linux r2modman paths) to `docs/agents/guides/mod-architecture.md` matching [contracts/build-profiles.md](./contracts/build-profiles.md)
-- [ ] T010 [US2] Update `specs/001-arch-2-reduce-reflection/quickstart.md` with optional full-build + r2modman deploy smoke checklist
+- [x] T009 [US2] Add full-profile MSBuild example (Linux r2modman paths) to `docs/agents/guides/mod-architecture.md` matching [contracts/build-profiles.md](./contracts/build-profiles.md)
+- [x] T010 [US2] Update `specs/001-arch-2-reduce-reflection/quickstart.md` with optional full-build + r2modman deploy smoke checklist
 
 **Checkpoint**: US2 documentation complete; full-build smoke optional for PR
 
@@ -82,8 +82,8 @@
 
 ### Implementation for User Story 3
 
-- [ ] T011 [US3] Audit `docs/agents/guides/reflection-inventory.md` against `rg` scan of `Systems/` for `Reflection`, `AccessTools`, `BindingFlags`, `GetType`, `TypeByName`
-- [ ] T012 [US3] Mark disposition `keep` | `reduce` | `replace` for every row; align with [research.md](./research.md) (REPOConfig compat, psychotic break UI stay `keep`)
+- [x] T011 [US3] Audit `docs/agents/guides/reflection-inventory.md` against `rg` scan of `Systems/` for `Reflection`, `AccessTools`, `BindingFlags`, `GetType`, `TypeByName`
+- [x] T012 [US3] Mark disposition `keep` | `reduce` | `replace` for every row; align with [research.md](./research.md) (REPOConfig compat, psychotic break UI stay `keep`)
 
 **Checkpoint**: US3 acceptance met for issue #168 inventory requirement
 
@@ -93,14 +93,14 @@
 
 **Purpose**: Safe reflection reductions, agent index, release notes (depends on Phase 2 + Phase 5)
 
-- [ ] T013 [P] Apply `replace`/`reduce` items for `Systems/Patches/EnemyNavMeshAgentAwakePatch.cs`, `Systems/Patches/PlayerControllerAwakePatch.cs`, `Systems/Patches/EnemyDirectorSetInvestigatePatch.cs` per inventory (only if stub types allow `typeof`)
-- [ ] T014 [P] Apply `reduce` items for `Systems/PlayerControllerCompat.cs` and `Systems/PlayerTumbleCompat.cs` per inventory (cache handles; no behavior change)
-- [ ] T015 [P] Confirm `Systems/DebugOverlay/DebugOverlayPanel.cs` `CountDreadPatches` remains documented as `keep` with PERF-2 visibility gate in `docs/agents/guides/reflection-inventory.md`
-- [ ] T016 Confirm no edits that remove required reflection in `Systems/RepoConfigSliderLabelCompat.cs` or `Systems/PsychoticBreak/PsychoticBreakOverlay.cs` without DBG-4 upstream
-- [ ] T017 Run `dotnet format --verify-no-changes --no-restore` on touched C# files
-- [ ] T018 Add ARCH-2 entry under `[Unreleased]` in `CHANGELOG.md` (inventory, stub/full docs, any reduction; no version bump)
-- [ ] T019 Set ARCH-2 to `done` in `docs/ROADMAP.md` when PR merges; link `docs/agents/guides/reflection-inventory.md` in `docs/agents/guides/README.md`
-- [ ] T020 Re-run T006-T008 (US1 final verify) after T013-T016
+- [x] T013 [P] Apply `replace`/`reduce` items for `Systems/Patches/EnemyNavMeshAgentAwakePatch.cs`, `Systems/Patches/PlayerControllerAwakePatch.cs`, `Systems/Patches/EnemyDirectorSetInvestigatePatch.cs` per inventory (only if stub types allow `typeof`)
+- [x] T014 [P] Apply `reduce` items for `Systems/PlayerControllerCompat.cs` and `Systems/PlayerTumbleCompat.cs` per inventory (cache handles; no behavior change)
+- [x] T015 [P] Confirm `Systems/DebugOverlay/DebugOverlayPanel.cs` `CountDreadPatches` remains documented as `keep` with PERF-2 visibility gate in `docs/agents/guides/reflection-inventory.md`
+- [x] T016 Confirm no edits that remove required reflection in `Systems/RepoConfigSliderLabelCompat.cs` or `Systems/PsychoticBreak/PsychoticBreakOverlay.cs` without DBG-4 upstream
+- [x] T017 Run `dotnet format --verify-no-changes --no-restore` on touched C# files
+- [x] T018 Add ARCH-2 entry under `[Unreleased]` in `CHANGELOG.md` (inventory, stub/full docs, any reduction; no version bump)
+- [x] T019 Set ARCH-2 to `done` in `docs/ROADMAP.md` when PR merges; link `docs/agents/guides/reflection-inventory.md` in `docs/agents/guides/README.md`
+- [x] T020 Re-run T006-T008 (US1 final verify) after T013-T016
 
 ---
 
