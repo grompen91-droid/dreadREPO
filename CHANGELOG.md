@@ -37,6 +37,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **MCP server:** Zod 4 `z.strictObject()` for tool input schemas (replaces deprecated `.strict()`)
 
 ### Fixed
+- **Audio:** ambient/psychotic clips no longer cut off early when pitch is below 1.0 (`AudioPlayUtil` destroy lifetime); NVorbis reads full OGG streams
+- **Stub/local builds:** error reporter uses `HttpWebRequest` instead of `UnityWebRequest` (fixes `BadImageFormatException: Method has zero rva` log spam); audio loader skips UWR fallback when UWR is unusable; psychotic break no longer `Destroy`s shared cached `AudioClip`s
 - **REPOConfig slider labels:** reverted experimental `MidlineLeft`/pivot tweak that overlapped slider text; compat back to `Left` alignment + x=100 column only (see `docs/repo-config-slider-labels-investigation.md`)
 - GitHub boilerplate: GPL-3.0 `LICENSE`, Dread-tailored Dependabot (mod, MCP, worker, CI), `SECURITY.md`, CodeQL with stub build and path filters
 

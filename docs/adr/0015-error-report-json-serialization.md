@@ -31,13 +31,15 @@ Replace `JsonUtility` for error payloads with a dedicated manual serializer:
 | `Systems/ErrorReportJson.cs` | `SerializePayload()` builds JSON via `StringBuilder` with invariant-culture numbers and escaped strings |
 | `tests/Dread.ErrorReportJson.Tests/` | xUnit golden tests (CI: `dotnet test` after mod build) |
 
-Both production batch flush (`SendBatch` / `UnityWebRequest`) and TestCrash sync POST (`TryPostPayloadSync` / `HttpWebRequest`, ADR-0012) call `ErrorReportJson.SerializePayload()`.
+Both production batch flush (`SendBatch` / `ErrorReportUploader.TryPostPayloadSync` / `HttpWebRequest`) and TestCrash sync POST (`TryPostPayloadSync`, ADR-0012) call `ErrorReportJson.SerializePayload()`. `UnityWebRequest` is not used for batch flush (stub-built DLLs can throw `BadImageFormatException: Method has zero rva`). See roadmap **ERR-4** for a non-blocking or UWR-when-available follow-up.
 
 Validation before POST: payload must contain `"Reports":[` (non-empty array allowed; empty array is valid JSON).
 
 ### Send failure handling
 
-If batch serialization fails, `UnityWebRequest` fails, or the Worker returns HTTP 200 with per-report `status: "error"` in `results`, `RequeueFailedBatch()` appends the affected report(s) back to `_buffer` and logs a warning. `FlushNow()` skips starting a new send while `_sendInProgress` is true.
+If batch serialization fails, HTTP POST fails, or the Worker returns HTTP 200 with per-report `status: "error"` in `results`, `RequeueFailedBatch()` appends the affected report(s) back to `_buffer` and logs a warning. `FlushNow()` skips starting a new send while `_sendInProgress` is true.
+
+`OnLogMessageReceived` ignores `BadImageFormatException` lines containing `zero rva` or `UnityEngine.Networking` in the stack to stop feedback loops when stub builds cannot use UWR.
 
 TestCrash log lines are ignored in `IsIgnoredSpam()` so `Debug.LogException` does not enqueue a duplicate async report; the sync POST path still sends the deliberate test payload.
 
