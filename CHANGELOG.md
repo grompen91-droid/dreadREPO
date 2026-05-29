@@ -29,6 +29,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ![Status](https://img.shields.io/badge/status-development-yellow?style=flat-square)
 
+### Fixed
+- GitHub boilerplate: valid Dependabot config (NuGet, npm, Actions), MIT `LICENSE` aligned with README, project `SECURITY.md`, CodeQL C# build via stubs
+
 > **Highlight:** Honest mod compatibility docs, opt-in telemetry, Compatibility mode for broken profiles, and host-only monster patch guards.
 
 <details>

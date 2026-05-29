@@ -2,20 +2,30 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+Security fixes target the latest release on Thunderstore and `master`. Older mod versions are not supported unless noted in a release advisory.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+| Version | Supported |
+| ------- | --------- |
+| Latest Thunderstore release | Yes |
+| `master` (pre-release) | Best effort |
+| Older releases | No |
 
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
+**Do not open a public GitHub issue for undisclosed security problems.**
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+1. Open a [private security advisory](https://github.com/grompen91-droid/dreadREPO/security/advisories/new) on this repository, or email the maintainer via the contact on their GitHub profile.
+2. Include steps to reproduce, affected versions, and impact (game client, Cloudflare worker, MCP server, etc.).
+3. Allow up to 7 days for an initial response. Critical issues in the error-reporter worker or telemetry path get priority.
+
+We will confirm receipt, assess severity, and coordinate a fix and release. Credit is given in the changelog when reporters want it.
+
+## Scope
+
+| Component | Notes |
+| --------- | ----- |
+| Dread BepInEx plugin (`Dread.dll`) | In-game mod behavior, config, patches |
+| Error reporter worker (`workers/error-reporter`) | Cloudflare Worker proxy for opt-in telemetry |
+| Dread MCP server (`dread-mcp-server`) | Local dev/debug tooling only |
+
+Out of scope: vanilla R.E.P.O., BepInEx, other mods, and Thunderstore hosting.
