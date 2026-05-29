@@ -23,7 +23,7 @@ Work top to bottom within each phase. Do not skip **Depends on** unless the issu
 
 | ID | Item | Notes |
 |----|------|-------|
-| (compat) | **REPOConfig slider labels** | Temporary fix in `RepoConfigSliderLabelCompat.cs`; user-verified. Remove when DBG-4 upstream lands. |
+| (compat) | **REPOConfig slider labels** | `RepoConfigSliderLabelCompat` when REPOConfig is loaded: restores names at x=100, compact row. Names readable; left-column alignment vs toggles still imperfect. **Do not remove** until DBG-4 upstream or verified A/B without compat. |
 | DOCS-1 | **Root `CONTEXT.md`** | Glossary + file map ([#174](https://github.com/grompen91-droid/dreadREPO/issues/174), PR #179) |
 
 ### Phase 1: Foundation (FINISHED)
@@ -37,7 +37,7 @@ Work top to bottom within each phase. Do not skip **Depends on** unless the issu
 
 | Order | ID | Priority | Issue | Depends on | Why |
 |-------|-----|----------|-------|------------|-----|
-| 4 | ARCH-1 | **P0** | [#167](https://github.com/grompen91-droid/dreadREPO/issues/167) | DOCS-1 (soft) | Split god-files; required before ARCH-3 |
+| 4 | ARCH-1 | **P0** | [#167](https://github.com/grompen91-droid/dreadREPO/issues/167) | DOCS-1 (soft) | Split god-files; PR open; required before ARCH-3 |
 | 5 | ARCH-2 | P1 | [#168](https://github.com/grompen91-droid/dreadREPO/issues/168) | ARCH-1 (soft) | Fewer reflection paths; easier stub/full builds |
 
 ### Phase 3: Harden core and telemetry product
@@ -111,7 +111,7 @@ flowchart TD
 | DBG-1 | P2 | **Refine debug panel UX** | Draggable panel, resize/snap, clearer layout | idea | [#163](https://github.com/grompen91-droid/dreadREPO/issues/163) |
 | DBG-2 | P2 | **Richer overlay configuration** | Forgiving defaults; cfg/REPOConfig layout | idea | [#164](https://github.com/grompen91-droid/dreadREPO/issues/164) |
 | DBG-3 | P2 | **Font fixes** | Proton/Linux font fallback and sizing | idea | [#165](https://github.com/grompen91-droid/dreadREPO/issues/165) |
-| DBG-4 | P3 | **REPOConfig slider labels (upstream)** | Remove `RepoConfigSliderLabelCompat` | blocked | [#166](https://github.com/grompen91-droid/dreadREPO/issues/166) |
+| DBG-4 | P3 | **REPOConfig slider labels (upstream)** | Remove `RepoConfigSliderLabelCompat` after REPOConfig/MenuLib pass descriptions or match toggle layout. Optional Dread polish (left align) only if compat stays; pivot/alignment experiments reverted 2026-05-30 | blocked | [#166](https://github.com/grompen91-droid/dreadREPO/issues/166) |
 | DBG-5 | P2 | **Extensible overlay panel API** | Make it trivial for other features to add overlay content without editing `DebugOverlaySystem`: a data-driven section/row registry (e.g. `IOverlayPanel` / `RegisterSection`) supporting read-only rows and interactive controls (toggles/sliders) so settings and future systems plug in. Decouples row data from rendering. | idea | (to file) |
 
 See also: `docs/repo-config-slider-labels-investigation.md`.
@@ -122,7 +122,7 @@ See also: `docs/repo-config-slider-labels-investigation.md`.
 
 | ID | Priority | Item | Notes | Status | Issue |
 |----|----------|------|-------|--------|-------|
-| ARCH-1 | P0 | **Refactor into manageable files** | Split large systems; thin `Plugin` / `DreadSystemInitializer` | done | [#167](https://github.com/grompen91-droid/dreadREPO/issues/167) |
+| ARCH-1 | P0 | **Refactor into manageable files** | Split large systems; thin `Plugin` / `DreadSystemInitializer` | in-progress | [#167](https://github.com/grompen91-droid/dreadREPO/issues/167) |
 | ARCH-4 | P3 | **External mod API + feature modules** | Optional cfg feature packs; documented BepInEx soft-dependency API; semver + ADR; after ARCH-3 | idea | (to file) |
 | ARCH-2 | P1 | **Reduce DLL / reflection surface** | Compile-time refs; document stub vs full build | idea | [#168](https://github.com/grompen91-droid/dreadREPO/issues/168) |
 | ARCH-3 | P0 | **Extensibility + hardened core** | Extension points, fail-safe init, compat patterns | idea | [#175](https://github.com/grompen91-droid/dreadREPO/issues/175) |

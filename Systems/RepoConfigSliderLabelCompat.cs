@@ -195,10 +195,11 @@ namespace Dread.Systems
             {
                 var tmpType = labelTmp.GetType();
                 var alignmentProp = tmpType.GetProperty("alignment", BindingFlags.Instance | BindingFlags.Public);
-                if (alignmentProp != null)
+                if (alignmentProp != null && alignmentProp.PropertyType.IsEnum)
                 {
-                    var leftMid = Enum.Parse(alignmentProp.PropertyType, "Left");
-                    alignmentProp.SetValue(labelTmp, leftMid);
+                    alignmentProp.SetValue(
+                        labelTmp,
+                        Enum.Parse(alignmentProp.PropertyType, "Left"));
                 }
 
                 var overflowProp = tmpType.GetProperty("overflowMode", BindingFlags.Instance | BindingFlags.Public);
