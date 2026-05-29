@@ -28,16 +28,16 @@ _Avoid_: "settings file" when you mean the on-disk cfg; editing cfg without know
 How chatty Dread is in the BepInEx log: None, Error, Debug, or Verbose. Debug is the normal default; Verbose is for diagnosis (per-system trace lines).
 _Avoid_: confusing with global BepInEx log level; "enable logging" when you mean only Dread's **Mod logging**
 
-**Compatibility mode** (in development):
-Planned safe-degradation when optional mods or load order would otherwise break Dread: skip risky patches, keep core features up. Tracked under ARCH-3.
-_Avoid_: **Mod compatibility** (that term means working with modded enemies); implying a shipped on/off toggle before it exists
+**Compatibility mode**:
+Config toggle (`10. Compatibility`) that keeps ambient audio while skipping monster Harmony patches, adrenaline/panic sprint mutation, and psychotic break. See [docs/agents/guides/compatibility.md](docs/agents/guides/compatibility.md) and ADR-0016.
+_Avoid_: **Mod compatibility** (that term means working with modded enemies); using "compat" only for REPOConfig slider work
 
 **Compat layer**:
-Pattern for living next to other mods: detect optional dependencies after assemblies load, guard host-only behavior, apply Harmony only when safe. Part of ARCH-3 extensibility work.
+Pattern for living next to other mods: detect optional dependencies after assemblies load, guard host-only behavior, apply Harmony only when safe. Documented in [docs/adr/0016-arch-3-extension-model.md](docs/adr/0016-arch-3-extension-model.md).
 _Avoid_: "compat mode" when you mean only REPOConfig or slider label work
 
-**System initializer** (in development):
-Spawns runtime systems once Unity UI is available, so early menu scenes do not break UI-dependent systems. Replaces ad-hoc startup in plugin entry on branches that wire it.
+**System initializer**:
+`DreadSystemInitializer` spawns runtime systems from `DreadSystemRegistry` once Unity UI is available. Boot order and contracts: [docs/adr/0016-arch-3-extension-model.md](docs/adr/0016-arch-3-extension-model.md), [specs/002-arch-3-extensible-core/contracts/system-lifecycle.md](specs/002-arch-3-extensible-core/contracts/system-lifecycle.md).
 _Avoid_: blaming **Plugin** alone when init was deferred or a single system failed in isolation
 
 ### Sessions and scenes

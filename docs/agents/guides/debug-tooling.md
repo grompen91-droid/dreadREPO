@@ -47,6 +47,20 @@ Tools map 1:1 to TCP commands (`dread_ping`, `dread_verify`, `dread_set_config`,
 
 Agent workflow: [verify-dread.md](../verify-dread.md) Tier 1, checklist JSON Tier 1 `mcp_sequence`.
 
+## `DreadRuntimeState` (overlay + MCP)
+
+Internal static snapshot updated by gameplay systems. Supported fields (ARCH-3, see [ADR-0016](../../adr/0016-arch-3-extension-model.md)):
+
+| Field | Source system | Use |
+|-------|---------------|-----|
+| `NearestEnemyDist` | Tension | Proximity HUD |
+| `AdrenalineActive`, `PanicSprintActive`, `PanicSprintCooldown` | Tension | Sprint modifiers |
+| `PsychoticBreak*` (enabled, episode, timers, threat/enemy counts, clips) | Psychotic break | Episode HUD |
+| `AudioClipCount`, `AudioNextPlayIn` | Audio Dread | Ambient scheduler |
+| `DreadPatchCount` | Overlay refresh | Harmony count |
+
+Add fields here when overlay or `get_runtime_state` needs new live data; avoid new reflection in debug paths.
+
 ## Debug overlay (`Systems/DebugOverlay/`)
 
 | Setting | Behavior |

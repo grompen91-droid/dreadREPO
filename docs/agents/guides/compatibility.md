@@ -58,6 +58,20 @@ Linux/Proton: ship full Thunderstore folder. Missing `System.Memory.dll` caused 
 3. Log verbose once when skipped
 4. Document in [mod-compatibility.md](../../mod-compatibility.md) if user-visible
 
+## ARCH-3 manual matrix (issue #175)
+
+Record results in the PR when changing init or compat paths. Stub CI covers Tier 0 only; full-game rows are manual.
+
+| Scenario | Steps | Expected |
+|----------|-------|----------|
+| REPOConfig absent | Profile without REPOConfig/MenuLib | Dread loads; `RepoConfigSliderLabelCompat` no-ops; verbose may note skip |
+| Compatibility mode on | `10. Compatibility` → `CompatibilityMode` true | Monster patches off in `Plugin.ApplyMonsterPatches`; ambient runs; psychotic break/tension mutations off per table above |
+| Non-host client | Join host as client | Local audio/tension OK; monster Harmony postfixes gated by `HarmonyPatchCompat.IsMasterClient()` |
+| Foreign patch owner | Another mod patches same method; `SkipConflictingPatches` true | Dread skips apply; one log line |
+| Stub CI | `verify-dread.ps1` Tier 0 | Build + `arch3_try_add_system` pass |
+
+Spec kit copy: [specs/002-arch-3-extensible-core/quickstart.md](../../../specs/002-arch-3-extensible-core/quickstart.md).
+
 ## Isolation test (for issues)
 
 1. Profile with only BepInEx + Dread
@@ -67,5 +81,6 @@ Linux/Proton: ship full Thunderstore folder. Missing `System.Memory.dll` caused 
 
 ## ADRs
 
+- `docs/adr/0016-arch-3-extension-model.md` (registry, boot order, ARCH-4 boundary)
 - `docs/adr/0004-host-authoritative-monster-changes.md`
 - `docs/adr/0001-remove-repolib-and-broken-systems.md` (removed broken visual systems)
