@@ -10,8 +10,8 @@
     "deploy": "wrangler deploy"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.8.0",
-    "vitest": "^3.2.0",
+    "@cloudflare/vitest-pool-workers": "^0.16.10",
+    "vitest": "^4.1.7",
     "wrangler": "^4.0.0"
   }
 }
