@@ -1,17 +1,37 @@
+# Code scanning for Dread: C# mod (stub build), JS/TS (MCP + worker), and workflow Actions.
 name: CodeQL
 
 on:
   push:
     branches: [master]
+    paths:
+      - "**/*.cs"
+      - "**/*.csproj"
+      - "dread-mcp-server/**"
+      - "workers/error-reporter/**"
+      - ".github/workflows/**"
+      - ".github/scripts/**"
   pull_request:
     branches: [master]
+    paths:
+      - "**/*.cs"
+      - "**/*.csproj"
+      - "dread-mcp-server/**"
+      - "workers/error-reporter/**"
+      - ".github/workflows/**"
+      - ".github/scripts/**"
   schedule:
-    - cron: '31 17 * * 1'
+    - cron: "31 17 * * 1"
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       security-events: write
       packages: read
@@ -39,8 +59,16 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - name: Generate stubs
+      - name: Cache generated stubs
         if: matrix.language == 'csharp'
+        id: cache-stubs
+        uses: actions/cache@v4
+        with:
+          path: .github/stubs/refs
+          key: stubs-${{ hashFiles('.github/scripts/gen-stubs.ps1', '.github/scripts/UnityEngine_stubs.cs', '.github/scripts/UnityEngine.UI_stubs.cs', '.github/scripts/UnityEngine.UIModule_stubs.cs', '.github/scripts/Assembly-CSharp_stubs.cs', '.github/scripts/UnityEngine.UnityWebRequestModule_stubs.cs', '.github/scripts/UnityEngine.UnityWebRequestAudioModule_stubs.cs', '.github/scripts/verify-stubs/Program.cs', '.github/scripts/verify-stubs/verify-stubs.csproj', 'Dread.csproj') }}
+
+      - name: Generate stubs
+        if: matrix.language == 'csharp' && steps.cache-stubs.outputs.cache-hit != 'true'
         shell: pwsh
         run: .github/scripts/gen-stubs.ps1
 
@@ -60,6 +88,7 @@ jobs:
             -p:BepInExDir="$refsDir" \
             -p:DeployToProfile=false \
             -p:DeployToDist=false
+          dotnet test tests/Dread.ErrorReportJson.Tests/Dread.ErrorReportJson.Tests.csproj -c Release --nologo
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4

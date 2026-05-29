@@ -1,28 +1,106 @@
-# Dependabot version updates for NuGet, npm, and GitHub Actions.
+# Dread (dreadREPO): dependency updates for the BepInEx mod, MCP server, error-reporter worker, and CI.
 # https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 
 version: 2
 updates:
+  # Dread.dll + ErrorReportJson tests (NVorbis, xunit, ReferenceAssemblies, Test.Sdk)
   - package-ecosystem: nuget
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+      day: monday
+      time: "09:00"
+      timezone: Etc/UTC
+    target-branch: master
+    labels:
+      - dependencies
+    commit-message:
+      prefix: deps
+      include: scope
+    open-pull-requests-limit: 3
+    groups:
+      dotnet-test:
+        patterns:
+          - "xunit*"
+          - "Microsoft.NET.Test.Sdk"
+          - "Microsoft.TestPlatform*"
+      dotnet-mod:
+        patterns:
+          - "NVorbis"
+          - "Microsoft.NETFramework.ReferenceAssemblies"
 
+  # Agent MCP server (docs/agents README)
   - package-ecosystem: npm
     directory: /dread-mcp-server
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+      day: monday
+      time: "09:30"
+      timezone: Etc/UTC
+    target-branch: master
+    labels:
+      - dependencies
+    commit-message:
+      prefix: deps
+      prefix-development: deps
+      include: scope
+    open-pull-requests-limit: 3
+    groups:
+      mcp-runtime:
+        dependency-type: production
+        patterns:
+          - "@modelcontextprotocol/*"
+          - "zod"
+      mcp-tooling:
+        dependency-type: development
+        patterns:
+          - "typescript"
+          - "tsx"
+          - "@types/*"
 
+  # Cloudflare Worker for opt-in error telemetry (ADR-0010)
   - package-ecosystem: npm
     directory: /workers/error-reporter
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+      day: monday
+      time: "10:00"
+      timezone: Etc/UTC
+    target-branch: master
+    labels:
+      - dependencies
+    commit-message:
+      prefix: deps
+      prefix-development: deps
+      include: scope
+    open-pull-requests-limit: 3
+    groups:
+      worker-cloudflare:
+        patterns:
+          - "wrangler"
+          - "@cloudflare/*"
+      worker-test:
+        dependency-type: development
+        patterns:
+          - "vitest"
+          - "@cloudflare/vitest-pool-workers"
 
+  # CI/CD workflows (ci.yml, cd.yml, codeql.yml, deploy-worker.yml, smoke-test.yml)
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 10
+      day: tuesday
+      time: "09:00"
+      timezone: Etc/UTC
+    target-branch: master
+    labels:
+      - dependencies
+    commit-message:
+      prefix: deps
+      include: scope
+    open-pull-requests-limit: 5
+    groups:
+      github-actions:
+        patterns:
+          - "*"

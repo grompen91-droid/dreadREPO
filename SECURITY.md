@@ -1,31 +1,45 @@
 # Security Policy
 
+**Dread** is a BepInEx mod for [R.E.P.O.](https://thunderstore.io/c/repo/) plus optional tooling in this monorepo. This policy covers security issues in our code, not the base game or Thunderstore.
+
 ## Supported Versions
 
-Security fixes target the latest release on Thunderstore and `master`. Older mod versions are not supported unless noted in a release advisory.
+Patches ship via Thunderstore (`elytraking/Dread`) and GitHub releases on `master`. Only the latest published mod version receives security fixes unless a release advisory says otherwise.
 
-| Version | Supported |
-| ------- | --------- |
-| Latest Thunderstore release | Yes |
-| `master` (pre-release) | Best effort |
-| Older releases | No |
+| Component | Supported |
+| --------- | --------- |
+| Latest Thunderstore / GitHub release of **Dread** | Yes |
+| `master` (unreleased commits) | Best effort |
+| Older mod versions | No |
+
+Game target: R.E.P.O. builds compatible with BepInEx 5.4.x (see `manifest.json` dependency on `BepInEx-BepInExPack-5.4.2100`).
 
 ## Reporting a Vulnerability
 
-**Do not open a public GitHub issue for undisclosed security problems.**
+**Do not file a public issue for undisclosed vulnerabilities.**
 
-1. Open a [private security advisory](https://github.com/grompen91-droid/dreadREPO/security/advisories/new) on this repository, or email the maintainer via the contact on their GitHub profile.
-2. Include steps to reproduce, affected versions, and impact (game client, Cloudflare worker, MCP server, etc.).
-3. Allow up to 7 days for an initial response. Critical issues in the error-reporter worker or telemetry path get priority.
+1. Open a [private security advisory](https://github.com/grompen91-droid/dreadREPO/security/advisories/new) on this repository.
+2. Describe impact, affected component, reproduction steps, and mod version (from `manifest.json` / in-game log).
+3. Expect an initial response within **7 days**. Issues affecting **opt-in telemetry** (`workers/error-reporter`) or remote ingestion are prioritized.
 
-We will confirm receipt, assess severity, and coordinate a fix and release. Credit is given in the changelog when reporters want it.
+We will confirm, assess severity, prepare a fix on `master`, and coordinate a Thunderstore release when needed. Reporters who want credit are named in `CHANGELOG.md`.
 
-## Scope
+## In Scope
 
-| Component | Notes |
-| --------- | ----- |
-| Dread BepInEx plugin (`Dread.dll`) | In-game mod behavior, config, patches |
-| Error reporter worker (`workers/error-reporter`) | Cloudflare Worker proxy for opt-in telemetry |
-| Dread MCP server (`dread-mcp-server`) | Local dev/debug tooling only |
+| Path / artifact | Risk surface |
+| --------------- | ------------ |
+| `Systems/`, `Plugin.cs`, `Dread.dll` | Harmony patches, config, in-game behavior |
+| `workers/error-reporter/` | Cloudflare Worker proxy; handles opt-in crash/telemetry payloads (see ADR-0010 in `docs/`) |
+| `dread-mcp-server/` | Local MCP bridge for dev/debug; not shipped to players |
+| `.github/workflows/` | CI/CD secrets and supply chain |
 
-Out of scope: vanilla R.E.P.O., BepInEx, other mods, and Thunderstore hosting.
+## Out of Scope
+
+- R.E.P.O., Unity, Steam, or other mods
+- BepInEx itself (report upstream)
+- Thunderstore hosting and CDN
+- Audio asset licensing (see mod docs; CC sources on freesound.org)
+
+## Safe Disclosure
+
+If you are unsure whether something is a vulnerability (e.g. tension/audio behavior that feels exploitable but is by design), open a **private advisory** anyway. We can reclassify or close it without public disclosure.
