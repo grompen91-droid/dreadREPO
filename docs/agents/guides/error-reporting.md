@@ -1,6 +1,6 @@
 # Error reporting
 
-Opt-in telemetry from game to Cloudflare Worker to GitHub issues. Default **off** (ADR-0010). Code: `ErrorReporterSystem.cs`, `ErrorReportJson.cs`, `workers/error-reporter/`.
+Opt-in telemetry from game to Cloudflare Worker to GitHub issues. Default **off** (ADR-0010). Code: `Systems/ErrorReporting/` (`ErrorReporterSystem.cs`, `ErrorReportLogQueue.cs`, `ErrorReportPayloadCapture.cs`, `ErrorReportUploader.cs`), `Systems/ErrorReportJson.cs`, `workers/error-reporter/`.
 
 ## Pipeline
 

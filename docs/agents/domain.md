@@ -41,6 +41,20 @@ Multi-context repo (presence of `CONTEXT-MAP.md` at the root):
         └── docs/adr/
 ```
 
+## Runtime file map (ARCH-1)
+
+Large systems are split under `Systems/` subfolders; type names and `Dread.Systems` namespace are unchanged.
+
+| Area | Path |
+|------|------|
+| Harmony patches | `Systems/Patches/*.cs` |
+| Psychotic break | `Systems/PsychoticBreak/PsychoticBreakSystem.cs` (+ Trigger, Episode, Overlay, PlayerLockdown, Audio partials) |
+| Error reporting | `Systems/ErrorReporting/ErrorReporterSystem.cs` (+ LogQueue, PayloadCapture, Uploader) |
+| Error JSON/types | `Systems/ErrorReportJson.cs`, `Systems/ErrorReportTypes.cs` |
+| Debug overlay | `Systems/DebugOverlay/DebugOverlaySystem.cs` (+ Panel, Styles partials) |
+| Monster audio loop | `Systems/MonsterOverhaulSystem.cs` |
+| Other systems | `Systems/*.cs` (flat) |
+
 ## Use the glossary's vocabulary
 
 When your output names a domain concept (in an issue title, a refactor proposal, a hypothesis, a test name), use the term as defined in `CONTEXT.md`. Don't drift to synonyms the glossary explicitly avoids.

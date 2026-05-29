@@ -1,6 +1,6 @@
 # Monster overhaul
 
-**Monster Overhaul** covers host-side aggression Harmony patches and client-side periodic enemy audio treatment. Code: `Systems/MonsterOverhaulSystem.cs` (patches in same file).
+**Monster Overhaul** covers host-side aggression Harmony patches and client-side periodic enemy audio treatment. Code: `Systems/MonsterOverhaulSystem.cs` (audio loop); Harmony patches in `Systems/Patches/`.
 
 ## Two halves
 
