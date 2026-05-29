@@ -117,7 +117,7 @@ The VM needs **.NET SDK 8.0.x** and **PowerShell 7+** (`pwsh`) installed before 
 
 ### Building without the game
 
-Since R.E.P.O. is not installed in the cloud VM, always build against generated stubs:
+Since R.E.P.O. is not installed in the cloud VM, always build against generated stubs. Reflection and stub limitations: [docs/agents/guides/reflection-inventory.md](docs/agents/guides/reflection-inventory.md).
 
 ```bash
 pwsh -NoProfile .github/scripts/gen-stubs.ps1

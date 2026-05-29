@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 
@@ -10,6 +11,10 @@ namespace Dread.Systems
     internal static class PlayerTumbleCompat
     {
         private static bool _forcedActive;
+        private static readonly Dictionary<Type, FieldInfo[]> TumbleBoolFieldsByType = new();
+        private static readonly Dictionary<Type, FieldInfo?> AvatarTumbleFieldByType = new();
+        private static readonly Dictionary<Type, MethodInfo?> TumbleSetMethodByType = new();
+        private static readonly Dictionary<Type, MethodInfo?> TumbleRequestMethodByType = new();
 
         private static readonly string[] TumbleActiveMemberNames =
         {
@@ -44,17 +49,8 @@ namespace Dread.Systems
                 catch { }
             }
 
-            foreach (var field in tumble.GetType().GetFields(
-                         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+            foreach (var field in GetTumbleBoolFields(tumble.GetType()))
             {
-                if (field.FieldType != typeof(bool))
-                    continue;
-
-                var name = field.Name;
-                if (name.IndexOf("tumble", StringComparison.OrdinalIgnoreCase) < 0
-                    && name.IndexOf("fall", StringComparison.OrdinalIgnoreCase) < 0)
-                    continue;
-
                 try
                 {
                     if ((bool)field.GetValue(tumble)!)
@@ -119,20 +115,18 @@ namespace Dread.Systems
             }
             catch { }
 
-            foreach (var field in avatar.GetType().GetFields(
-                         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+            var tumbleField = GetAvatarTumbleField(avatar.GetType());
+            if (tumbleField == null)
+                return null;
+
+            try
             {
-                if (!field.Name.Equals("tumble", StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                try
-                {
-                    return field.GetValue(avatar);
-                }
-                catch { }
+                return tumbleField.GetValue(avatar);
             }
-
-            return null;
+            catch
+            {
+                return null;
+            }
         }
 
         private static object? GetLocalAvatar(PlayerController pc)
@@ -174,9 +168,8 @@ namespace Dread.Systems
         private static bool InvokeTumble(object tumble, bool active)
         {
             var type = tumble.GetType();
-            foreach (var name in new[] { "TumbleSet", "TumbleRequest" })
+            foreach (var method in new[] { GetTumbleSetMethod(type), GetTumbleRequestMethod(type) })
             {
-                var method = AccessTools.Method(type, name, new[] { typeof(bool), typeof(bool) });
                 if (method == null)
                     continue;
 
@@ -189,6 +182,83 @@ namespace Dread.Systems
             }
 
             return false;
+        }
+
+        private static FieldInfo[] GetTumbleBoolFields(Type type)
+        {
+            lock (TumbleBoolFieldsByType)
+            {
+                if (TumbleBoolFieldsByType.TryGetValue(type, out var cached))
+                    return cached;
+
+                var matches = new List<FieldInfo>();
+                foreach (var field in type.GetFields(
+                             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+                {
+                    if (field.FieldType != typeof(bool))
+                        continue;
+
+                    var name = field.Name;
+                    if (name.IndexOf("tumble", StringComparison.OrdinalIgnoreCase) < 0
+                        && name.IndexOf("fall", StringComparison.OrdinalIgnoreCase) < 0)
+                        continue;
+
+                    matches.Add(field);
+                }
+
+                var result = matches.ToArray();
+                TumbleBoolFieldsByType[type] = result;
+                return result;
+            }
+        }
+
+        private static FieldInfo? GetAvatarTumbleField(Type avatarType)
+        {
+            lock (AvatarTumbleFieldByType)
+            {
+                if (AvatarTumbleFieldByType.TryGetValue(avatarType, out var cached))
+                    return cached;
+
+                FieldInfo? match = null;
+                foreach (var field in avatarType.GetFields(
+                             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+                {
+                    if (!field.Name.Equals("tumble", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    match = field;
+                    break;
+                }
+
+                AvatarTumbleFieldByType[avatarType] = match;
+                return match;
+            }
+        }
+
+        private static MethodInfo? GetTumbleSetMethod(Type tumbleType)
+        {
+            lock (TumbleSetMethodByType)
+            {
+                if (TumbleSetMethodByType.TryGetValue(tumbleType, out var cached))
+                    return cached;
+
+                var method = AccessTools.Method(tumbleType, "TumbleSet", new[] { typeof(bool), typeof(bool) });
+                TumbleSetMethodByType[tumbleType] = method;
+                return method;
+            }
+        }
+
+        private static MethodInfo? GetTumbleRequestMethod(Type tumbleType)
+        {
+            lock (TumbleRequestMethodByType)
+            {
+                if (TumbleRequestMethodByType.TryGetValue(tumbleType, out var cached))
+                    return cached;
+
+                var method = AccessTools.Method(tumbleType, "TumbleRequest", new[] { typeof(bool), typeof(bool) });
+                TumbleRequestMethodByType[tumbleType] = method;
+                return method;
+            }
         }
     }
 }

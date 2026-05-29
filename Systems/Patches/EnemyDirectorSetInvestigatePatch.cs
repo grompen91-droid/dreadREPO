@@ -14,8 +14,8 @@ namespace Dread.Systems
             if (_original != null || DreadConfig.CompatibilityMode.Value)
                 return;
 
-            var type = AccessTools.TypeByName("EnemyDirector");
-            _original = type != null ? AccessTools.Method(type, "SetInvestigate") : null;
+            var type = typeof(EnemyDirector);
+            _original = AccessTools.Method(type, "SetInvestigate");
             if (_original == null)
             {
                 LoggingService.LogWarning("[Dread] EnemyDirector.SetInvestigate not found; investigate patch skipped");

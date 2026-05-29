@@ -82,6 +82,7 @@ Use `SemiFunc.MenuLevel()` for menu/main UI. `MonsterOverhaulSystem` also tracks
 | Audio assets | `audio/*.ogg` |
 | ADRs | `docs/adr/` |
 | Per-system agent guides | `docs/agents/guides/README.md` |
+| Reflection inventory (ARCH-2) | `docs/agents/guides/reflection-inventory.md` |
 | Agent verify | `scripts/verify-dread.ps1`, `docs/agents/verify-dread.md` |
 
 ## Adding a new runtime system
@@ -92,6 +93,53 @@ Use `SemiFunc.MenuLevel()` for menu/main UI. `MonsterOverhaulSystem` also tracks
 4. Gate on `DreadConfig` + `CompatibilityMode` + menu level as needed
 5. Publish debug state via `DreadRuntimeState` if overlay/MCP should show it
 6. Document terms in `CONTEXT.md` if you introduce new domain language
+
+## Build profiles (stub vs full)
+
+*Estimated read time: ~3 minutes for this section; ~5 minutes with [reflection-inventory.md](reflection-inventory.md) hot-path summary.*
+
+Dread supports two MSBuild profiles. Full contract: [specs/001-arch-2-reduce-reflection/contracts/build-profiles.md](../../../specs/001-arch-2-reduce-reflection/contracts/build-profiles.md).
+
+| Profile | `GameDir` | Use when |
+|---------|-----------|----------|
+| **Stub** (CI / cloud) | `.github/stubs/refs` | No R.E.P.O. install; agents and GitHub Actions |
+| **Full** (local) | Game `REPO_Data/Managed` | Stronger compile-time checks; deploy to r2modman profile |
+
+### Stub profile (default for agents)
+
+```bash
+pwsh -NoProfile .github/scripts/gen-stubs.ps1
+dotnet build Dread.csproj -c Release \
+  -p:GameDir=.github/stubs/refs \
+  -p:BepInExDir=.github/stubs/refs \
+  -p:DeployToProfile=false \
+  -p:DeployToDist=false
+pwsh -NoProfile ./scripts/verify-dread.ps1
+```
+
+Stub builds may still use **runtime** reflection for optional mods (REPOConfig, MenuLib) and deferred Unity UI. Required sites are listed in [reflection-inventory.md](reflection-inventory.md).
+
+### Full profile (Linux r2modman example)
+
+Replace paths with your Steam install and profile name:
+
+```bash
+dotnet build Dread.csproj -c Release \
+  -p:GameDir="$HOME/.local/share/Steam/steamapps/common/REPO/REPO_Data/Managed" \
+  -p:BepInExDir="$HOME/.config/r2modmanPlus-local/REPO/profiles/<profile>/BepInEx" \
+  -p:PluginDir="$HOME/.config/r2modmanPlus-local/REPO/profiles/<profile>/BepInEx/plugins/elytraking-Dread" \
+  -p:DeployToProfile=true
+```
+
+After deploy, smoke: launch R.E.P.O. from that profile, confirm BepInEx loads Dread, menu level does not throw, start a run if possible.
+
+### Verification tiers
+
+| Tier | Stub | Full game |
+|------|------|-----------|
+| Tier 0 (`verify-dread.ps1`) | Required for merge | Not required in CI |
+| Tier 1 MCP | Optional | Game running + debug server |
+| In-game smoke | Optional | Full build + deploy |
 
 ## Build (agents without game install)
 

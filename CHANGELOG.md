@@ -30,6 +30,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ![Status](https://img.shields.io/badge/status-development-yellow?style=flat-square)
 
 ### Changed
+- **ARCH-2 (#168):** Reflection inventory in `docs/agents/guides/reflection-inventory.md`; stub vs full build docs in `mod-architecture.md`; Harmony patches use `typeof` for stub-covered game types (`EnemyNavMeshAgent`, `PlayerController`, `EnemyDirector`); cached compat reflection for player crouch/tumble checks; `SemiFunc.IsMasterClient` resolved at type load (no behavior change)
 - **ARCH-1 (#167):** Internal file layout only: Harmony patches under `Systems/Patches/`; psychotic break, error reporting, and debug overlay split into focused files under `Systems/PsychoticBreak/`, `Systems/ErrorReporting/`, and `Systems/DebugOverlay/` (no player-facing behavior change)
 - **Worker tests:** Vitest 4.1 + `@cloudflare/vitest-pool-workers` 0.16 with `cloudflareTest()` config (Cloudflare docs); worker package is ESM
 - **MCP server:** Zod 4 `z.strictObject()` for tool input schemas (replaces deprecated `.strict()`)

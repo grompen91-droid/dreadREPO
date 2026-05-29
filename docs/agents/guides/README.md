@@ -11,6 +11,7 @@ Current-state reference for working in the Dread codebase. These replace the old
 | Guide | Topics |
 |-------|--------|
 | [mod-architecture.md](mod-architecture.md) | Plugin boot, system hosts, netcode, adding systems |
+| [reflection-inventory.md](reflection-inventory.md) | ARCH-2: reflection sites, stub/full, hot paths |
 | [audio-dread-and-loading.md](audio-dread-and-loading.md) | Ambient audio, OGG loading, NVorbis, weights |
 | [monster-overhaul.md](monster-overhaul.md) | Monster audio loop, aggression patches |
 | [tension-and-proximity.md](tension-and-proximity.md) | Proximity scan, adrenaline, panic sprint |
@@ -34,6 +35,7 @@ Current-state reference for working in the Dread codebase. These replace the old
 | Agent verify / MCP | [debug-tooling.md](debug-tooling.md) + [verify-dread.md](../verify-dread.md) |
 | New config knob | [config-and-logging.md](config-and-logging.md) |
 | Mod conflicts | [compatibility.md](compatibility.md) + [mod-compatibility.md](../../mod-compatibility.md) |
+| Reduce reflection / stub CI | [reflection-inventory.md](reflection-inventory.md), [mod-architecture.md](mod-architecture.md) build profiles |
 
 ## Archive (superseded)
 
