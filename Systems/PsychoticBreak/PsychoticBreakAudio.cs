@@ -104,7 +104,7 @@ namespace Dread.Systems
             src.spatialBlend = 0f;
             src.volume = 0.9f;
             src.Play();
-            Destroy(go, _peakScreamClip.length + 1f);
+            Destroy(go, AudioPlayUtil.PlayLifetimeSeconds(_peakScreamClip, src.pitch, paddingSeconds: 1f));
         }
 
         private void SpawnPhantomSound()
