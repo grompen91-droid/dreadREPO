@@ -2,6 +2,7 @@
   "name": "dread-error-reporter",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Cloudflare Worker proxy for Dread error telemetry (ADR-0010)",
   "scripts": {
     "test": "vitest run",
@@ -10,8 +11,8 @@
     "deploy": "wrangler deploy"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.8.0",
-    "vitest": "^3.2.0",
-    "wrangler": "^4.0.0"
+    "@cloudflare/vitest-pool-workers": "^0.16.10",
+    "vitest": "^4.1.0",
+    "wrangler": "^4.95.0"
   }
 }

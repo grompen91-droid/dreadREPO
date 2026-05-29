@@ -121,7 +121,7 @@ Examples:
 Error Handling:
   - Returns "Connection failed" if the game is not running or the debug server is disabled
   - Returns an error response if the server encounters an internal issue`,
-    inputSchema: z.object({}).strict(),
+    inputSchema: z.strictObject({}),
     annotations: {
       readOnlyHint: true,
       destructiveHint: false,
@@ -177,9 +177,9 @@ Examples:
 Error Handling:
   - Returns safely on main menu (null-guarded, no crash)
   - Returns error if server not reachable`,
-    inputSchema: z.object({
+    inputSchema: z.strictObject({
       response_format: z.enum(["json", "text"]).default("json").describe("Output format: 'json' for structured data or 'text' for human-readable summary"),
-    }).strict(),
+    }),
     annotations: {
       readOnlyHint: true,
       destructiveHint: false,
@@ -235,10 +235,10 @@ Examples:
 
 Error Handling:
   - Returns error if server not reachable`,
-    inputSchema: z.object({
+    inputSchema: z.strictObject({
       response_format: z.enum(["json", "text"]).default("json").describe("Output format: 'json' for structured data or 'text' for human-readable summary"),
       section: z.string().optional().describe("Filter grouped sections (e.g. '8. Debug Server', '1. Audio Dread')"),
-    }).strict(),
+    }),
     annotations: {
       readOnlyHint: true,
       destructiveHint: false,
@@ -310,12 +310,12 @@ Examples:
 Error Handling:
   - Returns error code -3 if value cannot be parsed or key is unknown
   - Returns error if server not reachable`,
-    inputSchema: z.object({
+    inputSchema: z.strictObject({
       section: z.string().describe("Debug key prefix (e.g. 'audio', 'debugServer', 'errorReporting')"),
       key: z.string().default("").describe("Debug key suffix (e.g. 'enabled'). Empty for bare keys."),
       value: z.string().describe("New value as string (parsed to the correct type automatically)"),
       response_format: z.enum(["json", "text"]).default("text").describe("Output format"),
-    }).strict(),
+    }),
     annotations: {
       readOnlyHint: false,
       destructiveHint: true,
@@ -362,9 +362,9 @@ Examples:
 
 Error Handling:
   - Returns error if server not reachable`,
-    inputSchema: z.object({
+    inputSchema: z.strictObject({
       response_format: z.enum(["json", "text"]).default("json").describe("Output format"),
-    }).strict(),
+    }),
     annotations: {
       readOnlyHint: true,
       destructiveHint: false,
@@ -426,9 +426,9 @@ Examples:
 Error Handling:
   - Returns empty array if server returns no logs
   - Returns error if server not reachable`,
-    inputSchema: z.object({
+    inputSchema: z.strictObject({
       response_format: z.enum(["json", "text"]).default("json").describe("Output format"),
-    }).strict(),
+    }),
     annotations: {
       readOnlyHint: true,
       destructiveHint: false,
@@ -481,7 +481,7 @@ Examples:
 Error Handling:
   - Returns error if server not reachable
   - After success, subsequent commands will fail with "connection refused"`,
-    inputSchema: z.object({}).strict(),
+    inputSchema: z.strictObject({}),
     annotations: {
       readOnlyHint: false,
       destructiveHint: true,
@@ -510,9 +510,9 @@ Use after game launch with DebugServerEnabled=true to confirm the mod loaded cor
 Examples:
   - Use when: "Did Dread initialize correctly in this session?"
   - Use when: "Autonomous agent verify loop after launching REPO"`,
-    inputSchema: z.object({
+    inputSchema: z.strictObject({
       response_format: z.enum(["json", "text"]).default("json").describe("Output format"),
-    }).strict(),
+    }),
     annotations: {
       readOnlyHint: true,
       destructiveHint: false,
@@ -550,7 +550,7 @@ DESTRUCTIVE: The game process will terminate. Only works when DebugServerEnabled
 
 Examples:
   - Use when: "Verify error telemetry end-to-end"`,
-    inputSchema: z.object({}).strict(),
+    inputSchema: z.strictObject({}),
     annotations: {
       readOnlyHint: false,
       destructiveHint: true,
@@ -575,7 +575,7 @@ Only works when DebugServerEnabled=true and PsychoticBreakSystem is loaded.
 
 Examples:
   - Use when: "Test psychotic break visuals and audio in a live run"`,
-    inputSchema: z.object({}).strict(),
+    inputSchema: z.strictObject({}),
     annotations: {
       readOnlyHint: false,
       destructiveHint: true,
@@ -600,9 +600,9 @@ Lighter than get_state: no scene/player HP queries. Ideal for feature-level auto
 
 Args:
   - response_format ('json' | 'text'): Output format (default: 'json')`,
-    inputSchema: z.object({
+    inputSchema: z.strictObject({
       response_format: z.enum(["json", "text"]).default("json").describe("Output format"),
-    }).strict(),
+    }),
     annotations: {
       readOnlyHint: true,
       destructiveHint: false,

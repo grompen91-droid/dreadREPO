@@ -82,11 +82,8 @@ updates:
       worker-test:
         dependency-type: development
         patterns:
+          - "vitest"
           - "@cloudflare/vitest-pool-workers"
-    ignore:
-      # Vitest 4 breaks @cloudflare/vitest-pool-workers config import (see PR #197)
-      - dependency-name: vitest
-        update-types: ["version-update:semver-major"]
 
   # CI/CD workflows (ci.yml, cd.yml, codeql.yml, deploy-worker.yml, smoke-test.yml)
   - package-ecosystem: github-actions
