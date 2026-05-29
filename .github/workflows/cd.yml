@@ -29,7 +29,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -132,7 +132,7 @@ jobs:
           Set-Content CHANGELOG.md $newChangelog
 
       - name: Upload modified files
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: modified-files
           path: |
@@ -144,7 +144,7 @@ jobs:
           retention-days: 1
 
       - name: Upload release body
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-body
           path: ${{ runner.temp }}/release-body.md
@@ -158,12 +158,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
       - name: Cache NuGet packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
@@ -172,7 +172,7 @@ jobs:
 
       - name: Cache generated stubs
         id: cache-stubs
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: .github/stubs/refs
           key: stubs-${{ hashFiles('.github/scripts/gen-stubs.ps1', '.github/scripts/UnityEngine_stubs.cs', '.github/scripts/UnityEngine.UI_stubs.cs', '.github/scripts/UnityEngine.UIModule_stubs.cs', '.github/scripts/Assembly-CSharp_stubs.cs', '.github/scripts/UnityEngine.UnityWebRequestModule_stubs.cs', '.github/scripts/UnityEngine.UnityWebRequestAudioModule_stubs.cs', '.github/scripts/verify-stubs/Program.cs', '.github/scripts/verify-stubs/verify-stubs.csproj', 'Dread.csproj') }}
@@ -188,7 +188,7 @@ jobs:
           dotnet run --project .github/scripts/verify-stubs -- .github/stubs/refs
 
       - name: Download modified files
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: modified-files
           path: ${{ runner.temp }}/modified
@@ -221,7 +221,7 @@ jobs:
           fi
 
       - name: Upload Dread.dll
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Dread-DLL
           path: bin/Release/net48/Dread.dll
@@ -235,16 +235,16 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download Dread.dll
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: Dread-DLL
           path: ${{ runner.temp }}/dll
 
       - name: Download modified files
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: modified-files
           path: ${{ runner.temp }}/modified
@@ -283,7 +283,7 @@ jobs:
           Write-Host "Package created: $zipPath"
 
       - name: Upload Thunderstore zip
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: thunderstore-zip
           path: ${{ runner.temp }}/*.zip
@@ -297,31 +297,31 @@ jobs:
 
     steps:
       - name: Checkout default branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ github.event.repository.default_branch }}
 
       - name: Download Dread.dll
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: Dread-DLL
           path: ${{ runner.temp }}/dll
 
       - name: Download modified files
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: modified-files
           path: ${{ runner.temp }}/modified
 
       - name: Download release body
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: release-body
           path: ${{ runner.temp }}/release-body
 
       - name: Download Thunderstore zip
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: thunderstore-zip
           path: ${{ runner.temp }}/zip
