@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-30
 
-**Status**: Draft
+**Status**: Implemented (2026-05-30, commit `3f6b2f8`)
 
 **Roadmap**: ARCH-2 (P1) | **Issue**: [#168](https://github.com/grompen91-droid/dreadREPO/issues/168)
 
@@ -67,7 +67,7 @@ Maintainers can read which reflection call sites remain, why each is required, a
 
 ### Functional Requirements
 
-- **FR-001**: Produce and maintain a **reflection inventory** covering all `Systems/` reflection and Harmony `AccessTools` resolution sites, with rationale and hot-path classification.
+- **FR-001**: Produce and maintain a **reflection inventory** covering all `Systems/` reflection, Harmony `AccessTools` resolution, and Harmony `Traverse` usage, with rationale and hot-path classification.
 - **FR-002**: **Prefer compile-time references** for types present in stub or game assemblies where removal of reflection does not break optional-mod or stub builds.
 - **FR-003**: **Reduce hot-path reflection** where ARCH-1 file layout makes safe extraction obvious (e.g. debug overlay patch count already gated on visibility).
 - **FR-004**: **Document stub vs full build** in agent docs: commands, MSBuild properties, what features rely on reflection at runtime, and CI expectations.
@@ -82,9 +82,9 @@ Maintainers can read which reflection call sites remain, why each is required, a
 ## Success Criteria
 
 - **SC-001**: Linux stub CI build and `verify-dread.ps1` Tier 0 pass on ARCH-2 branch.
-- **SC-001**: Reflection inventory merged with zero "unknown" sites.
-- **SC-003**: At least one measurable reduction: fewer per-frame reflection call sites **or** documented justification for each remaining hot-path site.
-- **SC-004**: `docs/agents/guides/mod-architecture.md` (or new guide) describes stub vs full build in under 5 minutes read time.
+- **SC-002**: Reflection inventory merged with zero "unknown" sites (includes `Traverse` rows per [reflection-inventory.md](../../docs/agents/guides/reflection-inventory.md)).
+- **SC-003**: At least one measurable reduction: fewer per-frame reflection call sites **or** documented justification for each remaining hot-path site. **Delivered (2026-05-30)**: three patch files use `typeof` where stubs allow; `HarmonyPatchCompat` caches `SemiFunc.IsMasterClient`; `PlayerControllerCompat` / `PlayerTumbleCompat` use per-type caches.
+- **SC-004**: `docs/agents/guides/mod-architecture.md` describes stub vs full build in under 5 minutes read time (~3 min for Build profiles section plus linked inventory).
 
 ## Assumptions
 

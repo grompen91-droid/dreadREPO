@@ -96,6 +96,8 @@ Use `SemiFunc.MenuLevel()` for menu/main UI. `MonsterOverhaulSystem` also tracks
 
 ## Build profiles (stub vs full)
 
+*Estimated read time: ~3 minutes for this section; ~5 minutes with [reflection-inventory.md](reflection-inventory.md) hot-path summary.*
+
 Dread supports two MSBuild profiles. Full contract: [specs/001-arch-2-reduce-reflection/contracts/build-profiles.md](../../../specs/001-arch-2-reduce-reflection/contracts/build-profiles.md).
 
 | Profile | `GameDir` | Use when |

@@ -6,7 +6,7 @@
 
 **Tests**: No new unit test suite. Verification uses existing `scripts/verify-dread.ps1` Tier 0 and `tests/Dread.ErrorReportJson.Tests` per [quickstart.md](./quickstart.md).
 
-**Organization**: Phases follow user story priority (US1, US2, US3). **Foundational inventory (T005-T006) blocks reflection reduction tasks (T012-T015).**
+**Organization**: Phases follow user story priority (US1, US2, US3). **Foundational inventory (T004-T005) and audit (T011-T012) block reflection reduction tasks (T013-T016).**
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -33,10 +33,10 @@
 
 **Purpose**: Reflection inventory and build documentation MUST exist before code reduction tasks
 
-**CRITICAL**: Do not start T012-T015 until T005-T006 are complete
+**CRITICAL**: Do not start T013-T016 until T004-T005 and T011-T012 are complete
 
 - [x] T003 Run baseline verification: `pwsh -NoProfile .github/scripts/gen-stubs.ps1` then stub `dotnet build` and `pwsh -NoProfile ./scripts/verify-dread.ps1` per [contracts/build-profiles.md](./contracts/build-profiles.md)
-- [x] T004 [P] Create `docs/agents/guides/reflection-inventory.md` with full table (file, method, trigger, optional-mod gate, stub/full, disposition, rationale) for all `Systems/**/*.cs` reflection and `AccessTools` sites per [data-model.md](./data-model.md)
+- [x] T004 [P] Create `docs/agents/guides/reflection-inventory.md` with full table (file, method, trigger, optional-mod gate, stub/full, disposition, rationale) for all `Systems/**/*.cs` reflection, `AccessTools`, and Harmony `Traverse` sites per [data-model.md](./data-model.md)
 - [x] T005 [P] Add stub vs full build section to `docs/agents/guides/mod-architecture.md` from [contracts/build-profiles.md](./contracts/build-profiles.md) and link [quickstart.md](./quickstart.md)
 
 **Checkpoint**: Inventory and build docs ready; reduction work can begin
@@ -82,7 +82,7 @@
 
 ### Implementation for User Story 3
 
-- [x] T011 [US3] Audit `docs/agents/guides/reflection-inventory.md` against `rg` scan of `Systems/` for `Reflection`, `AccessTools`, `BindingFlags`, `GetType`, `TypeByName`
+- [x] T011 [US3] Audit `docs/agents/guides/reflection-inventory.md` against `rg` scan of `Systems/` for `Reflection`, `AccessTools`, `Traverse`, `BindingFlags`, `GetType`, `TypeByName`
 - [x] T012 [US3] Mark disposition `keep` | `reduce` | `replace` for every row; align with [research.md](./research.md) (REPOConfig compat, psychotic break UI stay `keep`)
 
 **Checkpoint**: US3 acceptance met for issue #168 inventory requirement
@@ -93,13 +93,13 @@
 
 **Purpose**: Safe reflection reductions, agent index, release notes (depends on Phase 2 + Phase 5)
 
-- [x] T013 [P] Apply `replace`/`reduce` items for `Systems/Patches/EnemyNavMeshAgentAwakePatch.cs`, `Systems/Patches/PlayerControllerAwakePatch.cs`, `Systems/Patches/EnemyDirectorSetInvestigatePatch.cs` per inventory (only if stub types allow `typeof`)
+- [x] T013 [P] Apply `replace`/`reduce` items for `Systems/Patches/EnemyNavMeshAgentAwakePatch.cs`, `Systems/Patches/PlayerControllerAwakePatch.cs`, `Systems/Patches/EnemyDirectorSetInvestigatePatch.cs`, and `Systems/HarmonyPatchCompat.cs` (`SemiFunc.IsMasterClient` cache) per inventory (only if stub types allow `typeof`)
 - [x] T014 [P] Apply `reduce` items for `Systems/PlayerControllerCompat.cs` and `Systems/PlayerTumbleCompat.cs` per inventory (cache handles; no behavior change)
 - [x] T015 [P] Confirm `Systems/DebugOverlay/DebugOverlayPanel.cs` `CountDreadPatches` remains documented as `keep` with PERF-2 visibility gate in `docs/agents/guides/reflection-inventory.md`
 - [x] T016 Confirm no edits that remove required reflection in `Systems/RepoConfigSliderLabelCompat.cs` or `Systems/PsychoticBreak/PsychoticBreakOverlay.cs` without DBG-4 upstream
 - [x] T017 Run `dotnet format --verify-no-changes --no-restore` on touched C# files
 - [x] T018 Add ARCH-2 entry under `[Unreleased]` in `CHANGELOG.md` (inventory, stub/full docs, any reduction; no version bump)
-- [x] T019 Set ARCH-2 to `done` in `docs/ROADMAP.md` when PR merges; link `docs/agents/guides/reflection-inventory.md` in `docs/agents/guides/README.md`
+- [x] T019 Set ARCH-2 to `done` in `docs/ROADMAP.md` and link `docs/agents/guides/reflection-inventory.md` in `docs/agents/guides/README.md` (roadmap status set at implementation; confirm on PR merge)
 - [x] T020 Re-run T006-T008 (US1 final verify) after T013-T016
 
 ---

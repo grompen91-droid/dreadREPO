@@ -37,13 +37,13 @@
 
 ## Decision: Harmony patch resolution
 
-**Decision**: Keep `AccessTools.TypeByName` for game types (`EnemyNavMeshAgent`, `PlayerController`, `EnemyDirector`, `DebugConsoleUI`) when stubs use minimal type definitions; evaluate `typeof()` only where stub `.cs` files define the type with matching name.
+**Decision (superseded 2026-05-30)**: Initial plan favored `AccessTools.TypeByName` for all patch types. **Implementation** uses `typeof` for `EnemyNavMeshAgent`, `PlayerController`, and `EnemyDirector` where [Assembly-CSharp stubs](../../../.github/scripts/Assembly-CSharp_stubs.cs) define the type; keeps `TypeByName` for `DebugConsoleUI` (not in stubs). See [reflection-inventory.md](../../docs/agents/guides/reflection-inventory.md) rows `harmony-*-apply`.
 
-**Rationale**: `.github/stubs/refs` may already define some types; patches already use `TypeByName` for resilience across stub/full drift.
+**Rationale**: Stubs now expose those types; `typeof` improves compile-time checking without breaking stub CI.
 
 **Alternatives considered**:
 
-- `typeof(EnemyNavMeshAgent)` everywhere: only if stub assembly exposes full type (verify per type).
+- `TypeByName` for all patches: rejected for stub-covered types after inventory audit.
 
 ## Decision: Hot-path reflection
 

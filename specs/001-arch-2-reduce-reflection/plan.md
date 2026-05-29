@@ -56,7 +56,7 @@ specs/001-arch-2-reduce-reflection/
 ├── quickstart.md        # Phase 1
 ├── contracts/
 │   └── build-profiles.md
-└── tasks.md             # Phase 2 (/speckit-tasks, not created here)
+└── tasks.md             # Phase 2 task list (/speckit-tasks; authoritative IDs T001-T020)
 ```
 
 ### Source Code (repository root)
@@ -99,22 +99,9 @@ Resolved:
 
 **Status**: Complete.
 
-### Reflection inventory (initial scan)
+### Reflection inventory
 
-| Area | File(s) | Trigger | Disposition (planned) |
-|------|---------|---------|------------------------|
-| Harmony patches | `Systems/Patches/*.cs` | Startup | Keep `TypeByName` or replace if stub defines type |
-| REPOConfig compat | `RepoConfigSliderLabelCompat.cs` | On slider create | **Keep** until DBG-4 |
-| Psychotic break UI | `PsychoticBreak/PsychoticBreakOverlay.cs` | Episode | **Keep** (UI not in stubs) |
-| Init defer UI | `DreadSystemInitializer.cs` | Startup | **Keep** (load `UnityEngine.UI`) |
-| Optional mod API | `HarmonyPatchCompat.cs` | Patch apply | **Keep** (`SemiFunc`) |
-| Player compat | `PlayerControllerCompat.cs`, `PlayerTumbleCompat.cs` | Gameplay | Inventory; **reduce** cache if hot |
-| Debug overlay | `DebugOverlay/DebugOverlayPanel.cs` | When visible | **Keep** (document; PERF-2 gated) |
-| Debug server | `DebugServerSystem.cs` | MCP command | Inventory `ReadPlayerFloat` |
-| Audio loader | `AudioClipLoader.cs` | Load | Inventory |
-| Error capture | `ErrorReporting/ErrorReportPayloadCapture.cs` | Log batch | Inventory `Find*` usage |
-
-Full table with line-level detail: implement in `docs/agents/guides/reflection-inventory.md` during `/speckit-tasks` / implement phase.
+**Superseded**: The initial scan table below was planning-only. The canonical inventory is [docs/agents/guides/reflection-inventory.md](../../docs/agents/guides/reflection-inventory.md) (includes `Traverse`, dispositions, and hot-path summary).
 
 ### Contracts
 
@@ -129,17 +116,18 @@ Full table with line-level detail: implement in `docs/agents/guides/reflection-i
 - Add to [docs/agents/README.md](../../docs/agents/README.md) index: link `reflection-inventory.md` and ARCH-2 spec folder when inventory lands.
 - Optional: `<!-- SPECKIT START -->` block in `AGENTS.md` pointing to this plan (if project adopts speckit pointer convention).
 
-## Phase 2: Implementation planning (outline for `/speckit-tasks`)
+## Phase 2: Implementation (`tasks.md`)
 
-**Not executed by `/speckit-plan`.** Suggested task slices:
+Executed via `/speckit-tasks` and `/speckit-implement`. See [tasks.md](./tasks.md) for full checklist (T001-T020, all complete as of 2026-05-30).
 
-1. **T1**: Add `reflection-inventory.md` (complete table, no code change).
-2. **T2**: Document stub vs full in `mod-architecture.md` + `quickstart` cross-links.
-3. **T3**: Patch types: evaluate `typeof` vs `TypeByName` per stub coverage.
-4. **T4**: Compat layers: cache reflection handles where profiling shows cost (if any).
-5. **T5**: Verify Tier 0 + ErrorReportJson tests; CHANGELOG; roadmap ARCH-2 → done.
+| Plan outline (historical) | Task IDs |
+|---------------------------|----------|
+| Inventory doc | T004, T011, T012 |
+| Stub vs full docs | T005, T009, T010 |
+| Patch `typeof` + compat caches | T013, T014 |
+| Verify + CHANGELOG + roadmap | T003, T006-T008, T017-T020 |
 
-**Dependencies**: ARCH-1 merged preferred; can proceed on branch rebased onto master.
+**Dependencies**: ARCH-1 merged on master before implementation (T001).
 
 ## Complexity Tracking
 
@@ -158,6 +146,8 @@ Full table with line-level detail: implement in `docs/agents/guides/reflection-i
 
 ## Success verification
 
-- [ ] [spec.md](./spec.md) success criteria met
-- [ ] Issue #168 acceptance checkboxes satisfied in PR description
-- [ ] `pwsh ./scripts/verify-dread.ps1` Tier 0 pass on stub build
+Verified 2026-05-30 on commit `3f6b2f8` (see [quickstart.md](./quickstart.md) baseline table).
+
+- [x] [spec.md](./spec.md) success criteria met (SC-001 through SC-004)
+- [x] Issue #168 inventory + stub/full docs delivered
+- [x] `pwsh ./scripts/verify-dread.ps1` Tier 0 pass on stub build

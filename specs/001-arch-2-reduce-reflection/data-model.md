@@ -28,7 +28,7 @@ Conceptual entities for build and reflection documentation (not runtime database
 | `disposition` | `keep` \| `reduce` \| `replace` |
 | `rationale` | Why reflection exists or change plan |
 
-**Validation**: Every `Systems/**/*.cs` reflection use must map to one row before ARCH-2 closes.
+**Validation**: Every `Systems/**/*.cs` reflection use, `AccessTools` resolution, and Harmony `Traverse` call must map to one row before ARCH-2 closes (see inventory **Traverse** policy).
 
 ## CompileTimeRef
 

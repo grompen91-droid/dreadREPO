@@ -1,8 +1,12 @@
 # Reflection inventory (ARCH-2)
 
-Canonical list of reflection and Harmony `AccessTools` resolution in `Systems/`. Maintained for issue [#168](https://github.com/grompen91-droid/dreadREPO/issues/168).
+Canonical list of reflection, Harmony `AccessTools` resolution, and Harmony `Traverse` usage in `Systems/`. Maintained for issue [#168](https://github.com/grompen91-droid/dreadREPO/issues/168).
 
 **Last reviewed**: 2026-05-30
+
+### Harmony `Traverse` policy
+
+`Traverse` is in scope for ARCH-2 inventory (same as raw reflection): version-tolerant field/property access when compile-time members are missing or renamed. Rows below mark **keep** unless a site was explicitly **reduce**d with caches (compat layers) or **replace**d with direct stub fields (patch postfixes).
 
 | ID | File | Method / site | Trigger | Optional-mod gate | Stub build | Full build | Disposition | Rationale |
 |----|------|---------------|---------|-------------------|------------|------------|-------------|-----------|
@@ -14,6 +18,9 @@ Canonical list of reflection and Harmony `AccessTools` resolution in `Systems/`.
 | `harmony-debug-console-apply` | `Systems/Patches/DebugConsoleGuardPatch.cs` | `Apply` / `Remove` | startup | none | required | required | **keep** | `DebugConsoleUI` not in stub assemblies; `TypeByName` + skip if missing |
 | `harmony-patch-compat-master` | `Systems/HarmonyPatchCompat.cs` | `IsMasterClient` | per patch gate | none | required | required | **replace** | `SemiFunc` in stubs; cache `MethodInfo` for `IsMasterClient` |
 | `harmony-patch-compat-foreign` | `Systems/HarmonyPatchCompat.cs` | `ShouldSkipDueToForeignPatches` | startup | none | required | required | **keep** | `Harmony.GetPatchInfo`; no compile-time alternative |
+| `tension-sprint-multiplier` | `Systems/TensionSystem.cs` | `Traverse` on `SprintSpeedMultiplier` | event (panic sprint / restore) | none | required | required | **keep** | Field not exposed on stub `PlayerController`; panic sprint gameplay |
+| `enemy-health-compat-read` | `Systems/EnemyHealthCompat.cs` | `Traverse.Create` + member name scan | per visibility check | none | required | required | **keep** | Version-tolerant HP field names on `EnemyHealth` |
+| `psychotic-break-lockdown` | `Systems/PsychoticBreak/PsychoticBreakPlayerLockdown.cs` | `Traverse` bool fields (`inputLocked`, etc.) | episode | none | required | required | **keep** | Alternate field names across game builds |
 | `player-controller-compat-crouch` | `Systems/PlayerControllerCompat.cs` | `TryReadCrouch` field scan | per call (hide check) | none | required | required | **reduce** | Cache bool fields matching crouch/crawl per `Type`; Traverse tried first |
 | `player-tumble-compat-resolve` | `Systems/PlayerTumbleCompat.cs` | `ResolveTumble` / `GetLocalAvatar` | per call | none | required | required | **reduce** | Cache `tumble` `FieldInfo` per avatar type; `PlayerAvatar` still `TypeByName` (not in stubs) |
 | `player-tumble-compat-invoke` | `Systems/PlayerTumbleCompat.cs` | `InvokeTumble` | event | none | required | required | **reduce** | Cache `TumbleSet` / `TumbleRequest` `MethodInfo` per tumble runtime type |
@@ -37,6 +44,7 @@ Canonical list of reflection and Harmony `AccessTools` resolution in `Systems/`.
 | Trigger | Sites | ARCH-2 action |
 |---------|-------|---------------|
 | per-frame | `PlayerControllerCompat`, `PlayerTumbleCompat` (via psychotic break / tension) | **reduce**: per-type caches |
+| event (gameplay) | `TensionSystem` sprint multiplier `Traverse` | **keep**: version-tolerant field |
 | when overlay visible | `CountDreadPatches` | **keep**: already gated (PERF-2) |
 | startup | Harmony patch `Apply`, REPOConfig, UI load | **replace** where stub types exist |
 | event / on-demand | Patches postfix, error capture, MCP | Mostly **keep** |
