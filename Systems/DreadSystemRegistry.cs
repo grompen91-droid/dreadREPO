@@ -33,7 +33,8 @@ namespace Dread.Systems
     }
 
     /// <summary>
-    /// Explicit registration list for runtime systems. See specs/002-arch-3-extensible-core/contracts/extension-registry.md.
+    /// Explicit registration list for runtime systems.
+    /// See specs/002-arch-3-extensible-core/contracts/extension-registry.md.
     /// </summary>
     internal static class DreadSystemRegistry
     {
