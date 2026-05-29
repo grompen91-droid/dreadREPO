@@ -26,7 +26,7 @@ Work top to bottom within each phase. Do not skip **Depends on** unless the issu
 | (compat) | **REPOConfig slider labels** | Temporary fix in `RepoConfigSliderLabelCompat.cs`; user-verified. Remove when DBG-4 upstream lands. |
 | DOCS-1 | **Root `CONTEXT.md`** | Glossary + file map ([#174](https://github.com/grompen91-droid/dreadREPO/issues/174), PR #179) |
 
-### Phase 1: Foundation (start here)
+### Phase 1: Foundation (FINISHED)
 
 | Order | ID | Priority | Issue | Depends on | Why first |
 |-------|-----|----------|-------|------------|-----------|
