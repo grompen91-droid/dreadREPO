@@ -34,6 +34,7 @@ Current-state reference for working in the Dread codebase. These replace the old
 | Agent verify / MCP | [debug-tooling.md](debug-tooling.md) + [verify-dread.md](../verify-dread.md) |
 | New config knob | [config-and-logging.md](config-and-logging.md) |
 | Mod conflicts | [compatibility.md](compatibility.md) + [mod-compatibility.md](../../mod-compatibility.md) |
+| Reduce reflection / stub CI | ARCH-2 spec [specs/001-arch-2-reduce-reflection/plan.md](../../../specs/001-arch-2-reduce-reflection/plan.md) (inventory guide when implemented) |
 
 ## Archive (superseded)
 

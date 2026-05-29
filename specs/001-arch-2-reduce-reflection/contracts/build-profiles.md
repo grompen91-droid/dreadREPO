@@ -1,0 +1,69 @@
+# Contract: Dread build profiles (ARCH-2)
+
+## Stub profile (CI / agents without game)
+
+**Inputs**
+
+| Property | Value |
+|----------|--------|
+| `GameDir` | `{repo}/.github/stubs/refs` |
+| `BepInExDir` | Profile or stub BepInEx core path |
+| `DeployToProfile` | `false` (typical) |
+| `DeployToDist` | `false` (typical) |
+
+**Commands**
+
+```bash
+pwsh -NoProfile .github/scripts/gen-stubs.ps1
+dotnet build Dread.csproj -c Release \
+  -p:GameDir=.github/stubs/refs \
+  -p:BepInExDir=.github/stubs/refs \
+  -p:DeployToProfile=false \
+  -p:DeployToDist=false
+pwsh -NoProfile ./scripts/verify-dread.ps1
+```
+
+**Guarantees**
+
+- Build completes with 0 errors.
+- `Dread.dll` is produced.
+- Runtime may still use reflection for optional mods and Unity UI; stub build does not execute game code.
+
+**Non-guarantees**
+
+- All game types resolve at compile time.
+- Harmony patch targets exist in stub assemblies (patches use `TypeByName` + null checks).
+
+## Full profile (local developer with R.E.P.O.)
+
+**Inputs**
+
+| Property | Value |
+|----------|--------|
+| `GameDir` | `{steam}/REPO/REPO_Data/Managed` (platform-specific) |
+| `BepInExDir` | r2modman profile `BepInEx` folder |
+
+**Commands**
+
+```bash
+dotnet build Dread.csproj -c Release \
+  -p:GameDir="/path/to/REPO/REPO_Data/Managed" \
+  -p:BepInExDir="$HOME/.config/r2modmanPlus-local/REPO/profiles/<profile>/BepInEx" \
+  -p:PluginDir="$HOME/.config/r2modmanPlus-local/REPO/profiles/<profile>/BepInEx/plugins/elytraking-Dread" \
+  -p:DeployToProfile=true
+```
+
+**Guarantees**
+
+- Stronger compile-time binding to real game assemblies.
+- Deploy target copies `Dread.dll`, plugin deps, and `audio/`.
+
+## Verification contract
+
+| Tier | Stub required | Full optional |
+|------|---------------|---------------|
+| Tier 0 | Yes | No |
+| Tier 1 MCP | No | Yes (game running) |
+| In-game smoke | No | Yes |
+
+ARCH-2 PR must not regress **Stub profile** Tier 0.
