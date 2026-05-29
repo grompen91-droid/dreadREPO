@@ -7,7 +7,7 @@
 ![Status](https://img.shields.io/badge/status-release-brightgreen?style=flat-square)
 ![BepInEx](https://img.shields.io/badge/BepInEx-5.4.21-blueviolet?style=flat-square)
 ![Game](https://img.shields.io/badge/game-R.E.P.O.-orange?style=flat-square)
-![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
+![License](https://img.shields.io/badge/license-GPL--3.0-blue?style=flat-square)
 ![Thunderstore](https://img.shields.io/badge/thunderstore-elytraking/Dread-243e58?style=flat-square)
 
 ## Table of Contents
@@ -420,4 +420,4 @@ Output in `dist/`:
 
 ## License
 
-MIT
+GNU General Public License v3.0. See [LICENSE](LICENSE).
