@@ -30,10 +30,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ![Status](https://img.shields.io/badge/status-development-yellow?style=flat-square)
 
 ### Changed
+- **ARCH-1 (#167):** Internal file layout only: Harmony patches under `Systems/Patches/`; psychotic break, error reporting, and debug overlay split into focused files under `Systems/PsychoticBreak/`, `Systems/ErrorReporting/`, and `Systems/DebugOverlay/` (no player-facing behavior change)
 - **Worker tests:** Vitest 4.1 + `@cloudflare/vitest-pool-workers` 0.16 with `cloudflareTest()` config (Cloudflare docs); worker package is ESM
 - **MCP server:** Zod 4 `z.strictObject()` for tool input schemas (replaces deprecated `.strict()`)
 
 ### Fixed
+- **REPOConfig slider labels:** reverted experimental `MidlineLeft`/pivot tweak that overlapped slider text; compat back to `Left` alignment + x=100 column only (see `docs/repo-config-slider-labels-investigation.md`)
 - GitHub boilerplate: GPL-3.0 `LICENSE`, Dread-tailored Dependabot (mod, MCP, worker, CI), `SECURITY.md`, CodeQL with stub build and path filters
 
 > **Highlight:** Honest mod compatibility docs, opt-in telemetry, Compatibility mode for broken profiles, and host-only monster patch guards.

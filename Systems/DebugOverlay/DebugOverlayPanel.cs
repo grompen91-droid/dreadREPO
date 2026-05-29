@@ -7,104 +7,14 @@ using UnityEngine;
 
 namespace Dread.Systems
 {
-    public class DebugOverlaySystem : MonoBehaviour
+    public partial class DebugOverlaySystem
     {
-        private const byte RowNormal = 0;
-        private const byte RowHeader = 1;
-        private const byte RowSep = 2;
-
-        private bool _visible;
-        private bool _loggedDisabledWhileRunning;
-
-        // Performance sampling.
-        private float _smoothedDelta;
-        private float _minFps;
-        private float _minFpsResetAt;
-        private float _memMB;
-        private float _nextStatRefresh;
-
-        private Texture2D? _bgTex;
-        private Texture2D? _sepTex;
-        private GUIStyle? _boxStyle;
-        private GUIStyle? _headerStyle;
-        private GUIStyle? _hintStyle;
-        private GUIStyle? _labelStyle;
-        private GUIStyle? _valueStyle;
-        private GUIStyle? _sepStyle;
         private readonly List<RowData> _rows = new(16);
 
         // Cached empty content. Avoids GUIContent.none, which the build resolves
         // against a stub property getter (get_none) that does not exist in the
         // game's real UnityEngine, throwing MissingMethodException in OnGUI.
         private static readonly GUIContent EmptyContent = new();
-
-        private static readonly Color ColAccent = new(0.96f, 0.55f, 0.38f);
-        private static readonly Color ColDim = new(0.62f, 0.64f, 0.70f);
-        private static readonly Color ColValue = new(0.92f, 0.93f, 0.96f);
-        private static readonly Color ColGood = new(0.48f, 0.90f, 0.55f);
-        private static readonly Color ColWarn = new(0.97f, 0.84f, 0.42f);
-        private static readonly Color ColBad = new(0.96f, 0.46f, 0.46f);
-
-        private void Awake()
-        {
-            _visible = DreadConfig.DebugOverlayEnabled.Value;
-            DreadConfig.DebugOverlayEnabled.SettingChanged += OnOverlayConfigChanged;
-            enabled = DreadConfig.DebugOverlayEnabled.Value;
-        }
-
-        private void OnDestroy()
-        {
-            DreadConfig.DebugOverlayEnabled.SettingChanged -= OnOverlayConfigChanged;
-        }
-
-        private void OnOverlayConfigChanged(object? sender, System.EventArgs e)
-        {
-            _visible = DreadConfig.DebugOverlayEnabled.Value;
-            enabled = DreadConfig.DebugOverlayEnabled.Value;
-        }
-
-        private void Update()
-        {
-            if (!GuardOverlayEnabled())
-                return;
-
-            SampleFrameStats();
-
-            if (Input.GetKeyDown(KeyCode.F10))
-                _visible = !_visible;
-
-            if (!IsOverlayVisible())
-                return;
-
-            if (Time.realtimeSinceStartup >= _nextStatRefresh)
-            {
-                _nextStatRefresh = Time.realtimeSinceStartup + 0.5f;
-                DreadRuntimeState.DreadPatchCount = CountDreadPatches();
-                _memMB = GC.GetTotalMemory(false) / (1024f * 1024f);
-            }
-        }
-
-        // Runs every frame (even while toggled off) so FPS is accurate the instant the HUD is shown.
-        private void SampleFrameStats()
-        {
-            float dt = Time.unscaledDeltaTime;
-            if (dt <= 0f)
-                return;
-
-            _smoothedDelta = _smoothedDelta <= 0f ? dt : _smoothedDelta + (dt - _smoothedDelta) * 0.1f;
-
-            float fps = 1f / dt;
-            float now = Time.realtimeSinceStartup;
-            if (now >= _minFpsResetAt)
-            {
-                _minFps = fps;
-                _minFpsResetAt = now + 2f;
-            }
-            else if (fps < _minFps)
-            {
-                _minFps = fps;
-            }
-        }
 
         private void OnGUI()
         {
@@ -257,59 +167,6 @@ namespace Dread.Systems
                 ? $"next {DreadRuntimeState.AudioNextPlayIn:F0}s"
                 : "next n/a";
             return $"{DreadRuntimeState.AudioClipCount}/4  {next}";
-        }
-
-        private bool IsOverlayVisible() => _visible && !SemiFunc.MenuLevel();
-
-        private bool GuardOverlayEnabled()
-        {
-            if (DreadConfig.DebugOverlayEnabled.Value)
-                return true;
-
-            if (!_loggedDisabledWhileRunning)
-            {
-                _loggedDisabledWhileRunning = true;
-                LoggingService.LogError(
-                    "DebugOverlaySystem ran while DebugOverlayEnabled is false: "
-                    + "enable/disable wiring regressed (PERF-2).");
-            }
-
-            return false;
-        }
-
-        private void EnsureStyles()
-        {
-            if (_boxStyle != null)
-                return;
-
-            _bgTex = MakeTexture(new Color(0.05f, 0.05f, 0.07f, 0.88f));
-            _sepTex = MakeTexture(new Color(0.45f, 0.47f, 0.52f, 0.5f));
-
-            _boxStyle = new GUIStyle(GUI.skin.box);
-            _boxStyle.normal.background = _bgTex;
-
-            _headerStyle = new GUIStyle(GUI.skin.label) { fontSize = 15, wordWrap = false };
-            _headerStyle.normal.textColor = ColAccent;
-
-            _hintStyle = new GUIStyle(GUI.skin.label) { fontSize = 11, wordWrap = false };
-            _hintStyle.normal.textColor = ColDim;
-
-            _labelStyle = new GUIStyle(GUI.skin.label) { fontSize = 13, wordWrap = false };
-            _labelStyle.normal.textColor = ColDim;
-
-            _valueStyle = new GUIStyle(GUI.skin.label) { fontSize = 13, wordWrap = false };
-            _valueStyle.normal.textColor = ColValue;
-
-            _sepStyle = new GUIStyle(GUI.skin.box);
-            _sepStyle.normal.background = _sepTex;
-        }
-
-        private static Texture2D MakeTexture(Color color)
-        {
-            var tex = new Texture2D(1, 1);
-            tex.SetPixel(0, 0, color);
-            tex.Apply();
-            return tex;
         }
 
         private static string OnOff(bool value) => value ? "ON" : "off";

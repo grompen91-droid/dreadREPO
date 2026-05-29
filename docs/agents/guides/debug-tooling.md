@@ -47,7 +47,7 @@ Tools map 1:1 to TCP commands (`dread_ping`, `dread_verify`, `dread_set_config`,
 
 Agent workflow: [verify-dread.md](../verify-dread.md) Tier 1, checklist JSON Tier 1 `mcp_sequence`.
 
-## Debug overlay (`DebugOverlaySystem.cs`)
+## Debug overlay (`Systems/DebugOverlay/`)
 
 | Setting | Behavior |
 |---------|----------|

@@ -78,7 +78,7 @@ Use `SemiFunc.MenuLevel()` for menu/main UI. `MonsterOverhaulSystem` also tracks
 |------|------|
 | Plugin + patch apply | `Plugin.cs` |
 | Config | `Config/DreadConfig.cs` |
-| Systems | `Systems/*.cs` |
+| Systems (overview) | `Systems/` (subfolders: `Patches/`, `PsychoticBreak/`, `ErrorReporting/`, `DebugOverlay/`; other hosts at `Systems/*.cs`) |
 | Audio assets | `audio/*.ogg` |
 | ADRs | `docs/adr/` |
 | Per-system agent guides | `docs/agents/guides/README.md` |

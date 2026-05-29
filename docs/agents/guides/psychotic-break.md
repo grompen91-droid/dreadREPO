@@ -1,6 +1,6 @@
 # Psychotic Break
 
-Rare **client-local Episode** when the player meets tension and stealth conditions. Implements `PsychoticBreakSystem.cs`. ADR: `docs/adr/0011-psychotic-break-system.md`.
+Rare **client-local Episode** when the player meets tension and stealth conditions. Code: `Systems/PsychoticBreak/` (`PsychoticBreakSystem.cs` plus Trigger, Episode, Overlay, PlayerLockdown, Audio partials). ADR: `docs/adr/0011-psychotic-break-system.md`.
 
 ## Glossary (use in issues/PRs)
 

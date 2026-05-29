@@ -1,7 +1,7 @@
 # REPOConfig slider labels investigation
 
 **Status:** Mitigated with a **temporary** Dread-side Harmony workaround. Needs upstream fix or a less hacky layout approach.  
-**Last updated:** 2026-05-26  
+**Last updated:** 2026-05-30  
 **Code:** `Systems/RepoConfigSliderLabelCompat.cs`  
 **Related:** Debug overlay performance work in the same session (separate issue, fixed).
 
@@ -86,7 +86,7 @@ Not a `DreadConfig` regression. Float slider keys (`Frequency`, `Volume`, etc.) 
 1. Postfix on all `MenuAPI.CreateREPOSlider` overloads when `description` is empty (REPOConfig case).
 2. Set `labelTMP.text` to the setting name.
 3. Clear and deactivate `descriptionTMP` (`Big Setting Text`).
-4. Set label `localPosition.x = 100` and tweak TMP (left align, min width 180px) so text is visible left of the bar (~122).
+4. Set label `localPosition.x = 100` (`LabelColumnLocalX`) and tweak TMP so text is visible left of the bar (~122).
 5. Postfix on `REPOSlider.HandleDescription` to keep **15px** compact row (`SliderBG` height, `bottomPadding = 1`).
 6. Apply from `Plugin.Start()` and `DreadSystemInitializer` fallback after MenuLib loads.
 
@@ -94,10 +94,67 @@ Not a `DreadConfig` regression. Float slider keys (`Frequency`, `Volume`, etc.) 
 
 **Without REPOConfig:** No patch. Use `elytraking.dread.cfg` or BepInEx Configuration Manager (F1).
 
+### Layout / TMP details (`ConfigureLabelForLeftColumn`)
+
+| Setting | Value | Notes |
+|---------|-------|-------|
+| `LabelColumnLocalX` | `100f` | After MenuLib `REPOSlider.Awake` (~44.7); places `Element Name` before bar (~122) |
+| `labelTMP.text` | setting name | From `CreateREPOSlider` first arg when description empty |
+| `descriptionTMP` | cleared, GO inactive | Avoids empty `Big Setting Text` row |
+| TMP `alignment` | `Left` | Do not change rect `pivot`: `(0, 0.5)` + `MidlineLeft` regressed layout (label over bar, merged with value) |
+| TMP `overflowMode` | `Overflow` / `Ellipsis` / `Visible` | First parse success |
+| Rect `sizeDelta.x` | `max(existing, 180)` | Room for long keys; **no `fontSize` change** |
+| Compact row | fill 109.8×15, outline 108×15, `bottomPadding = 1` | Via `ForceCompactSliderRow` |
+
+**No `fontSize` / `enableAutoSizing` / margin properties** are touched in this compat class.
+
+### Git history (2026-05-30 review)
+
+| Commit | `RepoConfigSliderLabelCompat.cs` change |
+|--------|----------------------------------------|
+| `5bac1e2` | **Introduced** compat (label x=100, TMP left align, width 180, compact row) |
+| `5df62c7` | `_handleDescriptionPatched` guard + DBG-4 removal comments (merged in PR #178) |
+| `c1b663e` | **Revert** PR #178 merge (back to `5bac1e2` behavior, dropped guard/comments) |
+| `d7c83d1` | Formatting only (line wraps) |
+| `14d4d62` (ARCH-1) | **Did not touch** this file (god-file split elsewhere) |
+
+`git diff master...cursor/arch-1-god-file-split` on this file: **formatting only** vs master.
+
+`git log -p -S LabelColumnLocalX`: single introduction in `5bac1e2`.
+
+### “Larger font” vs “centered labels” (user report after ARCH-1 build)
+
+1. **Larger / normal-sized text:** Not a font-size commit. Compat moves text onto `labelTMP` (`Element Name`) at x=100 instead of off-layout ~44.7 or hidden. MenuLib default point size on that TMP reads as “normal” vs clipped/tiny off-column text **before** compat or **without** compat active.
+2. **Centered appearance:** Compat never changed `fontSize`. Wide rect + default center pivot can look centered; acceptable vs broken overlap. **Reverted 2026-05-30:** `MidlineLeft` + pivot `(0, 0.5)` caused labels to sit on the slider bar (ghost overlap with value). Keep `Left` alignment only; do not change pivot.
+
+### Where the permanent fix belongs
+
+| Owner | Fix | Remove Dread compat? |
+|-------|-----|----------------------|
+| **REPOConfig** | Pass non-empty `description` (or use setting name) in `CreateREPOSlider` | Only after user A/B confirms labels + row height |
+| **MenuLib** | Align slider row like `REPOToggle` (+100 on label + chrome together) | Same |
+| **Dread** | Keep `RepoConfigSliderLabelCompat` until upstream verified | **Do not remove** on speculation |
+
+### Local deploy (r2modman profile `mk`, Linux/Proton)
+
+After stub build:
+
+```bash
+dotnet build Dread.csproj -c Release \
+  -p:GameDir=.github/stubs/refs \
+  -p:BepInExDir=.github/stubs/refs \
+  -p:DeployToProfile=false \
+  -p:DeployToDist=false
+```
+
+Copy `bin/Release/net472/Dread.dll` into the profile plugin folder, e.g.  
+`~/.config/r2modmanPlus-local/REPO/profiles/mk/BepInEx/plugins/elytraking-Dread/Dread.dll`  
+(path may vary with r2modman install). Restart game; confirm log line `REPOConfig slider label compat active`.
+
 ### Why this is temporary / needs improvement
 
 - **Magic number** `LabelColumnLocalX = 100` is tuned for one template/resolution; not the same code path as `REPOToggle` (+100 on label **and** controls together).
-- **Custom TMP styling** (left align, forced width) can look different from bool toggle labels.
+- **Custom TMP styling** (alignment, pivot, forced width) can still differ slightly from bool toggle labels.
 - **Does not fix other mods** that use REPOConfig sliders; only patches `CreateREPOSlider` globally while REPOConfig is present.
 - **Proper fix** is upstream: REPOConfig passes non-empty description (or MenuLib aligns slider label column with toggles).
 

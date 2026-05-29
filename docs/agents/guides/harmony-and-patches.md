@@ -4,7 +4,7 @@ How Dread applies Harmony patches at load time and toggles them from config. Fix
 
 ## Principles
 
-1. **No `[HarmonyPatch]` attributes** on production patch classes (explicit `Apply` / `Remove` instead). Monster and player patches live in `MonsterOverhaulSystem.cs`; `DebugConsoleGuardPatch` is in `Systems/DebugConsoleGuardPatch.cs`.
+1. **No `[HarmonyPatch]` attributes** on production patch classes (explicit `Apply` / `Remove` instead). Monster, player, and debug-console patches live under `Systems/Patches/`.
 2. **Idempotent `Apply`:** guard with `if (_original != null) return;` before patching.
 3. **`Remove` clears `_original`** so re-apply works after config toggle.
 4. **Config-driven lifecycle** in `Plugin.cs` via `SettingChanged` handlers.
@@ -12,12 +12,12 @@ How Dread applies Harmony patches at load time and toggles them from config. Fix
 
 ## Patch inventory
 
-| Patch class | Target | When applied | Host-only |
-|-------------|--------|--------------|-----------|
-| `EnemyNavMeshAgentAwakePatch` | `EnemyNavMeshAgent.Awake` | `MonsterAggressionEnabled` && !`CompatibilityMode` | Yes (postfix) |
-| `EnemyDirectorSetInvestigatePatch` | `EnemyDirector.SetInvestigate` | Same | Yes (prefix, 1.5x radius) |
-| `PlayerControllerAwakePatch` | `PlayerController.Awake` | `CrouchSpeedBoostEnabled` | No |
-| `DebugConsoleGuardPatch` | (debug console guard) | `DebugConsoleGuardEnabled` | No |
+| Patch class | Target | When applied | Host-only | File |
+|-------------|--------|--------------|-----------|------|
+| `EnemyNavMeshAgentAwakePatch` | `EnemyNavMeshAgent.Awake` | `MonsterAggressionEnabled` && !`CompatibilityMode` | Yes (postfix) | `Systems/Patches/EnemyNavMeshAgentAwakePatch.cs` |
+| `EnemyDirectorSetInvestigatePatch` | `EnemyDirector.SetInvestigate` | Same | Yes (prefix, 1.5x radius) | `Systems/Patches/EnemyDirectorSetInvestigatePatch.cs` |
+| `PlayerControllerAwakePatch` | `PlayerController.Awake` | `CrouchSpeedBoostEnabled` | No | `Systems/Patches/PlayerControllerAwakePatch.cs` |
+| `DebugConsoleGuardPatch` | (debug console guard) | `DebugConsoleGuardEnabled` | No | `Systems/Patches/DebugConsoleGuardPatch.cs` |
 | `RepoConfigSliderLabelCompat` | REPOConfig slider UI | `Plugin.Start()` and `DreadSystemInitializer` when REPOConfig/MenuLib are loaded | N/A |
 
 Monster patches are grouped in `Plugin.ApplyMonsterPatches()`.

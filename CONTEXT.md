@@ -259,7 +259,11 @@ Open conflicts only. Resolved terms live in **Language** above.
 |------|------|
 | Plugin entry, Harmony apply | `Plugin.cs` |
 | Config bindings | `Config/DreadConfig.cs` |
-| Runtime systems | `Systems/*.cs` |
+| Runtime systems (flat) | `Systems/*.cs` (initializer, tension, audio, debug server, compat, etc.) |
+| Harmony patches | `Systems/Patches/` |
+| Psychotic break | `Systems/PsychoticBreak/` |
+| Error reporting | `Systems/ErrorReporting/` (+ `ErrorReportJson.cs` at `Systems/` root) |
+| Debug overlay | `Systems/DebugOverlay/` |
 | OGG assets | `audio/` |
 | Architecture decisions | `docs/adr/` |
 | Agent orchestration hub | `docs/agents/README.md` |
