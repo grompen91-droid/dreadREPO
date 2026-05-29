@@ -22,35 +22,43 @@ namespace Dread.Systems
 
             _initialized = true;
 
-            int count = 0;
-            count += TryAddSystem<AudioDreadSystem>("DreadAudioHost");
-            count += TryAddSystem<MonsterOverhaulSystem>("DreadMonsterHost");
-            count += TryAddSystem<TensionSystem>("DreadTensionHost");
-            count += TryAddSystem<ErrorReporterSystem>("DreadErrorHost");
-            count += TryAddSystem<PsychoticBreakSystem>("DreadPsychoticBreakHost");
-            count += TryAddSystem<TestCrashSystem>("DreadTestCrashHost");
-            count += TryAddSystem<DebugServerSystem>("DreadDebugHost");
-            count += TryAddSystem<DebugOverlaySystem>("DreadDebugOverlayHost");
+            var count = 0;
+            var attempted = 0;
+            foreach (var registration in DreadSystemRegistry.Registrations)
+            {
+                if (registration.IsEnabled != null && !registration.IsEnabled())
+                    continue;
+
+                attempted++;
+                count += TryAddSystem(registration.SystemType, registration.HostName);
+            }
 
             RepoConfigSliderLabelCompat.TryApply(Plugin.HarmonyInstance);
 
             if (count > 0)
-                LoggingService.LogInfo($"Systems initialized ({count})");
-            else
+            {
+                if (count < attempted)
+                    LoggingService.LogInfo($"Systems initialized ({count}/{attempted})");
+                else
+                    LoggingService.LogInfo($"Systems initialized ({count})");
+            }
+            else if (attempted > 0)
                 LoggingService.LogError("All systems failed to initialize.");
+            else
+                LoggingService.LogVerbose("[Dread] No runtime systems enabled for initialization.");
 
             return true;
         }
 
-        private static int TryAddSystem<T>(string hostName) where T : Component
+        private static int TryAddSystem(Type systemType, string hostName)
         {
             try
             {
-                var component = CreateSystemHost(hostName).AddComponent<T>();
+                var component = CreateSystemHost(hostName).AddComponent(systemType);
                 if (component == null)
                 {
                     LoggingService.LogError(
-                        $"Failed to add {typeof(T).Name} component: Unity could not instantiate the script "
+                        $"Failed to add {systemType.Name} component: Unity could not instantiate the script "
                         + "(check BepInEx log for TypeLoadException)");
                     return 0;
                 }
@@ -62,7 +70,7 @@ namespace Dread.Systems
                 var detail = ex is TypeLoadException or ReflectionTypeLoadException
                     ? ex.InnerException?.Message ?? ex.Message
                     : ex.Message;
-                LoggingService.LogError($"Failed to add {typeof(T).Name} component: {detail}");
+                LoggingService.LogError($"Failed to add {systemType.Name} component: {detail}");
                 return 0;
             }
         }

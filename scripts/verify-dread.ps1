@@ -65,6 +65,31 @@ Invoke-GrepCheck -Id "trailing_whitespace" -Pattern '[[:blank:]]$' `
 Invoke-GrepCheck -Id "tabs" -Pattern "`t" `
     -Paths @("*.cs", "Systems/*.cs", "Config/*.cs") -FailMsg "tab characters"
 
+# ARCH-3: system spawn only via initializer + registry (no stray TryAddSystem< in Plugin or systems)
+$arch3Allowed = @(
+    "Systems/DreadSystemInitializer.cs",
+    "Systems/DreadSystemRegistry.cs"
+)
+$arch3Hits = @()
+foreach ($path in @("*.cs", "Systems", "Systems/Patches", "Systems/PsychoticBreak", "Systems/ErrorReporting", "Systems/DebugOverlay", "Config")) {
+    if (-not (Test-Path $path)) { continue }
+    $grepOut = & grep -rn "TryAddSystem<" $path 2>$null
+    if ($LASTEXITCODE -ne 0) { continue }
+    foreach ($line in $grepOut) {
+        $rel = ($line -split ":", 2)[0]
+        if ($arch3Allowed -notcontains $rel) {
+            $arch3Hits += $line
+        }
+    }
+}
+if ($arch3Hits.Count -gt 0) {
+    $sample = ($arch3Hits | Select-Object -First 3) -join "; "
+    Add-Check -Tier "tier0" -Id "arch3_try_add_system" -Ok $false `
+        -Message "TryAddSystem< outside initializer/registry: $sample"
+} else {
+    Add-Check -Tier "tier0" -Id "arch3_try_add_system" -Ok $true -Message "TryAddSystem confined to registry path"
+}
+
 # MCP npm build
 if (-not $SkipMcpBuild) {
     Push-Location dread-mcp-server

@@ -73,6 +73,8 @@ Dread loads OGG via NVorbis disk read first, then `UnityWebRequest` on Windows-n
 
 ## Manual compatibility test matrix
 
+Agent-maintained ARCH-3 matrix (REPOConfig absent, compatibility mode, non-host, stub CI): [docs/agents/guides/compatibility.md](agents/guides/compatibility.md#arch-3-manual-matrix-issue-175). Spec kit steps: [specs/002-arch-3-extensible-core/quickstart.md](../specs/002-arch-3-extensible-core/quickstart.md).
+
 Use this checklist before a release or after Harmony changes.
 
 ### Baseline
