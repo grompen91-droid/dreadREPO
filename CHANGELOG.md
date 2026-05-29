@@ -29,6 +29,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ![Status](https://img.shields.io/badge/status-development-yellow?style=flat-square)
 
+### Changed
+- **Worker tests:** Vitest 4.1 + `@cloudflare/vitest-pool-workers` 0.16 with `cloudflareTest()` config (Cloudflare docs); worker package is ESM
+- **MCP server:** Zod 4 `z.strictObject()` for tool input schemas (replaces deprecated `.strict()`)
+
 ### Fixed
 - GitHub boilerplate: GPL-3.0 `LICENSE`, Dread-tailored Dependabot (mod, MCP, worker, CI), `SECURITY.md`, CodeQL with stub build and path filters
 
