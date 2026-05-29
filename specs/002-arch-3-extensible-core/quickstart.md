@@ -39,9 +39,9 @@ Record pass/fail in PR description.
 | `gen-stubs.ps1` + stub Release build | PASS | 2026-05-30 |
 | `verify-dread.ps1` Tier 0 (incl. `arch3_try_add_system`) | PASS | 2026-05-30 |
 | `Arch3ProbeSystem` registry-only smoke (T008) | PASS (probe removed) | 2026-05-30 |
-| Manual compat matrix (US2) | PR author: paste table from section below | |
+| Manual compat matrix (US2) | PR author: fill **PR compatibility matrix** table below | |
 
-PR matrix placeholder: record manual rows in the GitHub PR description (see **Manual compatibility matrix**). Stub CI does not substitute for full-game rows.
+Stub CI does not substitute for full-game matrix rows.
 
 ## Add a probe system (US1 smoke)
 
@@ -56,7 +56,18 @@ Remove probe before merge unless product wants a permanent test host (default: r
 
 ## Manual compatibility matrix (US2)
 
-Run on a full game profile; paste results in PR.
+Run on a full game profile. Copy the **PR compatibility matrix** into the GitHub PR description and fill every cell.
+
+### PR compatibility matrix (paste into PR)
+
+| Scenario | Tester | Date | Pass/Fail | Notes |
+|----------|--------|------|-----------|-------|
+| REPOConfig absent (no REPOConfig/MenuLib in profile) | | | | Dread loads; no slider compat exceptions; verbose may note skip |
+| Compatibility mode on (`10. Compatibility` true; patches toggled per guide) | | | | Monster patches off; ambient runs; psychotic break off per [compatibility.md](../../docs/agents/guides/compatibility.md) |
+| Non-host client (join host lobby as client) | | | | Local tension/audio OK; no host-only patch errors in log |
+| Stub CI (Tier 0 only; no game) | | | | `gen-stubs` + stub build + `verify-dread.ps1` green |
+
+### Reference steps (full game)
 
 | Scenario | Steps | Expected |
 |----------|-------|----------|

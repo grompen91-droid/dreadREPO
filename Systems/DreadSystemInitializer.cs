@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
@@ -24,7 +25,8 @@ namespace Dread.Systems
 
             var count = 0;
             var attempted = 0;
-            foreach (var registration in DreadSystemRegistry.Registrations)
+            foreach (var registration in DreadSystemRegistry.Registrations
+                .OrderBy(r => r.OrderGroup))
             {
                 if (registration.IsEnabled != null && !registration.IsEnabled())
                     continue;

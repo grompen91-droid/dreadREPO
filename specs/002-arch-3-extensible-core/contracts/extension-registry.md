@@ -16,7 +16,7 @@ Each registration MUST provide:
 
 ## Ordering rules
 
-1. All `Core` registrations run before any `Debug` registration.
+1. All `Core` registrations run before any `Debug` registration (`DreadSystemInitializer` sorts by `OrderGroup`, then declaration order in the registry list).
 2. Within a group, order is declaration order in source (reviewers treat order as significant).
 3. `RepoConfigSliderLabelCompat.TryApply` runs after successful init loop (not a registry row).
 
@@ -35,7 +35,7 @@ Implementations MUST register at least these (host names from [mod-architecture.
 | `debug-server` | `DebugServerSystem` | `DreadDebugHost` | Debug |
 | `debug-overlay` | `DebugOverlaySystem` | `DreadDebugOverlayHost` | Debug |
 
-Debug rows SHOULD use `IsEnabled` matching their config toggles where applicable.
+Debug rows **may omit** `IsEnabled` when ADR-0016 applies: debug hosts always register so `SettingChanged` and F10 overlay wiring keep working (PERF-2). Use `IsEnabled` only when a debug host must not spawn at all.
 
 ## Predicate examples
 
@@ -54,7 +54,7 @@ Compatibility mode: gameplay systems remain registered; internal logic and Harmo
 Tier 0 verify MUST fail if:
 
 - `TryAddSystem<` appears outside `DreadSystemInitializer.cs` and the registry module, OR
-- Registry id list diverges from the manifest in `verify-dread.ps1` (implementation choice documented in PR).
+- `arch3_registry_manifest`: any of the eight baseline `SystemType` names missing from `DreadSystemRegistry.cs`.
 
 ## Versioning
 

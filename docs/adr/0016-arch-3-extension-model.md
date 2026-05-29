@@ -19,7 +19,7 @@ After ARCH-1 split `Plugin.cs` and `DreadSystemInitializer.cs`, every new runtim
 1. **`Plugin.Awake`**: `DreadConfig.Initialize`, Harmony patch apply/remove (monster, crouch, debug console guard), config `SettingChanged` handlers, `SceneManager.sceneLoaded` subscription.
 2. **`Plugin.Start`**: first `RepoConfigSliderLabelCompat.TryApply` (REPOConfig may load later).
 3. **`SceneManager.sceneLoaded`**: `DreadSystemInitializer.TryInitialize()` until Unity UI is ready.
-4. **`DreadSystemInitializer`**: iterate `DreadSystemRegistry.Registrations` (Core then Debug declaration order); per-row try/catch; then `RepoConfigSliderLabelCompat.TryApply` again.
+4. **`DreadSystemInitializer`**: iterate `DreadSystemRegistry.Registrations` sorted by `OrderGroup` (Core before Debug), then declaration order within each group; per-row try/catch; then `RepoConfigSliderLabelCompat.TryApply` again.
 
 Harmony patches are **not** registry rows (ADR-0009 lifecycle differs).
 
@@ -49,7 +49,7 @@ Matrix: [specs/002-arch-3-extensible-core/quickstart.md](../../specs/002-arch-3-
 
 ### Verification
 
-`scripts/verify-dread.ps1` Tier 0 `arch3_try_add_system`: `TryAddSystem<` only in initializer/registry paths (registry may use `AddComponent(Type)` only).
+`scripts/verify-dread.ps1` Tier 0: `arch3_try_add_system` (no stray `TryAddSystem<` outside initializer/registry) and `arch3_registry_manifest` (eight baseline system types present in `DreadSystemRegistry.cs`).
 
 ### ARCH-4 boundary
 
@@ -78,7 +78,7 @@ Do not add new reflection in debug paths for ARCH-3; extend this type when overl
 - **Positive:** One module to review for new systems; Tier 0 blocks stray spawns in `Plugin.cs`.
 - **Positive:** ADR + spec contracts give agents a single narrative.
 - **Negative:** Registry order is manual; reviewers must keep Core-before-Debug ordering.
-- **Negative:** Optional `IsEnabled` predicates are available but debug hosts still spawn when disabled so config `SettingChanged` and F10 overlay wiring keep working (PERF-2).
+- **Negative:** Debug registry rows intentionally omit `IsEnabled`: debug hosts **always register** at init so config `SettingChanged` and F10 overlay wiring keep working when toggles change (PERF-2). Core rows may use `IsEnabled` when a host must not spawn.
 
 ---
 

@@ -36,7 +36,7 @@
 
 ## Decision: Init ordering groups
 
-**Decision**: Three groups in registry order: (1) core gameplay/audio/tension/psychotic/error, (2) test crash (debug), (3) debug server/overlay gated on config.
+**Decision**: Two `OrderGroup` values (`Core`, `Debug`). Initializer sorts by group then registry declaration order. Core: gameplay/audio/tension/psychotic/error. Debug: test crash, debug server, overlay. Debug hosts **always register** (no `IsEnabled` on overlay/server per ADR-0016 PERF-2); internal logic respects config toggles.
 
 **Rationale**: Debug hosts should not block core if misconfigured; matches current implicit order in initializer.
 
@@ -56,7 +56,7 @@
 
 ## Decision: Tier 0 verify guard
 
-**Decision**: Add verify check: every `TryAddSystem<` in repo must appear only in `DreadSystemInitializer.cs` (or registry file if inlined), and registry type list must match a maintained manifest array in the verify script OR grep for duplicate registrations.
+**Decision**: Tier 0 checks: (1) `arch3_try_add_system`: no `TryAddSystem<` outside `DreadSystemInitializer.cs` / `DreadSystemRegistry.cs` (spawn uses registry + `AddComponent(Type)`); (2) `arch3_registry_manifest`: grep `DreadSystemRegistry.cs` for the eight baseline system type names from [extension-registry.md](./contracts/extension-registry.md).
 
 **Rationale**: FR-006; cheap static enforcement for agents.
 

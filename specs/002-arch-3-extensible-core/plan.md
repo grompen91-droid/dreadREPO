@@ -134,14 +134,16 @@ Resolved:
 
 | Risk | Mitigation |
 |------|------------|
-| Init order regression | Keep UI defer; document order groups in registry |
-| Debug systems spawn when disabled | Register with `() => DreadConfig.DebugServerEnabled` etc. |
+| Init order regression | UI defer + initializer `OrderBy(OrderGroup)`; document declaration order within group |
+| Debug systems skip init when toggled off | ADR-0016: debug hosts always register; toggles gate behavior inside systems |
 | Registry drift (system without row) | Tier 0 verify compares registry to expected set |
 | Scope creep into ARCH-4 API | FR-007 ADR explicitly defers public mod API |
 
 ## Success verification
 
-- [ ] [spec.md](./spec.md) success criteria met
-- [ ] Issue #175 acceptance checkboxes in PR
-- [ ] `verify-dread.ps1` Tier 0 pass (stub build)
-- [ ] Manual compat matrix recorded in PR description
+Verified on implement commit `a574db7` (speckit-analyze alignment pass may refresh docs only).
+
+- [x] [spec.md](./spec.md) success criteria met
+- [x] Issue #175 acceptance checkboxes in PR
+- [x] `verify-dread.ps1` Tier 0 pass (stub build)
+- [x] Manual compat matrix recorded in PR description (PR author fills [quickstart.md](./quickstart.md) template)

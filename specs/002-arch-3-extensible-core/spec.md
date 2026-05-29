@@ -4,7 +4,9 @@
 
 **Created**: 2026-05-30
 
-**Status**: Draft
+**Status**: Implemented (commit `a574db7`)
+
+**ROADMAP**: ARCH-3 stays `in-progress` until PR merge; set `done` in `docs/ROADMAP.md` on merge (T021).
 
 **Roadmap**: ARCH-3 (P0) | **Issue**: [#175](https://github.com/grompen91-droid/dreadREPO/issues/175)
 
@@ -33,7 +35,7 @@ A player runs Dread with REPOConfig absent, with **Compatibility mode** on, or a
 
 **Why this priority**: Issue #175 "harden core" acceptance includes a manual matrix; compat is already partial in code and must be formalized.
 
-**Independent Test**: Manual matrix in [quickstart.md](./quickstart.md); Tier 0 `verify-dread.ps1` passes; documented paths match `docs/agents/guides/compatibility.md`.
+**Independent Test**: Manual matrix in [quickstart.md](./quickstart.md); Tier 0 `verify-dread.ps1` passes; normative compat matrix in [quickstart.md](./quickstart.md) and [docs/agents/guides/compatibility.md](../../docs/agents/guides/compatibility.md).
 
 **Acceptance Scenarios**:
 
@@ -75,7 +77,7 @@ Maintainers and MCP agents read one architecture note (ADR or CONTEXT section) d
 - **FR-003**: **Documented system lifecycle** contract covering config registration, initializer registration, scene gating, compat checks, and optional `DreadRuntimeState` publishing.
 - **FR-004**: **Compat pattern library** update: consolidate optional-mod detection, host-only patch gates, compatibility mode matrix, and load-order notes in agent docs (align with ADR-0004, ADR-0009).
 - **FR-005**: **Thin `Plugin.cs`**: patch apply/remove and config wiring stay in Plugin; no new per-system `TryAddSystem` lines after ARCH-3 (registry only).
-- **FR-006**: **Verification**: extend `scripts/verify-dread.ps1` Tier 0 with at least one ARCH-3 static guard (e.g. registry lists all `TryAddSystem` types, or forbid direct `TryAddSystem` outside initializer/registry).
+- **FR-006**: **Verification**: Tier 0 `arch3_try_add_system` fails on any `TryAddSystem<` outside `Systems/DreadSystemInitializer.cs` and `Systems/DreadSystemRegistry.cs`; `arch3_registry_manifest` greps those eight system type names in `DreadSystemRegistry.cs` per [contracts/extension-registry.md](./contracts/extension-registry.md).
 - **FR-007**: **Architecture note**: ADR describing extension model and relationship to ARCH-4 (external API deferred).
 
 ### Key Entities

@@ -13,19 +13,23 @@ Conceptual entities for system registration and initialization (not persisted da
 | `isEnabled` | Optional predicate; null means always try when init runs |
 | `rationale` | One line for ADR/registry review |
 
-**Relationships**: Consumed by `DreadSystemInitializer` after UI gate passes.
+**Relationships**: Consumed by `DreadSystemInitializer` after UI gate passes; initializer sorts by `orderGroup` (Core before Debug), then list declaration order.
+
+**Ordering**: `orderGroup` is enforced at runtime via `OrderBy(OrderGroup)`; declaration order within a group remains significant for reviewers.
 
 **Validation**: Each concrete runtime system in [mod-architecture.md](../../docs/agents/guides/mod-architecture.md) table maps to exactly one registration.
 
-## InitResult
+## InitResult (conceptual)
+
+Not a persisted C# type in v1. Per-system outcomes are implied by try/catch in `TryAddSystem(Type, hostName)` and aggregated only in the session log line.
 
 | Field | Description |
 |-------|-------------|
-| `registrationId` | Links to `SystemRegistration.id` |
+| `registrationId` | Links to `SystemRegistration.id` (conceptual) |
 | `success` | Whether `AddComponent` succeeded |
 | `errorDetail` | Exception message if failed |
 
-**Relationships**: Aggregated into session init log line (`Systems initialized (N)`).
+**Relationships**: Shipped logging uses `(count)` or `(count/attempted)` summary only; see `DreadSystemInitializer` after the registry loop.
 
 ## CompatProfile
 

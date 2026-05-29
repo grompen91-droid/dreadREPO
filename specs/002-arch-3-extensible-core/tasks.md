@@ -36,7 +36,7 @@
 
 **CRITICAL**: Do not start T007 or Phase 4+ doc tasks that assume registry until T004-T005 are complete
 
-- [x] T004 Create `Systems/DreadSystemRegistry.cs` with `SystemRegistration` records for all rows in [contracts/extension-registry.md](./contracts/extension-registry.md) (Core then Debug order; debug `IsEnabled` predicates per research.md)
+- [x] T004 Create `Systems/DreadSystemRegistry.cs` with `SystemRegistration` records for all rows in [contracts/extension-registry.md](./contracts/extension-registry.md) (Core then Debug order; debug hosts may omit `IsEnabled` per ADR-0016)
 - [x] T005 Refactor `Systems/DreadSystemInitializer.cs` to iterate `DreadSystemRegistry` with per-system try/catch, preserve UI defer gate and post-init `RepoConfigSliderLabelCompat.TryApply`; remove inline `TryAddSystem<>` calls
 
 **Checkpoint**: Registry drives init; `Plugin.cs` unchanged for system spawning
@@ -89,7 +89,7 @@
 - [x] T015 [P] [US3] Update `CONTEXT.md` **System initializer** and **Compat layer** entries to link ADR and contracts
 - [x] T016 [US3] Rewrite `docs/agents/guides/mod-architecture.md` section "Adding a new runtime system" to use registry + [contracts/system-lifecycle.md](./contracts/system-lifecycle.md)
 - [x] T017 [US3] Add ADR and `specs/002-arch-3-extensible-core/` links in `docs/agents/guides/README.md`
-- [x] T018 [P] [US3] Document supported `DreadRuntimeState` fields for overlay/MCP in `docs/agents/guides/debug-overlay.md` or ADR appendix (no new reflection in debug paths)
+- [x] T018 [P] [US3] Document supported `DreadRuntimeState` fields for overlay/MCP in `docs/agents/guides/debug-tooling.md` and ADR-0016 appendix (no new reflection in debug paths)
 
 **Checkpoint**: US3 documentation complete
 

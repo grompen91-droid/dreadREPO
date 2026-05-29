@@ -65,7 +65,7 @@ Invoke-GrepCheck -Id "trailing_whitespace" -Pattern '[[:blank:]]$' `
 Invoke-GrepCheck -Id "tabs" -Pattern "`t" `
     -Paths @("*.cs", "Systems/*.cs", "Config/*.cs") -FailMsg "tab characters"
 
-# ARCH-3: system spawn only via initializer + registry (no stray TryAddSystem< in Plugin or systems)
+# ARCH-3: spawn only via DreadSystemRegistry + DreadSystemInitializer (no stray TryAddSystem< elsewhere)
 $arch3Allowed = @(
     "Systems/DreadSystemInitializer.cs",
     "Systems/DreadSystemRegistry.cs"
@@ -85,9 +85,40 @@ foreach ($path in @("*.cs", "Systems", "Systems/Patches", "Systems/PsychoticBrea
 if ($arch3Hits.Count -gt 0) {
     $sample = ($arch3Hits | Select-Object -First 3) -join "; "
     Add-Check -Tier "tier0" -Id "arch3_try_add_system" -Ok $false `
-        -Message "TryAddSystem< outside initializer/registry: $sample"
+        -Message "Stray TryAddSystem< outside DreadSystemInitializer/DreadSystemRegistry (register in DreadSystemRegistry only): $sample"
 } else {
-    Add-Check -Tier "tier0" -Id "arch3_try_add_system" -Ok $true -Message "TryAddSystem confined to registry path"
+    Add-Check -Tier "tier0" -Id "arch3_try_add_system" -Ok $true `
+        -Message "No stray TryAddSystem<; runtime spawn via registry + initializer only"
+}
+
+# ARCH-3: baseline system types from extension-registry contract
+$arch3RegistryPath = "Systems/DreadSystemRegistry.cs"
+$arch3ManifestTypes = @(
+    "AudioDreadSystem",
+    "MonsterOverhaulSystem",
+    "TensionSystem",
+    "ErrorReporterSystem",
+    "PsychoticBreakSystem",
+    "TestCrashSystem",
+    "DebugServerSystem",
+    "DebugOverlaySystem"
+)
+$arch3Missing = @()
+if (-not (Test-Path $arch3RegistryPath)) {
+    $arch3Missing = $arch3ManifestTypes
+} else {
+  foreach ($typeName in $arch3ManifestTypes) {
+    $hit = & grep -q $typeName $arch3RegistryPath 2>$null
+    if ($LASTEXITCODE -ne 0) { $arch3Missing += $typeName }
+  }
+}
+if ($arch3Missing.Count -gt 0) {
+    $missingList = $arch3Missing -join ", "
+    Add-Check -Tier "tier0" -Id "arch3_registry_manifest" -Ok $false `
+        -Message "DreadSystemRegistry missing baseline types: $missingList"
+} else {
+    Add-Check -Tier "tier0" -Id "arch3_registry_manifest" -Ok $true `
+        -Message "Registry manifest: eight baseline system types present"
 }
 
 # MCP npm build
