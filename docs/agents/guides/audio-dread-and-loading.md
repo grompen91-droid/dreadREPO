@@ -11,6 +11,7 @@
 | Timing | 30s warmup after load, then random **60 to 180s** interval divided by `AudioFrequency` |
 | Position | Random offset around camera (3D spatial, not entity-attached) |
 | Gating | `AudioEnabled`, not menu level, clips must load |
+| Playback lifetime | `AudioPlayUtil.PlayLifetimeSeconds(clip, pitch)` for one-shot hosts: `clip.length / pitch + padding` (pitch below 1.0 needs longer destroy delay) |
 
 Runtime state for overlay/MCP:
 
@@ -27,8 +28,9 @@ Config section: `1. Audio Dread` in `DreadConfig.cs`.
 |------|--------|
 | Path | `{pluginDir}/audio/{fileName}` |
 | Cache | Static dictionary per file name; cleared on scene load via `ClearCache()` from `TensionSystem` |
-| Primary load | NVorbis decode to `AudioClip` (Linux-friendly) |
-| Fallback | `UnityWebRequestMultimedia` with `file://` URI |
+| Primary load | NVorbis decode to `AudioClip` (read until EOF, Linux-friendly) |
+| Fallback | `UnityWebRequestMultimedia` with `file://` URI only when `UnityWebRequestCompat.IsUsable` |
+| Stub builds | If NVorbis fails and UWR is unusable (zero-RVA stub compile), warning + `onLoaded(null)` |
 | Missing file | Warning log, `onLoaded(null)` |
 
 Agents adding sounds:
@@ -54,6 +56,8 @@ Use glossary names from [CONTEXT.md](../../../CONTEXT.md) (e.g. **Low stamina so
 | Add ambient clip | `AudioDreadSystem.ClipNames` + `ClipWeights` + file in `audio/` |
 | Tune frequency | `DreadConfig.AudioFrequency` |
 | Fix Linux load | Ensure full plugin folder deployed (NVorbis + dependencies); see [compatibility.md](compatibility.md) |
+| Truncated ambient sound | Check pitch vs `Destroy` timing; use `AudioPlayUtil` for new one-shots |
+| `BadImageFormatException` spam | Stub build + UWR: use game `Managed` refs for release DLLs; see `UnityWebRequestCompat` and error reporter HTTP path |
 
 ## ADRs
 

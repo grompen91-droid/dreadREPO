@@ -93,10 +93,10 @@ namespace Dread.Systems
             DreadConfig.PsychoticBreakOncePerMatch.SettingChanged -= OnConfigChanged;
             DreadConfig.CompatibilityMode.SettingChanged -= OnConfigChanged;
 
-            if (_peakScreamClip != null) Destroy(_peakScreamClip);
-            if (_distantScreamClip != null) Destroy(_distantScreamClip);
-            if (_threatScreamClip != null) Destroy(_threatScreamClip);
-            if (_footstepClip != null) Destroy(_footstepClip);
+            _peakScreamClip = null;
+            _distantScreamClip = null;
+            _threatScreamClip = null;
+            _footstepClip = null;
 
             CleanupOverlay();
             CleanupFootstepSource();

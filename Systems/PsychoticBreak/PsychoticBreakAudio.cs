@@ -104,7 +104,7 @@ namespace Dread.Systems
             src.spatialBlend = 0f;
             src.volume = 0.9f;
             src.Play();
-            Destroy(go, _peakScreamClip.length + 1f);
+            Destroy(go, AudioPlayUtil.PlayLifetimeSeconds(_peakScreamClip, src.pitch, paddingSeconds: 1f));
         }
 
         private void SpawnPhantomSound()
@@ -123,7 +123,8 @@ namespace Dread.Systems
             host.transform.position = pos;
             var src = host.AddComponent<AudioSource>();
             src.clip = clip;
-            src.pitch = Random.Range(0.5f, 1.5f);
+            var pitch = Random.Range(0.5f, 1.5f);
+            src.pitch = pitch;
             src.spatialBlend = 1f;
             src.volume = Random.Range(0.4f, 0.8f);
             src.rolloffMode = AudioRolloffMode.Linear;
@@ -131,7 +132,7 @@ namespace Dread.Systems
             src.maxDistance = 25f;
             src.Play();
 
-            Destroy(host, clip.length + 1f);
+            Destroy(host, AudioPlayUtil.PlayLifetimeSeconds(clip, pitch, paddingSeconds: 1f));
         }
     }
 }
