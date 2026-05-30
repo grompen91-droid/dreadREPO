@@ -80,7 +80,7 @@ Work top to bottom within each phase. Do not skip **Depends on** unless the issu
 | 12 | DBG-1 | P2 | [#163](https://github.com/grompen91-droid/dreadREPO/issues/163) | DBG-3 (soft) | Draggable panel after text renders reliably |
 | 13 | DBG-2 | P2 | [#164](https://github.com/grompen91-droid/dreadREPO/issues/164) | DBG-1, DBG-5 (soft) | Richer cfg once layout UX is settled |
 
-### Phase 5: Performance optimization
+### Phase 5: Performance optimization (PAUSED)
 
 | Order | ID | Priority | Issue | Depends on | Why |
 |-------|-----|----------|-------|------------|-----|
