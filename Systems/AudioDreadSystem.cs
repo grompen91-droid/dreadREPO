@@ -122,7 +122,8 @@ namespace Dread.Systems
                 return;
 
             var clip = PickWeightedClip();
-            if (clip == null) return;
+            if (clip == null)
+                return;
             var cam = _mainCam;
 
             var offset = new Vector3(
@@ -135,7 +136,8 @@ namespace Dread.Systems
             host.transform.position = pos;
             var src = host.AddComponent<AudioSource>();
             src.clip = clip;
-            src.pitch = Random.Range(0.5f, 1.5f);
+            var pitch = Random.Range(0.5f, 1.5f);
+            src.pitch = pitch;
             src.spatialBlend = 1.0f;
             src.volume = DreadConfig.AudioVolume.Value;
             src.rolloffMode = AudioRolloffMode.Linear;
@@ -143,10 +145,7 @@ namespace Dread.Systems
             src.maxDistance = 25f;
             src.Play();
 
-            if (clip != null)
-                Destroy(host, clip.length + 0.5f);
-            else
-                Destroy(host, 0.5f);
+            Destroy(host, AudioPlayUtil.PlayLifetimeSeconds(clip, pitch));
         }
     }
 }

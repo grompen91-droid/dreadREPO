@@ -45,6 +45,14 @@ namespace Dread.Systems
                 yield break;
             }
 
+            if (!UnityWebRequestCompat.IsUsable)
+            {
+                LoggingService.LogWarning(
+                    $"[AudioClipLoader] NVorbis failed and UnityWebRequest is unavailable for {fileName}");
+                onLoaded(null);
+                yield break;
+            }
+
             var fileUri = ToFileUri(path);
             using var req = UnityWebRequestMultimedia.GetAudioClip(fileUri, AudioType.OGGVORBIS);
             yield return req.SendWebRequest();
@@ -102,31 +110,25 @@ namespace Dread.Systems
                 using var reader = new VorbisReader(path);
                 int channels = reader.Channels;
                 int sampleRate = reader.SampleRate;
-                int frameCount = (int)reader.TotalSamples;
-                if (frameCount <= 0 || channels <= 0)
+                if (channels <= 0 || sampleRate <= 0)
                     return false;
 
-                var samples = new float[frameCount * channels];
-                int offset = 0;
-                while (offset < samples.Length)
+                var chunk = new float[Math.Max(channels * 2048, (sampleRate / 10) * channels)];
+                int listCapacity = Math.Max(channels * 4096, (int)Math.Min(reader.TotalSamples, 2_000_000));
+                var sampleList = new List<float>(listCapacity);
+                int read;
+                while ((read = reader.ReadSamples(chunk, 0, chunk.Length)) > 0)
                 {
-                    int read = reader.ReadSamples(samples, offset, samples.Length - offset);
-                    if (read == 0)
-                        break;
-                    offset += read;
+                    for (int i = 0; i < read; i++)
+                        sampleList.Add(chunk[i]);
                 }
 
-                int usedFrames = offset / channels;
-                if (usedFrames <= 0)
+                int sampleCount = sampleList.Count;
+                if (sampleCount < channels)
                     return false;
 
-                var pcm = samples;
-                if (usedFrames * channels < pcm.Length)
-                {
-                    var trimmed = new float[usedFrames * channels];
-                    Array.Copy(pcm, trimmed, trimmed.Length);
-                    pcm = trimmed;
-                }
+                int usedFrames = sampleCount / channels;
+                var pcm = sampleList.ToArray();
 
                 int pcmReadPos = 0;
                 clip = AudioClip.Create(

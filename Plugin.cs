@@ -22,6 +22,7 @@ namespace Dread
         private readonly Harmony _harmony = new(GUID);
         private EventHandler? _logLevelHandler;
 
+        // ADR-0004 host gates are inside patch postfixes; CompatibilityMode disables apply here (ADR-0009).
         private static bool MonsterPatchesEnabled =>
             DreadConfig.MonsterAggressionEnabled.Value && !DreadConfig.CompatibilityMode.Value;
 

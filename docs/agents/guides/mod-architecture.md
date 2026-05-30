@@ -22,10 +22,11 @@ Plugin.Awake()
 
 First gameplay-ready scene:
   DreadSystemInitializer.TryInitialize()
-    -> one DontDestroyOnLoad host per runtime system
+    -> loop DreadSystemRegistry (Core then Debug)
+    -> one DontDestroyOnLoad host per registered system
 ```
 
-Entry: `Plugin.cs`. System spawning: `Systems/DreadSystemInitializer.cs` (waits for `UnityEngine.UI` before adding UI-dependent components).
+Entry: `Plugin.cs` (Harmony + config only). Registry: `Systems/DreadSystemRegistry.cs`. Init loop: `Systems/DreadSystemInitializer.cs` (waits for `UnityEngine.UI` before UI-dependent components). See [ADR-0016](../../adr/0016-arch-3-extension-model.md).
 
 ## Runtime systems (one host each)
 
@@ -87,12 +88,16 @@ Use `SemiFunc.MenuLevel()` for menu/main UI. `MonsterOverhaulSystem` also tracks
 
 ## Adding a new runtime system
 
+Follow [specs/002-arch-3-extensible-core/contracts/system-lifecycle.md](../../../specs/002-arch-3-extensible-core/contracts/system-lifecycle.md):
+
 1. Create `Systems/YourSystem.cs` as `MonoBehaviour`
-2. Register in `DreadSystemInitializer.TryAddSystem<YourSystem>("DreadYourHost")`
-3. Subscribe/unsubscribe `SceneManager.sceneLoaded` in `OnDestroy`
-4. Gate on `DreadConfig` + `CompatibilityMode` + menu level as needed
-5. Publish debug state via `DreadRuntimeState` if overlay/MCP should show it
-6. Document terms in `CONTEXT.md` if you introduce new domain language
+2. Add config entries in `Config/DreadConfig.cs`
+3. Add one row to `Systems/DreadSystemRegistry.cs` (Core or Debug group; optional `IsEnabled` predicate)
+4. **Do not** add `TryAddSystem` in `Plugin.cs`
+5. Subscribe/unsubscribe `SceneManager.sceneLoaded` in `OnDestroy`
+6. Gate on `DreadConfig` + `CompatibilityMode` + menu level inside the system (or `IsEnabled` on the row)
+7. Publish fields on `DreadRuntimeState` if overlay/MCP should show live values ([ADR-0016](../../adr/0016-arch-3-extension-model.md))
+8. Document new domain terms in `CONTEXT.md`
 
 ## Build profiles (stub vs full)
 

@@ -22,11 +22,14 @@ Current-state reference for working in the Dread codebase. These replace the old
 | [config-and-logging.md](config-and-logging.md) | DreadConfig sections, LoggingService |
 | [compatibility.md](compatibility.md) | Compatibility mode, REPOConfig, optional mods |
 
+**ARCH-3 (extension model):** [docs/adr/0016-arch-3-extension-model.md](../../adr/0016-arch-3-extension-model.md), spec contracts under [specs/002-arch-3-extensible-core/](../../../specs/002-arch-3-extensible-core/).
+
 ## By task type
 
 | You need to… | Start here |
 |--------------|------------|
-| Orient in repo | [mod-architecture.md](mod-architecture.md) |
+| Orient in repo | [mod-architecture.md](mod-architecture.md) + [ADR-0016](../../adr/0016-arch-3-extension-model.md) |
+| Add a runtime system | [mod-architecture.md](mod-architecture.md) + [system-lifecycle contract](../../../specs/002-arch-3-extensible-core/contracts/system-lifecycle.md) |
 | Change gameplay near enemies | [tension-and-proximity.md](tension-and-proximity.md) or [monster-overhaul.md](monster-overhaul.md) |
 | Patch game methods | [harmony-and-patches.md](harmony-and-patches.md) |
 | Add sounds | [audio-dread-and-loading.md](audio-dread-and-loading.md) |

@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using Dread.Config;
 using UnityEngine;
-using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
 namespace Dread.Systems
@@ -47,7 +46,19 @@ namespace Dread.Systems
 
         private static void OnLogMessageReceived(string logString, string stackTrace, LogType type)
         {
+            if (ShouldIgnoreUnityLog(logString, stackTrace))
+                return;
+
             EnqueueLog(logString, stackTrace, type);
+        }
+
+        private static bool ShouldIgnoreUnityLog(string logString, string stackTrace)
+        {
+            if (!logString.Contains("BadImageFormatException"))
+                return false;
+
+            return logString.IndexOf("zero rva", StringComparison.OrdinalIgnoreCase) >= 0
+                || stackTrace.IndexOf("UnityEngine.Networking", StringComparison.Ordinal) >= 0;
         }
 
         internal static void EnqueueLog(string logString, string stackTrace, LogType type)
@@ -238,7 +249,7 @@ namespace Dread.Systems
                     Reports = batch.ToArray()
                 };
 
-                var bytes = ErrorReportUploader.EncodePayload(payload, out var json);
+                ErrorReportUploader.EncodePayload(payload, out var json);
                 var validationError = ErrorReportUploader.ValidateBatchJson(json);
                 if (validationError != null)
                 {
@@ -247,21 +258,15 @@ namespace Dread.Systems
                     yield break;
                 }
 
-                using var request = new UnityWebRequest(ErrorReportUploader.WorkerUrl, "POST");
-                request.uploadHandler = new UploadHandlerRaw(bytes);
-                request.downloadHandler = new DownloadHandlerBuffer();
-                request.SetRequestHeader("Content-Type", "application/json");
+                yield return null;
 
-                yield return request.SendWebRequest();
-
-                if (request.result != UnityWebRequest.Result.Success)
+                if (!ErrorReportUploader.TryPostPayloadSync(payload, out var body, out var postError))
                 {
-                    LoggingService.LogWarning($"Error report HTTP failed: {request.error}");
+                    LoggingService.LogWarning($"Error report HTTP failed: {postError}");
                     RequeueFailedBatch(batch);
                 }
                 else
                 {
-                    var body = request.downloadHandler?.text ?? string.Empty;
                     HandleWorkerResponse(body, batch);
                 }
             }

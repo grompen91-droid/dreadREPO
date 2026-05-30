@@ -25,6 +25,7 @@ Work top to bottom within each phase. Do not skip **Depends on** unless the issu
 |----|------|-------|
 | (compat) | **REPOConfig slider labels** | `RepoConfigSliderLabelCompat` when REPOConfig is loaded: restores names at x=100, compact row. Names readable; left-column alignment vs toggles still imperfect. **Do not remove** until DBG-4 upstream or verified A/B without compat. |
 | DOCS-1 | **Root `CONTEXT.md`** | Glossary + file map ([#174](https://github.com/grompen91-droid/dreadREPO/issues/174), PR #179) |
+| AUDIO-1 | **Audio playback + stub UWR hardening** | `AudioPlayUtil` (pitch-aware destroy); NVorbis read-until-EOF; `UnityWebRequestCompat`; error reporter batch POST via `HttpWebRequest`; psychotic break no longer `Destroy`s cached clips. See `docs/agents/guides/audio-dread-and-loading.md` | done (unreleased) |
 
 ### Phase 1: Foundation (FINISHED)
 
@@ -125,7 +126,7 @@ See also: `docs/repo-config-slider-labels-investigation.md`.
 | ARCH-1 | P0 | **Refactor into manageable files** | Split large systems; thin `Plugin` / `DreadSystemInitializer` | done | [#167](https://github.com/grompen91-droid/dreadREPO/issues/167) |
 | ARCH-4 | P3 | **External mod API + feature modules** | Optional cfg feature packs; documented BepInEx soft-dependency API; semver + ADR; after ARCH-3 | idea | (to file) |
 | ARCH-2 | P1 | **Reduce DLL / reflection surface** | Compile-time refs; document stub vs full build | done | [#168](https://github.com/grompen91-droid/dreadREPO/issues/168) |
-| ARCH-3 | P0 | **Extensibility + hardened core** | Extension points, fail-safe init, compat patterns | idea | [#175](https://github.com/grompen91-droid/dreadREPO/issues/175) |
+| ARCH-3 | P0 | **Extensibility + hardened core** | Extension points, fail-safe init, compat patterns | done | [#175](https://github.com/grompen91-droid/dreadREPO/issues/175) (`specs/002-arch-3-extensible-core/`) |
 
 ---
 
@@ -144,9 +145,23 @@ See also: `docs/repo-config-slider-labels-investigation.md`.
 |----|----------|------|-------|--------|-------|
 | ERR-1 | P0 | **Test error reporting end-to-end** | TestCrash, MCP, real exceptions (ADR-0010, ADR-0012, ADR-0015); checklist in `docs/agents/error-reporting-test-checklist.md` | done | [#171](https://github.com/grompen91-droid/dreadREPO/issues/171) |
 | ERR-2 | P1 | **Default on + first-run prompt** | Default `ErrorReportingEnabled` true | idea | [#172](https://github.com/grompen91-droid/dreadREPO/issues/172) |
-| ERR-3 | P1 | **Privacy copy** | Canonical disclosure + cfg description; ERR-2 uses same strings | in-progress | [#173](https://github.com/grompen91-droid/dreadREPO/issues/173) (`specs/003-err-3-privacy-copy/`) |
+| ERR-3 | P1 | **Privacy copy** | Canonical disclosure + cfg description; ERR-2 uses same strings | done | [#173](https://github.com/grompen91-droid/dreadREPO/issues/173) (`specs/003-err-3-privacy-copy/`) |
+| ERR-4 | P2 | **Non-blocking batch flush** | `SendBatch` uses sync `HttpWebRequest` on main thread (up to 15s). Prefer `UnityWebRequest` when `UnityWebRequestCompat.IsUsable`, else background thread. Narrow `ShouldIgnoreUnityLog` if we need non-UWR `BadImageFormatException` reports | idea | (to file) |
 
-**Current behavior:** `ErrorReportingEnabled` defaults to **false** (opt-in). Ship ERR-2 only after ERR-1 and ERR-3.
+**Current behavior:** `ErrorReportingEnabled` defaults to **false** (opt-in). Ship ERR-2 only after ERR-1 and ERR-3. Batch flush path: `ErrorReportUploader.TryPostPayloadSync` (ADR-0015 updated).
+
+---
+
+## Audio and atmosphere
+
+| ID | Priority | Item | Notes | Status | Issue |
+|----|----------|------|-------|--------|-------|
+| AUDIO-1 | P1 | **Pitch-aware playback + NVorbis EOF + stub UWR** | `AudioPlayUtil`; chunked NVorbis; `UnityWebRequestCompat`; shared clip cache safe in psychotic break | done (unreleased) | (this PR) |
+| AUDIO-2 | P2 | **Unit tests for `AudioPlayUtil`** | Golden cases: pitch 0.5 doubles wall-clock lifetime; edge pitch clamp | idea | (to file) |
+| AUDIO-3 | P2 | **NVorbis load performance** | Replace per-sample `List.Add` with block copy for large OGGs; handle partial final frame if needed | idea | (to file) |
+| AUDIO-4 | P2 | **`PlayPeakScream` DRY** | Use `AudioPlayUtil` for destroy timing (pitch fixed at 1.0 today) | idea | (to file) |
+
+Stub/local builds: always use real game `Managed` DLLs for release packages when possible (`build.ps1` warns on stub-only compile). CI may still use stubs; NVorbis is the primary audio path.
 
 ---
 

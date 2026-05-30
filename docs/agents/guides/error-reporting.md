@@ -10,7 +10,8 @@ Opt-in telemetry from game to Cloudflare Worker to GitHub issues. Default **off*
 Unity Application.logMessageReceived (Exception/Error)
   -> enqueue + dedupe (60s per hash)
   -> batch flush (5 min or buffer full)
-  -> POST JSON to Worker
+  -> POST JSON via `HttpWebRequest` (`TryPostPayloadSync`; main thread, see roadmap ERR-4)
+  -> Worker
   -> Worker creates/updates GitHub issue (label auto-reported)
 ```
 

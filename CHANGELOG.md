@@ -31,12 +31,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 - **ERR-3 (#173):** Canonical error reporting privacy disclosure (`ErrorReportingPrivacyCopy`) wired to `ErrorReportingEnabled` config description; optional one-line log when reporting is enabled at runtime
-- **REPOConfig compat:** `RepoConfigCompat` entry point; short error-reporting summary label in REPOConfig; `HideFromREPOConfig` only on the test crash button (debug server, overlay, logging, and compatibility toggles stay in REPOConfig)
+- **REPOConfig compat:** `RepoConfigCompat` entry point; `HideFromREPOConfig` only on the test crash button (debug server, overlay, logging, and compatibility toggles stay in REPOConfig)
 
 ### Changed
 - **Config section order:** Gameplay first (audio through compatibility), then error reporting (7), then debug overlay/server/logging (8-10); test crash remains section 11 and hidden from REPOConfig. Renumbered cfg section headers; existing installs may keep values under old section names until reset or manual merge.
 - **REPOConfig error reporting:** Removed disclosure label compat (REPOConfig has no bool description API). Full privacy text remains in `elytraking.dread.cfg` and Configuration Manager only.
 - **REPOConfig testing:** `Crash Game` (section 11) visible in REPOConfig as a toggle (turn on to test crash pipeline).
+- **ARCH-3 (#175):** `DreadSystemRegistry` + fail-safe init loop in `DreadSystemInitializer`; Tier 0 `arch3_try_add_system` guard in `verify-dread.ps1`; ADR-0016 and agent compat/registry docs; `Plugin.cs` remains patch-focused (no system spawns)
 - **ARCH-2 (#168):** Reflection inventory in `docs/agents/guides/reflection-inventory.md`; stub vs full build docs in `mod-architecture.md`; Harmony patches use `typeof` for stub-covered game types (`EnemyNavMeshAgent`, `PlayerController`, `EnemyDirector`); cached compat reflection for player crouch/tumble checks; `SemiFunc.IsMasterClient` resolved at type load (no behavior change)
 - **ARCH-1 (#167):** Internal file layout only: Harmony patches under `Systems/Patches/`; psychotic break, error reporting, and debug overlay split into focused files under `Systems/PsychoticBreak/`, `Systems/ErrorReporting/`, and `Systems/DebugOverlay/` (no player-facing behavior change)
 - **Worker tests:** Vitest 4.1 + `@cloudflare/vitest-pool-workers` 0.16 with `cloudflareTest()` config (Cloudflare docs); worker package is ESM
@@ -44,6 +45,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 - **ERR-3 disclosure accuracy:** Privacy copy now matches `ErrorReportPayloadCapture` (eleven config fields including audio frequency/volume; system info may include VRAM and GPU driver); `FullDescription` composed from `DataBullets`; REPOConfig/Configuration Manager called out in disable steps
+- **Audio:** ambient/psychotic clips no longer cut off early when pitch is below 1.0 (`AudioPlayUtil` destroy lifetime); NVorbis reads full OGG streams
+- **Stub/local builds:** error reporter uses `HttpWebRequest` instead of `UnityWebRequest` (fixes `BadImageFormatException: Method has zero rva` log spam); audio loader skips UWR fallback when UWR is unusable; psychotic break no longer `Destroy`s shared cached `AudioClip`s
 - **REPOConfig slider labels:** reverted experimental `MidlineLeft`/pivot tweak that overlapped slider text; compat back to `Left` alignment + x=100 column only (see `docs/repo-config-slider-labels-investigation.md`)
 - GitHub boilerplate: GPL-3.0 `LICENSE`, Dread-tailored Dependabot (mod, MCP, worker, CI), `SECURITY.md`, CodeQL with stub build and path filters
 

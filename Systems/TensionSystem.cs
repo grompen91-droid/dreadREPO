@@ -300,7 +300,8 @@ namespace Dread.Systems
             host.transform.position = pos;
             var src = host.AddComponent<AudioSource>();
             src.clip = _footstepClip;
-            src.pitch = Random.Range(0.5f, 1.5f);
+            var pitch = Random.Range(0.5f, 1.5f);
+            src.pitch = pitch;
             src.spatialBlend = 1f;
             src.volume = 0.55f;
             src.rolloffMode = AudioRolloffMode.Linear;
@@ -309,7 +310,7 @@ namespace Dread.Systems
             src.Play();
 
             if (_footstepClip != null)
-                Destroy(host, _footstepClip.length + 0.5f);
+                Destroy(host, AudioPlayUtil.PlayLifetimeSeconds(_footstepClip, pitch));
             else
                 Destroy(host, 0.5f);
         }
