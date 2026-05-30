@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-30
 
-**Status**: Implementation complete on branch `004-err-2-default-on-prompt` (pending merge). Automated verification done (Tier 0, `Dread.ErrorReportJson.Tests`, grep). Manual SC-005/SC-006: [quickstart.md](./quickstart.md) Phase 7 matrix.
+**Status**: ERR-2 shipped on `master` (1.6.0, PR #208). This branch/PR adds **Phase 7** Core capture fix only (pending merge). Automated verification done (Tier 0, `Dread.ErrorReportJson.Tests`, grep). Manual SC-005/SC-006: [quickstart.md](./quickstart.md) Phase 7 matrix.
 
 **Roadmap**: ERR-2 (P1) | **Issue**: [#172](https://github.com/grompen91-droid/dreadREPO/issues/172)
 

@@ -1,6 +1,17 @@
 # Dread
 
+![Version](https://img.shields.io/badge/version-1.6.1-crimson?style=flat-square)
+![Status](https://img.shields.io/badge/status-release-brightgreen?style=flat-square)
+
 Atmospheric horror overhaul for R.E.P.O. Seven runtime systems that layer ambient dread, scarier monsters, real-time proximity tension, psychotic episodes, automated error reporting, and AI-assisted debugging.
+
+## What's new (1.6.0)
+
+- **Error reporting:** default **on** for new installs; one-time in-game privacy prompt before any data is sent (turn off in prompt, cfg, or REPOConfig)
+- **Stability:** cleaner mod file layout, safer system startup, better audio on low pitch, fewer stub-build crashes
+- **Hosts:** monster changes still host-only; clients without Dread can join
+
+Full notes: [CHANGELOG.md](https://github.com/grompen91-droid/dreadREPO/blob/master/CHANGELOG.md)
 
 ## Features
 
@@ -101,3 +112,6 @@ Dread only requires BepInEx. It works with many popular mods (Mimic, Wesleys Ene
 Full matrix, Proton DLL notes, and test checklist: [mod-compatibility.md](https://github.com/grompen91-droid/dreadREPO/blob/master/docs/mod-compatibility.md)
 
 [Changelog](CHANGELOG.md)
+
+
+

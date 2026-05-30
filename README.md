@@ -3,7 +3,7 @@
 > **Atmospheric horror overhaul for R.E.P.O.**  
 > Seven runtime systems that layer ambient dread, scarier monsters, a tension system that reads your proximity to danger in real time, a psychotic break episode when you are alone and scared, and automatic error reporting.
 
-![Version](https://img.shields.io/badge/version-1.5.2-crimson?style=flat-square)
+![Version](https://img.shields.io/badge/version-1.6.1-crimson?style=flat-square)
 ![Status](https://img.shields.io/badge/status-release-brightgreen?style=flat-square)
 ![BepInEx](https://img.shields.io/badge/BepInEx-5.4.21-blueviolet?style=flat-square)
 ![Game](https://img.shields.io/badge/game-R.E.P.O.-orange?style=flat-square)
@@ -43,18 +43,21 @@ Plugin.Awake()
   +-- DreadConfig.Initialize()          # 9 config sections
   +-- Harmony patch application         # conditional patches
   |
-Plugin.Start()
-  +-- DontDestroyOnLoad host GameObjects (7 systems)
-       +-- AudioDreadSystem            # coroutine: weighted ambient sounds
-       +-- MonsterOverhaulSystem       # scan loop + 3 Harmony patches
-       +-- TensionSystem               # 0.5s proximity scan drives 4 features
-       +-- PsychoticBreakSystem        # 2s trigger check: solo+threat+LoS+crouching -> 20s episode
-       +-- ErrorReporterSystem         # hooks Unity log, buffers, sends to Cloudflare worker
-       +-- TestCrashSystem             # config button to trigger intentional crash
-       +-- DebugServerSystem           # TCP debug server for AI agents (default off)
+Plugin.Start() / deferred retry
+  +-- DreadSystemInitializer.TryInitialize()
+       +-- DreadSystemRegistry (ordered registrations, config gates)
+            +-- AudioDreadSystem              # coroutine: weighted ambient sounds
+            +-- MonsterOverhaulSystem         # scan loop + Harmony patches (Systems/Patches/)
+            +-- TensionSystem                 # 0.5s proximity scan drives 4 features
+            +-- PsychoticBreakSystem          # Systems/PsychoticBreak/* episode state machine
+            +-- ErrorReporterSystem           # Systems/ErrorReporting/* telemetry + consent
+            +-- ErrorReportingPromptSystem    # first-run disclosure (ERR-2)
+            +-- TestCrashSystem               # config button to trigger intentional crash
+            +-- DebugOverlaySystem            # F10 HUD (Systems/DebugOverlay/)
+            +-- DebugServerSystem             # TCP debug server for AI agents (default off)
 ```
 
-All seven systems load their audio assets from a DLL-adjacent `audio/` folder via `UnityWebRequestMultimedia.GetAudioClip` with `AudioType.OGGVORBIS`. They are independent by design: a failure in one system does not affect the others.
+Runtime systems are registered in `DreadSystemRegistry` and spawned with per-system fail-safe isolation (ARCH-3). Audio loads from DLL-adjacent `audio/*.ogg` via **NVorbis** (primary) with optional `UnityWebRequest` when the Unity module is usable (`UnityWebRequestCompat`, `AudioClipLoader`). A failure in one system does not prevent others from starting.
 
 ---
 
@@ -261,7 +264,7 @@ Dread is **dependency-free** (BepInEx only) and is tested alongside common mod s
 
 See **[docs/mod-compatibility.md](docs/mod-compatibility.md)** for the full matrix, isolation test steps, Linux DLL notes, and manual test checklist.
 
-**Planned work:** [docs/ROADMAP.md](docs/ROADMAP.md) (debug overlay UX, refactor, extensibility and hardened core, performance). Error reporting default-on + first-run prompt (ERR-2) ships in the next release; see [CHANGELOG.md](CHANGELOG.md) [Unreleased].
+**Planned work:** [docs/ROADMAP.md](docs/ROADMAP.md) (unified UI kit, debug overlay UX/fonts/drag, performance pass, non-blocking telemetry flush). ARCH-1/2/3, ERR-2/3, and audio hardening shipped 2026-05-29. Pending: error-report Core capture fix in [CHANGELOG.md](CHANGELOG.md) [Unreleased].
 
 **Contributor glossary:** [CONTEXT.md](CONTEXT.md) (domain terms for issues, PRs, and agents).
 
@@ -286,10 +289,11 @@ The `audio/` folder includes `door_creak.ogg` which is shipped but not currently
 | Patcher | Harmony 2 (runtime IL patching) |
 | Game engine | Unity (via `Assembly-CSharp.dll`) |
 | Networking | Photon PUN (`PhotonUnityNetworking`, `Photon3Unity3D`) |
-| Audio | OGG Vorbis, loaded via `UnityWebRequestMultimedia` |
-| Error reporting | Cloudflare Workers |
+| Audio | OGG Vorbis via **NVorbis** (`AudioClipLoader`); UWR fallback when usable |
+| Error reporting | Cloudflare Worker (`workers/error-reporter`, Vitest 4 + `@cloudflare/vitest-pool-workers`) |
 | Debug server | TCP socket (JSON-over-line protocol) |
-| AI agent bridge | MCP server (TypeScript, @modelcontextprotocol/sdk) |
+| AI agent bridge | MCP server (TypeScript 6, Zod 4, `@modelcontextprotocol/sdk`) |
+| CI / security | GitHub Actions, Dependabot, CodeQL (C# stub build), GPL-3.0 |
 
 ---
 
@@ -297,20 +301,20 @@ The `audio/` folder includes `door_creak.ogg` which is shipped but not currently
 
 ```
 Dread/
-  Plugin.cs                          # BepInEx entry: Awake (config + Harmony + LoggingService) / Start (7 systems)
+  Plugin.cs                          # BepInEx entry: config, Harmony, defers to DreadSystemInitializer
   Dread.csproj                       # net48, references BepInEx/Harmony/Unity/Photon/Assembly-CSharp
   Config/
-    DreadConfig.cs                   # Static ConfigEntry bindings, 9 config sections
+    DreadConfig.cs                   # ConfigEntry bindings (gameplay, error reporting, debug, compat)
   Systems/
-    LoggingService.cs                # Level-gated logging (None/Error/Debug/Verbose) + ASCII art
-    AudioDreadSystem.cs              # Coroutine: weighted ambient at 60-180s intervals, pitch randomized
-    MonsterOverhaulSystem.cs         # 3 Harmony patches + 4s audio scan loop
-    TensionSystem.cs                 # 0.5s proximity scan + 4 subsystems
-    PsychoticBreakSystem.cs          # 2s trigger check + 20s episode state machine
-    ErrorReporterSystem.cs           # Unity log hooks + buffered telemetry to Cloudflare
-    TestCrashSystem.cs               # Config button to trigger intentional crash
-    DebugServerSystem.cs             # TCP debug server for AI agents (default off)
-    FlashlightStateTracker.cs        # Helper: stores flashlight reference during Psychotic Break
+    DreadSystemRegistry.cs           # Ordered runtime system registrations (ARCH-3)
+    DreadSystemInitializer.cs        # Fail-safe AddComponent loop
+    AudioDreadSystem.cs, AudioClipLoader.cs, AudioPlayUtil.cs
+    MonsterOverhaulSystem.cs, TensionSystem.cs, TestCrashSystem.cs
+    Patches/                         # Harmony patch classes (enemy, player, debug console guard)
+    PsychoticBreak/                  # Episode, trigger, audio, overlay, player lockdown
+    ErrorReporting/                  # Reporter, uploader, consent, privacy copy, prompt UI
+    DebugOverlay/                    # F10 overlay panel + styles
+    DebugServerSystem.cs, LoggingService.cs, HarmonyPatchCompat.cs, ...
   audio/
     scraping.ogg                     # Common ambient sound
     footsteps.ogg                    # Common ambient + fake footsteps + psychotic break
@@ -323,15 +327,15 @@ Dread/
     scream_distant.ogg               # Psychotic Break distant scream
     scream_threat.ogg                # Psychotic Break phantom threat sound
   dread-mcp-server/                  # MCP server for AI-assisted debugging
-    src/                             # TypeScript source
-    package.json                     # @modelcontextprotocol/sdk + zod
-    tsconfig.json
-  workers/
-    error-reporter/                  # Cloudflare Worker for crash telemetry ingestion
-      wrangler.toml
-      index.js
+    src/index.ts                     # Zod 4 strictObject tool schemas
+    package.json                     # TypeScript 6, @modelcontextprotocol/sdk
+  workers/error-reporter/            # Cloudflare Worker (Vitest 4, vitest.config.mts)
+  docs/ROADMAP.md                    # Backlog + 2026-05-29 merge log
+  .github/dependabot.yml             # NuGet, npm (MCP + worker), GitHub Actions
   build.ps1                          # PowerShell build + Thunderstore packaging
   manifest.json                      # Thunderstore package metadata
+  LICENSE                            # GPL-3.0
+  SECURITY.md                        # Vulnerability reporting policy
 ```
 
 ---
@@ -340,6 +344,8 @@ Dread/
 
 | Version | Highlights |
 |---------|------------|
+| **v1.6.0** | ARCH-1/2/3 (split systems, registry, reflection docs), ERR-2/3 (default-on telemetry + privacy prompt), audio/stub hardening, GPL-3.0, Dependabot/CodeQL, Vitest 4 + Zod 4 toolchain |
+| **v1.5.3** | Accidental patch publish (superseded by v1.6.0 on Thunderstore) |
 | **v1.5.2** | Debug server, MCP server, configurable logging system, stub fixes, Psychotic Break instantiation fix, audio loading fix, cross-platform build |
 | **v1.5.1** | CD pipeline: `vmajor`/`vminor`/`vpatch` tags trigger version bumps, auto-generated GitHub Releases, changelog management |
 | **v1.5.0** | Pitch randomization across all audio systems, rarer ambient sounds (60-180s, reduced weights), rarer fake footsteps (3-6 min, 20%), state leak fixes, config bounds fixes |
@@ -416,15 +422,18 @@ npm run build
 | `dotnet build -c Release` | Release build only |
 
 ```powershell
-.\build.ps1 -Version "1.5.2"
+.\build.ps1 -Version "1.5.3"
 ```
 
-Output in `dist/`:
-- `elytraking-Dread-1.5.2/`: unpacked package folder
-- `elytraking-Dread-1.5.2.zip`: ready for Thunderstore upload
+Output in `dist/` (version from `manifest.json` after CD bump):
+- `elytraking-Dread-<version>/`: unpacked package folder
+- `elytraking-Dread-<version>.zip`: ready for Thunderstore upload
 
 ---
 
 ## License
 
 GNU General Public License v3.0. See [LICENSE](LICENSE).
+
+
+
