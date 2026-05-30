@@ -24,7 +24,7 @@ Implementers MUST include equivalents of:
 | 6 | Screen resolution, refresh, DPI, fullscreen mode | `CaptureDisplayInfoSafe` |
 | 7 | Eleven named Dread settings (toggles plus audio frequency/volume) | `CaptureConfigSafe` / `ConfigData` |
 | 8 | Not sent: your username, Steam profile, or deliberate PII | Product statement; verify no such fields in `ErrorReportTypes` |
-| 9 | Disable: `ErrorReportingEnabled = false` in section 5 | `DreadConfig.cs` bind |
+| 9 | Disable: `ErrorReportingEnabled = false` in section 7 | `DreadConfig.cs` bind |
 | 10 | Default on for new installs; turn off via first-run prompt or cfg | `ErrorReportingEnabled` default `true` (ERR-2); existing saved `false` retained on upgrade |
 
 ## Review checklist (pre-merge)
@@ -34,7 +34,7 @@ Implementers MUST include equivalents of:
 - [x] Confirm `ErrorReportLogQueue` returns immediately when `ErrorReportingEnabled` is false.
 - [x] If README/THUNDERSTORE touched, pipeline description matches `Application.logMessageReceived` (not Harmony on Debug.Log).
 - [x] No em dash in any edited markdown file.
-- [x] ERR-2 default-on copy and first-run prompt implemented per issue #172 (separate feature branch).
+- [x] ERR-2 default-on copy and first-run prompt implemented per issue #172 (PR #208).
 
 ## ERR-2 integration
 
@@ -53,7 +53,7 @@ May include: exception details; scene and gameplay stats (enemy counts, HP, posi
 PC and GPU info (may include VRAM and driver); screen settings; eleven named Dread settings.
 No account name or Steam ID.
 To disable: set ErrorReportingEnabled = false in BepInEx/config/elytraking.dread.cfg
-(section 11. Error Reporting), or the same toggle in REPOConfig when listed.
+(section 7. Error Reporting), or the same toggle in REPOConfig when listed.
 ```
 
 Final wording is implementation detail; checklist rows are normative.

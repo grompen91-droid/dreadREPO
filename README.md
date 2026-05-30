@@ -167,7 +167,7 @@ Anonymous telemetry via Unity `Application.logMessageReceived` (`Exception` / `E
 - Reports buffer in-memory and flush every 5 minutes or when the buffer is full (max 50 per batch)
 - No reports are sent until you acknowledge the first-run prompt (`ErrorReportingPromptShown`)
 - Disabled when `ErrorReportingEnabled` is false (turn off in the prompt, cfg, or REPOConfig)
-- Includes a **Test Crash** button (section 11, cfg only) to verify the pipeline works end-to-end
+- Includes a **Test Crash** toggle (section 11; REPOConfig or Configuration Manager) to verify the pipeline end-to-end
 
 ---
 

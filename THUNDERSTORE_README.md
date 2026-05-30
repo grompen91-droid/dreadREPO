@@ -58,27 +58,34 @@ PanicSprintEnabled = true
 LowStaminaSoundEnabled = true
 FakeFootstepsEnabled = true
 
-[4. QOL]
+[4. Psychotic Break]
+PsychoticBreakEnabled = true
+PsychoticBreakTriggerChance = 0.01
+PsychoticBreakDuration = 20
+PsychoticBreakOncePerMatch = true
+
+[5. QOL]
 CrouchSpeedBoost = true
 
-[11. Error Reporting]
-ErrorReportingEnabled = true     # default on; first-run prompt on first gameplay level
+[6. Compatibility]
+CompatibilityMode = false
 
-[6. Psychotic Break]
-Enabled = true
-TriggerChance = 0.01
-Duration = 20
-OncePerMatch = true
+[7. Error Reporting]
+ErrorReportingEnabled = true     # default on for new cfg; first-run prompt on first gameplay level
+ErrorReportingPromptShown = false
 
-[7. Testing]
-EnableTestCrashButton = false
+[8. Debug Overlay]
+DebugOverlayEnabled = false
 
-[8. Debug Server]
+[9. Debug Server]
 DebugServerEnabled = false
 DebugServerPort = 15432
 
-[9. Logging]
+[10. Logging]
 LogLevel = Debug
+
+[11. Testing]
+Crash Game = false
 ```
 
 ## Compatibility
@@ -87,8 +94,8 @@ Dread only requires BepInEx. It works with many popular mods (Mimic, Wesleys Ene
 
 **If something breaks:**
 
-- Enable **Compatibility mode** (`10. Compatibility`) for ambient audio only
-- Turn off **Error reporting** in cfg or the first-run prompt if you do not want crash telemetry
+- Enable **Compatibility mode** (`6. Compatibility`) for ambient audio only
+- Turn off **Error reporting** in cfg, REPOConfig, or the first-run prompt if you do not want crash telemetry
 - Keep **Debug console guard** on if MenuLib/REPOConfig spams console errors
 
 Full matrix, Proton DLL notes, and test checklist: [mod-compatibility.md](https://github.com/grompen91-droid/dreadREPO/blob/master/docs/mod-compatibility.md)

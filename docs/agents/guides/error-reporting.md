@@ -6,6 +6,8 @@ Anonymous crash telemetry from game to Cloudflare Worker to GitHub issues. Defau
 
 **First-run prompt (ERR-2):** [specs/004-err-2-default-on-prompt/contracts/first-run-prompt.md](../../../specs/004-err-2-default-on-prompt/contracts/first-run-prompt.md).
 
+**Privacy copy (ERR-3):** canonical strings in `Systems/ErrorReporting/ErrorReportingPrivacyCopy.cs`; review checklist and required bullets in [specs/003-err-3-privacy-copy/contracts/privacy-copy.md](../../../specs/003-err-3-privacy-copy/contracts/privacy-copy.md).
+
 ## Pipeline
 
 ```
@@ -78,6 +80,14 @@ Full checklist: [docs/agents/error-reporting-test-checklist.md](../error-reporti
 | Payload field | `ErrorReportJson.cs` + golden tests |
 | Worker validation | `workers/error-reporter` handlers |
 | Prompt / consent | `ErrorReportingPromptSystem`, `ErrorReportingConsent`, `DreadConfig` keys |
+
+## ERR-2 first-run prompt (future)
+
+Issue [#172](https://github.com/grompen91-droid/dreadREPO/issues/172) owns default-on and first-run UI. When implementing:
+
+- Import `ErrorReportingPrivacyCopy.ShortSummary`, `DataBullets`, and `DisableInstructions` (do not rewrite disclosure).
+- Modal body should follow [privacy-copy.md](../../../specs/003-err-3-privacy-copy/contracts/privacy-copy.md) checklist rows 1-10.
+- Persist choice only via `ErrorReportingEnabled` in section `7. Error Reporting`.
 
 ## ADRs
 

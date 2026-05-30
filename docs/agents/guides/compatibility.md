@@ -75,7 +75,7 @@ Record results in the PR when changing init or compat paths. Stub CI covers Tier
 | Scenario | Steps | Expected |
 |----------|-------|----------|
 | REPOConfig absent | Profile without REPOConfig/MenuLib | Dread loads; `RepoConfigSliderLabelCompat` no-ops; verbose may note skip |
-| Compatibility mode on | `10. Compatibility` → `CompatibilityMode` true | Monster patches off in `Plugin.ApplyMonsterPatches`; ambient runs; psychotic break/tension mutations off per table above |
+| Compatibility mode on | `6. Compatibility` → `CompatibilityMode` true | Monster patches off in `Plugin.ApplyMonsterPatches`; ambient runs; psychotic break/tension mutations off per table above |
 | Non-host client | Join host as client | Local audio/tension OK; monster Harmony postfixes gated by `HarmonyPatchCompat.IsMasterClient()` |
 | Foreign patch owner | Another mod patches same method; `SkipConflictingPatches` true | Dread skips apply; one log line |
 | Stub CI | `verify-dread.ps1` Tier 0 | Build + `arch3_try_add_system` pass |

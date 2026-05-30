@@ -75,7 +75,7 @@ Hidden on menu levels (`SemiFunc.MenuLevel()`). IMGUI only, no Unity UI package 
 
 | Trigger | Path |
 |---------|------|
-| Config button | `7. Testing` → "Crash Game" (Configuration Manager) |
+| Config button | `11. Testing` → "Crash Game" (Configuration Manager or REPOConfig) |
 | MCP/TCP | `TestCrashSystem.TriggerForDebug()` |
 
 Requires level loaded (`TestCrashSystem` host exists). Crashes with `[Dread TestCrash]` marker for log filtering.
