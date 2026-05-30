@@ -28,6 +28,15 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- **Core:** `ProximityScan` in `Systems/Core/` replaces `EnemyScanCache`; tension, monster audio, debug server, psychotic break, and error reporting share one scan seam (ADR-0008 proximity pattern consolidated)
+- **Core:** `HarmonyPatchRegistry` + `PatchLifecycle` centralize patch apply/remove; `Plugin.cs` delegates patch wiring (ADR-0009 preserved)
+- **Core:** `PlayerInputLockCompat` shared by psychotic break and error-reporting prompt
+- **Core:** `SpatialAudio3D` helper for weighted ambient, fake footsteps, and phantom break audio
+- **Core:** `GameplayContext` unifies menu/in-level/run gates; `DreadFeaturePolicy` centralizes Compatibility mode (low stamina + fake footsteps now disabled in compat)
+- **Core:** `PlayerControllerCompat` stamina/sprint multiplier seams for tension and debug server reads
+- **Verify:** Tier 0 registry manifest includes `ErrorReportingPromptSystem`
+
 ### Fixed
 - **Error reporting:** Game-state capture for crash reports no longer calls compile-time `EnemyHealth.CurrentHealth` (fixes `get_CurrentHealth` MissingMethodException when third-party mods log errors, e.g. DeathMinimap after death); uses `Systems/Core/EnemyHealthCompat` and `EnemyScanCache`
 
