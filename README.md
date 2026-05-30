@@ -153,7 +153,7 @@ See [Psychotic Break Configuration](#psychotic-break) for the toggle, trigger ch
 
 ### Error Reporting
 
-An automatic telemetry system that hooks into Unity's `Debug.LogError` and `Debug.LogException` via Harmony prefix patches, buffers crash reports, and sends them to a Cloudflare Workers endpoint. Every report includes:
+Opt-in telemetry via Unity `Application.logMessageReceived` (`Exception` / `Error` logs), batched and sent to a Cloudflare Worker (may create public GitHub issues). Default **off**. The full disclosure is in the generated cfg description for `ErrorReportingEnabled` (section `7. Error Reporting` in cfg; REPOConfig shows the toggle only, full disclosure in cfg or F1 Configuration Manager). Summary table:
 
 | Data | Details |
 |------|---------|
@@ -162,12 +162,12 @@ An automatic telemetry system that hooks into Unity's `Debug.LogError` and `Debu
 | Game state | Scene name, enemies alive/nearby/total, player HP/stamina, play time |
 | System info | OS, CPU, GPU, RAM, VRAM, driver version, device model |
 | Display info | Resolution, refresh rate, DPI, fullscreen mode |
-| Config snapshot | All Dread config values at time of crash |
+| Config snapshot | Eleven named Dread settings (toggles plus audio frequency/volume); see section 7 disclosure for full list |
 
-- Reports buffer in-memory and flush every 5 minutes or on scene change (max 50 per batch)
-- Disabled entirely when the `ErrorReportingEnabled` config is false
-- Opt-in by default (can be disabled in config)
-- Includes a **Test Crash** button (section 7) to verify the pipeline works end-to-end
+- Reports buffer in-memory and flush every 5 minutes or when the buffer is full (max 50 per batch)
+- Disabled entirely when `ErrorReportingEnabled` is false (default)
+- Opt-in only: set `ErrorReportingEnabled = true` in config to enable
+- Includes a **Test Crash** toggle (section 11; REPOConfig or Configuration Manager) to verify the pipeline end-to-end
 
 ---
 
@@ -204,27 +204,33 @@ PanicSprintEnabled = true
 LowStaminaSoundEnabled = true
 FakeFootstepsEnabled = true
 
-[4. QOL]
-CrouchSpeedBoost = true
-
-[5. Error Reporting]
-ErrorReportingEnabled = true     # send anonymous crash telemetry
-
-[6. Psychotic Break]
+[4. Psychotic Break]
 PsychoticBreakEnabled = true
 PsychoticBreakTriggerChance = 0.01     # 1% per 2s check
 PsychoticBreakDuration = 20            # episode length in seconds
 PsychoticBreakOncePerMatch = true
 
-[7. Testing]
-Crash Game = false                   # set to true to trigger intentional crash (button)
+[5. QOL]
+CrouchSpeedBoost = true
 
-[8. Debug Server]
+[6. Compatibility]
+CompatibilityMode = false
+
+[7. Error Reporting]
+ErrorReportingEnabled = false    # opt-in anonymous crash telemetry (see cfg description)
+
+[8. Debug Overlay]
+DebugOverlayEnabled = false
+
+[9. Debug Server]
 DebugServerEnabled = false           # TCP debug server for AI agents (default off)
 DebugServerPort = 15432              # port, falls back to +1 if unavailable
 
-[9. Logging]
+[10. Logging]
 LogLevel = Debug                     # None | Error | Debug | Verbose
+
+[11. Testing]
+Crash Game = false                   # turn ON in REPOConfig or cfg to test crash reporting (resets to off)
 ```
 
 </details>

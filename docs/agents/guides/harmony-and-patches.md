@@ -18,7 +18,7 @@ How Dread applies Harmony patches at load time and toggles them from config. Fix
 | `EnemyDirectorSetInvestigatePatch` | `EnemyDirector.SetInvestigate` | Same | Yes (prefix, 1.5x radius) | `Systems/Patches/EnemyDirectorSetInvestigatePatch.cs` |
 | `PlayerControllerAwakePatch` | `PlayerController.Awake` | `CrouchSpeedBoostEnabled` | No | `Systems/Patches/PlayerControllerAwakePatch.cs` |
 | `DebugConsoleGuardPatch` | (debug console guard) | `DebugConsoleGuardEnabled` | No | `Systems/Patches/DebugConsoleGuardPatch.cs` |
-| `RepoConfigSliderLabelCompat` | REPOConfig slider UI | `Plugin.Start()` and `DreadSystemInitializer` when REPOConfig/MenuLib are loaded | N/A |
+| `RepoConfigCompat` | REPOConfig slider labels + error reporting summary | `Plugin.Start()` and `DreadSystemInitializer` when REPOConfig/MenuLib are loaded | N/A |
 
 Monster patches are grouped in `Plugin.ApplyMonsterPatches()`.
 

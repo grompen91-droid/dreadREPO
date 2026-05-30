@@ -2,6 +2,8 @@
 
 Opt-in telemetry from game to Cloudflare Worker to GitHub issues. Default **off** (ADR-0010). Code: `Systems/ErrorReporting/` (`ErrorReporterSystem.cs`, `ErrorReportLogQueue.cs`, `ErrorReportPayloadCapture.cs`, `ErrorReportUploader.cs`), `Systems/ErrorReportJson.cs`, `workers/error-reporter/`.
 
+**Privacy copy (ERR-3):** canonical strings in `Systems/ErrorReporting/ErrorReportingPrivacyCopy.cs`; review checklist and required bullets in [specs/003-err-3-privacy-copy/contracts/privacy-copy.md](../../../specs/003-err-3-privacy-copy/contracts/privacy-copy.md).
+
 ## Pipeline
 
 ```
@@ -19,7 +21,7 @@ Test path: `TestCrashSystem` or MCP `trigger_test_crash` (see [debug-tooling.md]
 
 | Key | Section | Default |
 |-----|---------|---------|
-| `ErrorReportingEnabled` | `5. Error Reporting` | **false** (opt-in) |
+| `ErrorReportingEnabled` | `7. Error Reporting` | **false** (opt-in) |
 
 When off, `EnqueueLog` returns immediately.
 
@@ -39,7 +41,7 @@ Serialized by `ErrorReportJson.SerializePayload()` (ADR-0015). Includes:
 - Exception message/stack
 - System/display info
 - Game state tables
-- Config snapshot (booleans from `DreadConfig`)
+- Config snapshot (eleven named `DreadConfig` fields: toggles plus `AudioFrequency` and `AudioVolume`; see `ErrorReportingPrivacyCopy`)
 - Raw JSON in issue body for debugging
 
 ## Worker
@@ -74,6 +76,14 @@ Full checklist: [docs/agents/error-reporting-test-checklist.md](../error-reporti
 | Default opt-in change | Requires ADR + changelog; product decision |
 
 Never enable reporting by default without explicit issue/ADR approval.
+
+## ERR-2 first-run prompt (future)
+
+Issue [#172](https://github.com/grompen91-droid/dreadREPO/issues/172) owns default-on and first-run UI. When implementing:
+
+- Import `ErrorReportingPrivacyCopy.ShortSummary`, `DataBullets`, and `DisableInstructions` (do not rewrite disclosure).
+- Modal body should follow [privacy-copy.md](../../../specs/003-err-3-privacy-copy/contracts/privacy-copy.md) checklist rows 1-10.
+- Persist choice only via `ErrorReportingEnabled` in section `7. Error Reporting`.
 
 ## ADRs
 

@@ -35,7 +35,7 @@ namespace Dread.Systems
                 count += TryAddSystem(registration.SystemType, registration.HostName);
             }
 
-            RepoConfigSliderLabelCompat.TryApply(Plugin.HarmonyInstance);
+            RepoConfigCompat.TryApply(Plugin.HarmonyInstance);
 
             if (count > 0)
             {

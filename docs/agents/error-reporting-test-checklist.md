@@ -14,8 +14,8 @@ Issue: [#171](https://github.com/grompen91-droid/dreadREPO/issues/171)
 
 - [ ] R.E.P.O. running with Dread installed (local or Thunderstore build)
 - [ ] BepInEx ConfigurationManager installed (optional but recommended for button tests)
-- [ ] `DebugServerEnabled=true` in config (section 8. Debug Server)
-- [ ] `ErrorReportingEnabled=true` in config (section 5. Error Reporting)
+- [ ] `DebugServerEnabled=true` in config (section 9. Debug Server)
+- [ ] `ErrorReportingEnabled=true` in config (section 7. Error Reporting)
 - [ ] MCP server configured in `.cursor/mcp.json` (for MCP tests in section B)
 
 ---
@@ -26,7 +26,7 @@ Issue: [#171](https://github.com/grompen91-droid/dreadREPO/issues/171)
 
 - [ ] Enable `ErrorReportingEnabled` in config
 - [ ] Open ConfigurationManager (F1)
-- [ ] Click "Crash Game" button under section 7. Testing
+- [ ] Click "Crash Game" button under section 11. Testing
 - [ ] Confirm game crashes with `[Dread TestCrash]` in BepInEx log
 - [ ] Check BepInEx log for `[ErrorReporter] Sending test crash report` and no `GitHub step failed` / `401` in the worker response line
 - [ ] Check GitHub repo issues: new issue with label `auto-reported` + `bug`, title `[auto] InvalidOperationException in <Scene>` (if worker returns 401, fix Cloudflare `TOKEN` secret via `wrangler secret put TOKEN`)

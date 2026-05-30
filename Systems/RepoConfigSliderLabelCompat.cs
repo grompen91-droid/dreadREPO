@@ -73,7 +73,7 @@ namespace Dread.Systems
             LoggingService.LogInfo($"[Dread] REPOConfig slider label compat active ({patched} hooks)");
         }
 
-        private static bool IsRepoConfigLoaded()
+        internal static bool IsRepoConfigLoaded()
         {
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
@@ -258,7 +258,7 @@ namespace Dread.Systems
             }
         }
 
-        private static Type? FindMenuApiType()
+        internal static Type? FindMenuApiType()
         {
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
             {

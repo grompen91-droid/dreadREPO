@@ -18,14 +18,14 @@ How agents add settings and control log verbosity. Files: `Config/DreadConfig.cs
 | `1. Audio Dread` | `AudioEnabled`, `AudioFrequency`, `AudioVolume` |
 | `2. Monster Overhaul` | `MonsterAggressionEnabled`, `MonsterAudioEnabled` |
 | `3. Tension` | Fake footsteps, adrenaline, low stamina, panic sprint |
-| `4. QOL` | `CrouchSpeedBoost` |
-| `5. Error Reporting` | `ErrorReportingEnabled` (default false) |
-| `6. Psychotic Break` | enabled, chance, duration, once per match |
-| `7. Testing` | TestCrash button |
-| `8. Debug Server` | enabled, port |
-| `9. Logging` | `LogLevel` enum |
-| `10. Compatibility` | Compatibility mode, skip conflicting patches, debug console guard |
-| `11. Debug Overlay` | `DebugOverlayEnabled` |
+| `4. Psychotic Break` | enabled, chance, duration, once per match |
+| `5. QOL` | `CrouchSpeedBoost` |
+| `6. Compatibility` | Compatibility mode, skip conflicting patches, debug console guard |
+| `7. Error Reporting` | `ErrorReportingEnabled` (default false) |
+| `8. Debug Overlay` | `DebugOverlayEnabled` |
+| `9. Debug Server` | enabled, port |
+| `10. Logging` | `LogLevel` enum |
+| `11. Testing` | `Crash Game` toggle (turn on to test crash; resets to off) |
 
 ### Adding a config entry
 

@@ -46,7 +46,7 @@ Work top to bottom within each phase. Do not skip **Depends on** unless the issu
 | Order | ID | Priority | Issue | Depends on | Why |
 |-------|-----|----------|-------|------------|-----|
 | 6 | ARCH-3 | **P0** | [#175](https://github.com/grompen91-droid/dreadREPO/issues/175) | ARCH-1, ERR-1 (soft) | Extensibility + fail-safe init; defines how new systems land |
-| 7 | ERR-3 | P1 | [#173](https://github.com/grompen91-droid/dreadREPO/issues/173) | ERR-1 | Privacy copy required before opt-out default changes |
+| 7 | ERR-3 | P1 | [#173](https://github.com/grompen91-droid/dreadREPO/issues/173) | ERR-1 | Privacy copy (`specs/003-err-3-privacy-copy/`) |
 | 8 | ERR-2 | P1 | [#172](https://github.com/grompen91-droid/dreadREPO/issues/172) | ERR-1, ERR-3 | Default-on + first-run prompt only after tests and copy |
 
 ### Phase 4: Debug overlay polish
@@ -145,7 +145,7 @@ See also: `docs/repo-config-slider-labels-investigation.md`.
 |----|----------|------|-------|--------|-------|
 | ERR-1 | P0 | **Test error reporting end-to-end** | TestCrash, MCP, real exceptions (ADR-0010, ADR-0012, ADR-0015); checklist in `docs/agents/error-reporting-test-checklist.md` | done | [#171](https://github.com/grompen91-droid/dreadREPO/issues/171) |
 | ERR-2 | P1 | **Default on + first-run prompt** | Default `ErrorReportingEnabled` true | idea | [#172](https://github.com/grompen91-droid/dreadREPO/issues/172) |
-| ERR-3 | P1 | **Privacy copy** | In-game text: what is sent, how to disable | idea | [#173](https://github.com/grompen91-droid/dreadREPO/issues/173) |
+| ERR-3 | P1 | **Privacy copy** | Canonical disclosure + cfg description; ERR-2 uses same strings | done | [#173](https://github.com/grompen91-droid/dreadREPO/issues/173) (`specs/003-err-3-privacy-copy/`) |
 | ERR-4 | P2 | **Non-blocking batch flush** | `SendBatch` uses sync `HttpWebRequest` on main thread (up to 15s). Prefer `UnityWebRequest` when `UnityWebRequestCompat.IsUsable`, else background thread. Narrow `ShouldIgnoreUnityLog` if we need non-UWR `BadImageFormatException` reports | idea | (to file) |
 
 **Current behavior:** `ErrorReportingEnabled` defaults to **false** (opt-in). Ship ERR-2 only after ERR-1 and ERR-3. Batch flush path: `ErrorReportUploader.TryPostPayloadSync` (ADR-0015 updated).

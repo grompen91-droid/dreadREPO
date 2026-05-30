@@ -76,6 +76,21 @@ Not a `DreadConfig` regression. Float slider keys (`Frequency`, `Volume`, etc.) 
 
 ---
 
+## Error reporting privacy copy (not supported in REPOConfig)
+
+**Conclusion (2026-05-30):** REPOConfig cannot show per-toggle description text.
+
+| Fact | Source |
+|------|--------|
+| `showDescriptions` config removed / commented out | `REPOConfig/Entry.cs` |
+| Sliders always use `CreateREPOSlider(modName, string.Empty, ...)` | `REPOConfig/ConfigMenu.cs` (description line commented) |
+| Bools use `CreateREPOToggle` with no description parameter | `REPOConfig/ConfigMenu.cs` |
+| `CreateREPOLabel` = section headers (bold), not help text | `ConfigMenu.CreateModEntries` |
+
+Dread tried `CreateREPOLabel(ShortSummary, scrollView)` and sibling reordering: text rendered as a **section header** and overlapped **2. Monster Overhaul** (wrong widget + layout). **Removed** `RepoConfigErrorReportingDisclosureCompat`. Players use `elytraking.dread.cfg` or BepInEx Configuration Manager for `ErrorReportingPrivacyCopy.FullDescription`.
+
+---
+
 ## Current fix (temporary)
 
 **File:** `Systems/RepoConfigSliderLabelCompat.cs`  
