@@ -23,10 +23,6 @@ namespace Dread
         private readonly Harmony _harmony = new(GUID);
         private EventHandler? _logLevelHandler;
 
-        // ADR-0004 host gates are inside patch postfixes; CompatibilityMode disables apply here (ADR-0009).
-        private static bool MonsterPatchesEnabled =>
-            DreadConfig.MonsterAggressionEnabled.Value && !DreadConfig.CompatibilityMode.Value;
-
         private void Awake()
         {
             PluginDependencyResolver.Register();
@@ -39,49 +35,12 @@ namespace Dread
             _logLevelHandler = (_, _) => LoggingService.SetLevel(DreadConfig.LogLevelEntry.Value);
             DreadConfig.LogLevelEntry.SettingChanged += _logLevelHandler;
 
-            ApplyMonsterPatches();
-            if (DreadConfig.CrouchSpeedBoostEnabled.Value)
-                PlayerControllerAwakePatch.Apply(_harmony);
-            if (DreadConfig.DebugConsoleGuardEnabled.Value)
-                DebugConsoleGuardPatch.Apply(_harmony);
-
-            DreadConfig.MonsterAggressionEnabled.SettingChanged += (_, _) => ApplyMonsterPatches();
-            DreadConfig.CompatibilityMode.SettingChanged += (_, _) => ApplyMonsterPatches();
-
-            DreadConfig.CrouchSpeedBoostEnabled.SettingChanged += (_, _) =>
-            {
-                if (DreadConfig.CrouchSpeedBoostEnabled.Value)
-                    PlayerControllerAwakePatch.Apply(_harmony);
-                else
-                    PlayerControllerAwakePatch.Remove(_harmony);
-            };
-
-            DreadConfig.DebugConsoleGuardEnabled.SettingChanged += (_, _) =>
-            {
-                if (DreadConfig.DebugConsoleGuardEnabled.Value)
-                    DebugConsoleGuardPatch.Apply(_harmony);
-                else
-                    DebugConsoleGuardPatch.Remove(_harmony);
-            };
+            PatchLifecycle.Initialize(_harmony);
 
             LoggingService.PrintAsciiArt();
             LoggingService.LogInfo($"{NAME} v{VERSION} loaded.");
 
             SceneManager.sceneLoaded += OnSceneLoaded;
-        }
-
-        private void ApplyMonsterPatches()
-        {
-            if (MonsterPatchesEnabled)
-            {
-                EnemyNavMeshAgentAwakePatch.Apply(_harmony);
-                EnemyDirectorSetInvestigatePatch.Apply(_harmony);
-            }
-            else
-            {
-                EnemyNavMeshAgentAwakePatch.Remove(_harmony);
-                EnemyDirectorSetInvestigatePatch.Remove(_harmony);
-            }
         }
 
         private void Start()
@@ -99,9 +58,9 @@ namespace Dread
         {
             if (_logLevelHandler != null)
                 DreadConfig.LogLevelEntry.SettingChanged -= _logLevelHandler;
+
+            PatchLifecycle.Shutdown();
         }
     }
 }
-
-
 
