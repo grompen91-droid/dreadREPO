@@ -41,12 +41,12 @@ Work top to bottom within each phase. Do not skip **Depends on** unless the issu
 | [#194](https://github.com/grompen91-droid/dreadREPO/pull/194) | agent | GPL-3.0, tailored Dependabot/SECURITY, CodeQL C# stub build |
 | [#195](https://github.com/grompen91-droid/dreadREPO/pull/195)-[#198](https://github.com/grompen91-droid/dreadREPO/pull/198) | dependabot | zod 4, GitHub Actions, MCP tooling (TS 6) |
 | [#200](https://github.com/grompen91-droid/dreadREPO/pull/200) | agent | Vitest 4 + Cloudflare pool 0.16 + `vitest.config.mts` |
-| [#201](https://github.com/grompen91-droid/dreadREPO/pull/201) | contributor | ARCH-1 god-file split |
-| [#202](https://github.com/grompen91-droid/dreadREPO/pull/202) | contributor | ARCH-2 reflection reductions |
-| [#203](https://github.com/grompen91-droid/dreadREPO/pull/203) | contributor | Audio lifetime + stub UWR |
-| [#204](https://github.com/grompen91-droid/dreadREPO/pull/204) | contributor | ARCH-3 system registry |
-| [#207](https://github.com/grompen91-droid/dreadREPO/pull/207) | contributor | ERR-3 privacy copy |
-| [#208](https://github.com/grompen91-droid/dreadREPO/pull/208) | contributor | ERR-2 default-on + prompt |
+| [#201](https://github.com/grompen91-droid/dreadREPO/pull/201) | noxaur | ARCH-1 god-file split |
+| [#202](https://github.com/grompen91-droid/dreadREPO/pull/202) | noxaur | ARCH-2 reflection reductions |
+| [#203](https://github.com/grompen91-droid/dreadREPO/pull/203) | noxaur | Audio lifetime + stub UWR |
+| [#204](https://github.com/grompen91-droid/dreadREPO/pull/204) | noxaur | ARCH-3 system registry |
+| [#207](https://github.com/grompen91-droid/dreadREPO/pull/207) | noxaur | ERR-3 privacy copy |
+| [#208](https://github.com/grompen91-droid/dreadREPO/pull/208) | noxaur | ERR-2 default-on + prompt |
 
 ### Phase 1: Foundation (FINISHED)
 
