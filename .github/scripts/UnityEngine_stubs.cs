@@ -150,6 +150,8 @@ namespace UnityEngine
     }
     public static class Mathf
     {
+        public static float Max(float a, float b) => a > b ? a : b;
+        public static float Min(float a, float b) => a < b ? a : b;
         public static float Lerp(float a, float b, float t) => a;
         public static float MoveTowards(float current, float target, float maxDelta) => current;
         public static float Clamp(float value, float min, float max) => value;
@@ -282,6 +284,19 @@ namespace UnityEngine
     // IMGUI types (GUI, GUIStyle, GUIContent, GUISkin, GUIStyleState) moved to
     // UnityEngine.IMGUIModule_stubs.cs to mirror real Unity, where they live in
     // UnityEngine.IMGUIModule.dll. Keep them out of this assembly.
+
+    public enum CursorLockMode
+    {
+        None = 0,
+        Locked = 1,
+        Confined = 2,
+    }
+
+    public static class Cursor
+    {
+        public static bool visible { get; set; }
+        public static CursorLockMode lockState { get; set; }
+    }
 
     public static class Input
     {

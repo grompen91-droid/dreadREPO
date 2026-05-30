@@ -34,7 +34,7 @@ namespace Dread.Systems
 
         private static void OnErrorReportingSettingChanged(object sender, EventArgs e)
         {
-            if (!DreadConfig.ErrorReportingEnabled.Value)
+            if (!ErrorReportingConsent.IsReportingAllowed())
                 return;
 
             LoggingService.LogInfo(
@@ -77,10 +77,10 @@ namespace Dread.Systems
         /// <summary>TestCrash: synchronous POST so report completes before Process.Kill().</summary>
         internal IEnumerator ReportTestCrashAndWait(Exception ex)
         {
-            if (!DreadConfig.ErrorReportingEnabled.Value)
+            if (!ErrorReportingConsent.IsReportingAllowed())
             {
                 LoggingService.LogWarning(
-                    "[ErrorReporter] ErrorReportingEnabled is false; enable it to send test crash reports.");
+                    "[ErrorReporter] Error reporting is not allowed yet (disabled or first-run prompt pending).");
                 yield break;
             }
 
@@ -140,6 +140,9 @@ namespace Dread.Systems
 
         private void ProcessPendingLogsCore()
         {
+            if (!ErrorReportingConsent.IsReportingAllowed())
+                return;
+
             if (!ErrorReportLogQueue.TryDequeueBatch(out var batch))
                 return;
 
@@ -183,6 +186,9 @@ namespace Dread.Systems
         private void FlushNow()
         {
             if (_sendInProgress)
+                return;
+
+            if (!ErrorReportingConsent.IsReportingAllowed())
                 return;
 
             List<ErrorReport> batch;

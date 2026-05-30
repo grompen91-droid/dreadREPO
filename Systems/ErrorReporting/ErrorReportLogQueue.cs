@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
-using Dread.Config;
 using UnityEngine;
 
 namespace Dread.Systems
@@ -30,7 +29,7 @@ namespace Dread.Systems
             if (type != LogType.Exception && type != LogType.Error)
                 return;
 
-            if (!DreadConfig.ErrorReportingEnabled.Value)
+            if (!ErrorReportingConsent.IsReportingAllowed())
                 return;
 
             if (IsIgnoredSpam(logString, stackTrace))

@@ -71,7 +71,8 @@ CrouchSpeedBoost = true
 CompatibilityMode = false
 
 [7. Error Reporting]
-ErrorReportingEnabled = false    # opt-in; full disclosure in generated cfg description
+ErrorReportingEnabled = true     # default on for new cfg; first-run prompt on first gameplay level
+ErrorReportingPromptShown = false
 
 [8. Debug Overlay]
 DebugOverlayEnabled = false
@@ -94,7 +95,7 @@ Dread only requires BepInEx. It works with many popular mods (Mimic, Wesleys Ene
 **If something breaks:**
 
 - Enable **Compatibility mode** (`6. Compatibility`) for ambient audio only
-- Turn off **Error reporting** (default off) if logs grow too fast
+- Turn off **Error reporting** in cfg, REPOConfig, or the first-run prompt if you do not want crash telemetry
 - Keep **Debug console guard** on if MenuLib/REPOConfig spams console errors
 
 Full matrix, Proton DLL notes, and test checklist: [mod-compatibility.md](https://github.com/grompen91-droid/dreadREPO/blob/master/docs/mod-compatibility.md)

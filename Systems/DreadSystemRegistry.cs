@@ -61,6 +61,11 @@ namespace Dread.Systems
                 "DreadErrorHost",
                 SystemOrderGroup.Core),
             new SystemRegistration(
+                "error-reporting-prompt",
+                typeof(ErrorReportingPromptSystem),
+                "DreadErrorReportingPromptHost",
+                SystemOrderGroup.Core),
+            new SystemRegistration(
                 "psychotic-break",
                 typeof(PsychoticBreakSystem),
                 "DreadPsychoticBreakHost",

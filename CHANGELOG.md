@@ -30,10 +30,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ![Status](https://img.shields.io/badge/status-development-yellow?style=flat-square)
 
 ### Added
+- **ERR-2 (#172):** Error reporting default-on for new cfg; one-time IMGUI first-run prompt on first non-menu gameplay scene; `ErrorReportingPromptShown` cfg key; `ErrorReportingConsent` blocks enqueue/send until prompt acknowledged; `ErrorReportingPromptSystem` registered in `DreadSystemRegistry`
 - **ERR-3 (#173):** Canonical error reporting privacy disclosure (`ErrorReportingPrivacyCopy`) wired to `ErrorReportingEnabled` config description; optional one-line log when reporting is enabled at runtime
-- **REPOConfig compat:** `RepoConfigCompat` entry point consolidating slider label Harmony patches
+- **REPOConfig compat:** `RepoConfigCompat` entry point; `HideFromREPOConfig` only on the test crash button (debug server, overlay, logging, and compatibility toggles stay in REPOConfig)
 
 ### Changed
+- **ERR-2 (#172):** First-run error reporting prompt shows clear Dread mod branding, fixes bullet text clipping via measured row heights, unlocks the mouse cursor, blocks gameplay input while open, and uses dark-panel styling aligned with the Dread debug overlay
+- **Roadmap:** **UI-1** unified in-game UI kit (modular component for modals, overlay, and future panels; see `docs/ROADMAP.md`)
+- **ERR-2 (#172):** `ErrorReportingPrivacyCopy` and README/THUNDERSTORE/mod-compat/ADR-0010 updated for default-on + first-run prompt; existing saved `ErrorReportingEnabled = false` retained on upgrade
 - **Config section order:** Gameplay first (audio through compatibility), then error reporting (7), then debug overlay/server/logging (8-10); test crash remains section 11. Renumbered cfg section headers; existing installs may keep values under old section names until reset or manual merge.
 - **REPOConfig error reporting:** Removed disclosure label compat (REPOConfig has no bool description API). Full privacy text remains in `elytraking.dread.cfg` and Configuration Manager only.
 - **REPOConfig testing:** `Crash Game` (section 11) visible in REPOConfig as a toggle (turn on to test crash pipeline).
@@ -44,6 +48,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **MCP server:** Zod 4 `z.strictObject()` for tool input schemas (replaces deprecated `.strict()`)
 
 ### Fixed
+- **ERR-2 (#172):** Resetting `ErrorReportingPromptShown` to false in cfg or REPOConfig shows the first-run prompt again on scene load or when the setting changes, without restarting the game
 - **ERR-3 disclosure accuracy:** Privacy copy now matches `ErrorReportPayloadCapture` (eleven config fields including audio frequency/volume; system info may include VRAM and GPU driver); `FullDescription` composed from `DataBullets`; REPOConfig/Configuration Manager called out in disable steps
 - **Audio:** ambient/psychotic clips no longer cut off early when pitch is below 1.0 (`AudioPlayUtil` destroy lifetime); NVorbis reads full OGG streams
 - **Stub/local builds:** error reporter uses `HttpWebRequest` instead of `UnityWebRequest` (fixes `BadImageFormatException: Method has zero rva` log spam); audio loader skips UWR fallback when UWR is unusable; psychotic break no longer `Destroy`s shared cached `AudioClip`s

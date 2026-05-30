@@ -13,7 +13,7 @@ Several questions drove the design:
 
 1. How do we collect errors without requiring a server we manage?
 2. How do we avoid overwhelming GitHub Issues with duplicates?
-3. How do we respect player privacy and keep the feature opt-out?
+3. How do we respect player privacy while defaulting reporting on for new installs with clear disclosure?
 4. How do we make the reports useful for triage without the developer needing to ask for system specs every time?
 
 ---
@@ -21,6 +21,8 @@ Several questions drove the design:
 ## Decision
 
 Add an `ErrorReporterSystem` MonoBehaviour that hooks Unity's `Application.logMessageReceived` and sends error reports to a Cloudflare Worker. The Worker acts as a proxy that creates GitHub Issues on the repo.
+
+**Default-on and first-run prompt (ERR-2):** New cfg files bind `ErrorReportingEnabled` to `true`. Existing saved `false` values are retained on upgrade (BepInEx bind default only applies to missing keys). `ErrorReportingPromptShown` defaults to `false` until the player dismisses a one-time IMGUI disclosure on the first non-menu gameplay scene (`ErrorReportingPromptSystem`). Until `ErrorReportingPromptShown` is `true`, `ErrorReportingConsent.IsReportingAllowed()` blocks enqueue and send even when `ErrorReportingEnabled` is `true`. Prompt text comes only from `ErrorReportingPrivacyCopy` (ERR-3). After the prompt, runtime behavior follows `ErrorReportingEnabled` (cfg, REPOConfig, Configuration Manager).
 
 TestCrash verification uses a separate synchronous POST path (ADR-0012). JSON serialization uses `ErrorReportJson` (ADR-0015), not `JsonUtility`.
 
@@ -100,7 +102,7 @@ The JSON payload sent to the Worker includes:
 
 - **Positive:** Every crash creates a GitHub Issue with full context (system specs, game state, config). Developer can triage without user follow-up.
 - **Positive:** Deduplication by error hash prevents issue spam for repeat crashes.
-- **Positive:** Opt-out config toggle respects player privacy.
+- **Positive:** Opt-out config toggle respects player privacy; first-run prompt discloses data before sends on a new profile.
 - **Positive:** Thread-safe design prevents the error reporter itself from crashing the game.
 - **Negative:** Requires a Cloudflare account and Workers deployment. Adds operational dependency.
 - **Negative:** In-memory rate limiting is per-isolate -- a user hitting different Cloudflare edges could bypass the 5/hr limit.
