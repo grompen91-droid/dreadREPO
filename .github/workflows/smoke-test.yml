@@ -45,7 +45,9 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force "$env:PLUGIN_DIR" | Out-Null
           New-Item -ItemType Directory -Force "$env:PLUGIN_DIR\audio" | Out-Null
-          Copy-Item "bin\Release\net48\Dread.dll" -Destination "$env:PLUGIN_DIR" -Force
+          . ./.github/scripts/plugin-deps.ps1
+          Copy-PluginBinaries -SourceDir "bin\Release\net48" -DestDir "$env:PLUGIN_DIR"
+          Test-PluginBinariesPresent -Dir "$env:PLUGIN_DIR"
           Copy-Item "audio\*" -Destination "$env:PLUGIN_DIR\audio" -Force
           Write-Host "Installed to $env:PLUGIN_DIR"
 

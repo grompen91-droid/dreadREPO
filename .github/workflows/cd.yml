@@ -220,11 +220,17 @@ jobs:
             exit $exitCode
           fi
 
-      - name: Upload Dread.dll
+      - name: Upload plugin binaries
         uses: actions/upload-artifact@v7
         with:
-          name: Dread-DLL
-          path: bin/Release/net48/Dread.dll
+          name: plugin-bin
+          path: |
+            bin/Release/net48/Dread.dll
+            bin/Release/net48/NVorbis.dll
+            bin/Release/net48/System.Memory.dll
+            bin/Release/net48/System.Buffers.dll
+            bin/Release/net48/System.Numerics.Vectors.dll
+            bin/Release/net48/System.Runtime.CompilerServices.Unsafe.dll
           retention-days: 1
 
   package:
@@ -237,10 +243,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Download Dread.dll
+      - name: Download plugin binaries
         uses: actions/download-artifact@v8
         with:
-          name: Dread-DLL
+          name: plugin-bin
           path: ${{ runner.temp }}/dll
 
       - name: Download modified files
@@ -256,10 +262,13 @@ jobs:
           $name = "elytraking-Dread"
           $outDir = "${{ runner.temp }}/$name-$newVersion"
           $zipPath = "${{ runner.temp }}/$name-$newVersion.zip"
+          $pluginDir = "$outDir/BepInEx/plugins/$name"
 
-          New-Item -ItemType Directory -Force "$outDir/BepInEx/plugins/$name" | Out-Null
+          New-Item -ItemType Directory -Force $pluginDir | Out-Null
 
-          Copy-Item "${{ runner.temp }}/dll/Dread.dll" "$outDir/BepInEx/plugins/$name/"
+          . ./.github/scripts/plugin-deps.ps1
+          Copy-PluginBinaries -SourceDir "${{ runner.temp }}/dll" -DestDir $pluginDir
+          Test-PluginBinariesPresent -Dir $pluginDir
 
           if (Test-Path "audio") {
             Copy-Item -Recurse "audio" "$outDir/BepInEx/plugins/$name/"
@@ -302,10 +311,10 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.repository.default_branch }}
 
-      - name: Download Dread.dll
+      - name: Download plugin binaries
         uses: actions/download-artifact@v8
         with:
-          name: Dread-DLL
+          name: plugin-bin
           path: ${{ runner.temp }}/dll
 
       - name: Download modified files
@@ -371,10 +380,11 @@ jobs:
           $releaseTag = "${{ needs.version.outputs.release_tag }}"
           $zipFile = Get-ChildItem "${{ runner.temp }}/zip/*.zip" | Select-Object -First 1
 
+          $dllAssets = Get-ChildItem "${{ runner.temp }}/dll/*.dll" | ForEach-Object { $_.FullName }
           gh release create "$releaseTag" `
             --title "v$newVersion" `
             --notes-file "${{ runner.temp }}/release-body/release-body.md" `
-            "${{ runner.temp }}/dll/Dread.dll" `
+            @dllAssets `
             "$($zipFile.FullName)"
 
       - name: Create post-release issue
