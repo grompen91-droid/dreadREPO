@@ -1,6 +1,6 @@
 using System;
 using Dread.Config;
-using HarmonyLib;
+using Dread.Systems.Core;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -128,7 +128,7 @@ namespace Dread.Systems
             if (_state == PromptState.Dismissed)
                 return;
 
-            if (SemiFunc.MenuLevel())
+            if (GameplayContext.IsMenuLevel())
             {
                 if (_state == PromptState.Visible)
                 {
@@ -301,7 +301,7 @@ namespace Dread.Systems
             if ((object)pc == null)
                 return;
 
-            SetPlayerInputLocked(pc, locked: true);
+            PlayerInputLockCompat.SetLocked(pc, locked: true);
         }
 
         private static void UnlockLocalPlayerInput()
@@ -310,45 +310,7 @@ namespace Dread.Systems
             if ((object)pc == null)
                 return;
 
-            SetPlayerInputLocked(pc, locked: false);
-        }
-
-        private static void SetPlayerInputLocked(PlayerController pc, bool locked)
-        {
-            bool any = false;
-            try
-            {
-                Traverse.Create(pc).Field<bool>("inputLocked").Value = locked;
-                any = true;
-            }
-            catch { }
-
-            try
-            {
-                Traverse.Create(pc).Field<bool>("interactDisabled").Value = locked;
-                any = true;
-            }
-            catch { }
-
-            try
-            {
-                Traverse.Create(pc).Field<bool>("InputLocked").Value = locked;
-                any = true;
-            }
-            catch { }
-
-            try
-            {
-                Traverse.Create(pc).Field<bool>("InteractDisabled").Value = locked;
-                any = true;
-            }
-            catch { }
-
-            if (!any)
-            {
-                LoggingService.LogVerbose(
-                    "[Dread] Error reporting prompt: could not lock PlayerController input fields");
-            }
+            PlayerInputLockCompat.SetLocked(pc, locked: false);
         }
 
         private void EnsureStyles()
