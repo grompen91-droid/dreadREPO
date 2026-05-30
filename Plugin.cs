@@ -14,7 +14,7 @@ namespace Dread
     {
         public const string GUID = "elytraking.dread";
         public const string NAME = "Dread";
-        public const string VERSION = "1.5.2";
+        public const string VERSION = "1.5.3";
 
         internal static new ManualLogSource Logger = null!;
         internal static Harmony HarmonyInstance { get; private set; } = null!;
@@ -101,3 +101,4 @@ namespace Dread
         }
     }
 }
+
