@@ -9,6 +9,7 @@ using System.Threading;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using Dread.Config;
+using Dread.Systems.Core;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -413,7 +414,7 @@ namespace Dread.Systems
                     playerStamina = ReadPlayerFloat(player, "stamina", "Stamina", "energy");
                     foreach (var e in enemies)
                     {
-                        if (e.CurrentHealth > 0)
+                        if (EnemyHealthCompat.TryIsAlive(e))
                         {
                             var dist = Vector3.Distance(e.transform.position, player.transform.position);
                             if (nearestEnemyDist < 0 || dist < nearestEnemyDist)

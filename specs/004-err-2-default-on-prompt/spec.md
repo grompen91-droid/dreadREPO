@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-30
 
-**Status**: Draft (planning complete; implementation not started)
+**Status**: ERR-2 shipped on `master` (1.6.0, PR #208). This branch/PR adds **Phase 7** Core capture fix only (pending merge). Automated verification done (Tier 0, `Dread.ErrorReportJson.Tests`, grep). Manual SC-005/SC-006: [quickstart.md](./quickstart.md) Phase 7 matrix.
 
 **Roadmap**: ERR-2 (P1) | **Issue**: [#172](https://github.com/grompen91-droid/dreadREPO/issues/172)
 
@@ -77,9 +77,11 @@ A player disables reporting in the prompt or later via REPOConfig / cfg / Config
 - **FR-004**: Prompt body MUST compose text from `ErrorReportingPrivacyCopy.ShortSummary`, `DataBullets`, and `DisableInstructions` without paraphrasing payload categories (ERR-3 contract).
 - **FR-005**: Update canonical copy for default-on: revise `ShortSummary` and bullet 8 (and `FullDescription`) so they no longer claim "default off"; keep checklist alignment in `specs/003-err-3-privacy-copy/contracts/privacy-copy.md` updated in same PR.
 - **FR-006**: Persist enable/disable choice **only** by setting `ErrorReportingEnabled` when the user clicks a prompt button (prompt-shown flag is separate metadata).
-- **FR-007**: Update **ADR-0010**, **CHANGELOG [Unreleased]**, **README**, **THUNDERSTORE_README**, and **docs/mod-compatibility.md** for default-on + first-run prompt (no `manifest.json` / `Plugin.VERSION` bump in feature PR).
+- **FR-007**: Update **ADR-0010**, **ADR-0016** (`Systems/Core/` section), **CHANGELOG [Unreleased]**, **README**, **THUNDERSTORE_README**, and **docs/mod-compatibility.md** for default-on + first-run prompt (no `manifest.json` / `Plugin.VERSION` bump in feature PR).
 - **FR-008**: Register prompt host via `DreadSystemRegistry` (ARCH-3 pattern) or documented initializer hook; fail-safe if IMGUI unavailable.
-- **FR-009**: Do not send error reports **before** prompt acknowledgment on first run if implementation can gate enqueue until shown (preferred); if gating is too invasive, document that default true applies only after first scene frame with prompt visible (minimize pre-prompt sends).
+- **FR-009**: Do not send error reports **before** prompt acknowledgment on first run. **Implemented** via `ErrorReportingConsent.IsReportingAllowed()` (queue, capture, flush, send): while `ErrorReportingPromptShown` is `false`, reporting is off regardless of `ErrorReportingEnabled`. See [data-model.md](./data-model.md) and [research.md](./research.md).
+- **FR-010**: Game-state capture for error reports MUST NOT reference `EnemyHealth.CurrentHealth` at compile time; use `EnemyHealthCompat` in `Systems/Core/`.
+- **FR-011**: Version-tolerant game-type helpers live under `Systems/Core/` (`Dread.Systems.Core`); feature code imports Core compat instead of duplicating reflection.
 
 ### Key Entities
 
@@ -93,6 +95,8 @@ A player disables reporting in the prompt or later via REPOConfig / cfg / Config
 - **SC-002**: Tier 0 stub build + `dotnet test tests/Dread.ErrorReportJson.Tests` pass.
 - **SC-003**: Manual: fresh cfg, prompt once, both buttons set cfg correctly; upgrade cfg with `false` does not auto-enable without **Keep reporting on**.
 - **SC-004**: Grep shows prompt strings originate from `ErrorReportingPrivacyCopy` only.
+- **SC-005**: After a third-party mod logs an error during play (e.g. DeathMinimap NRE after both players die), BepInEx log shows no Dread `[ErrorReporter] Failed to process pending logs` mentioning `get_CurrentHealth`. Verified per [quickstart.md](./quickstart.md) Phase 7 manual matrix (not CI-automated).
+- **SC-006**: Error report payloads include `GameState` enemy counts when HP is readable via Core compat (best effort).
 
 ## Assumptions
 
@@ -107,12 +111,13 @@ A player disables reporting in the prompt or later via REPOConfig / cfg / Config
 |------------|--------|
 | ERR-1 test matrix | Done (roadmap) |
 | ERR-3 privacy copy | Done on `003-err-3-privacy-copy` / PR #207 |
-| ADR-0010 | Update in ERR-2 PR |
+| ADR-0010 | Updated in ERR-2 PR |
 | ADR-0012 TestCrash | No behavior change; verify still works with default true |
+| Phase 7 (FR-010/FR-011) | Core compat + error capture fix; same PR as ERR-2; no Worker/schema change |
 
 ## Out of Scope
 
-- Worker, GitHub, or payload schema changes.
+- Worker, GitHub, or payload schema changes (Phase 7 only changes client capture via `EnemyHealthCompat`).
 - REPOConfig custom modal (no description API; cfg/CM remain secondary surfaces).
 - Localization.
 - Re-prompting on every game version bump (only cfg reset re-triggers).

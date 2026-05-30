@@ -1,5 +1,5 @@
 ---
-description: "Task list for ERR-2 default-on error reporting + first-run prompt"
+description: "Task list for ERR-2 default-on error reporting + first-run prompt + Core EnemyHealth capture fix"
 ---
 
 # Tasks: ERR-2 Error reporting default on + first-run prompt
@@ -125,6 +125,33 @@ description: "Task list for ERR-2 default-on error reporting + first-run prompt"
 
 ---
 
+## Phase 7: Core compat + error capture fix (FR-010 / FR-011)
+
+**Purpose**: Fix `[ErrorReporter] Failed to process pending logs: Method not found: int .EnemyHealth.get_CurrentHealth()` when third-party mods log errors (e.g. DeathMinimap after death). Consolidate compat helpers under `Systems/Core/`.
+
+**Prerequisites**: Phases 1-6 complete (ERR-2 prompt + consent shipped). See [contracts/core-enemy-health.md](./contracts/core-enemy-health.md) and Core EnemyHealth plan adjunct.
+
+**Independent Test**: With error reporting enabled and prompt acknowledged, trigger DeathMinimap NRE (die in run with DeathMinimap installed). BepInEx log shows DeathMinimap stack but **no** Dread `get_CurrentHealth` warning; pending error batch processes without `Failed to process pending logs` for that reason.
+
+- [x] T034 Append FR-010 and FR-011 plus SC-005/SC-006 to `specs/004-err-2-default-on-prompt/spec.md` per Core capture plan adjunct
+- [x] T035 [P] Add Core capture decision to `specs/004-err-2-default-on-prompt/research.md` and note `GameState` capture uses Core compat in `specs/004-err-2-default-on-prompt/data-model.md`
+- [x] T036 Create `Systems/Core/` and `git mv` seven compat files (`EnemyHealthCompat`, `PlayerControllerCompat`, `PlayerTumbleCompat`, `HarmonyPatchCompat`, `RepoConfigCompat`, `RepoConfigSliderLabelCompat`, `UnityWebRequestCompat`) to `Systems/Core/` with namespace `Dread.Systems.Core`; update `Dread.csproj` if needed
+- [x] T037 Add `using Dread.Systems.Core` and fix references in `Plugin.cs`, `Systems/DreadSystemInitializer.cs`, `Systems/EnemyScanCache.cs`, `Systems/Patches/EnemyNavMeshAgentAwakePatch.cs`, `Systems/Patches/EnemyDirectorSetInvestigatePatch.cs`, `Systems/PsychoticBreak/PsychoticBreakTrigger.cs`, and any other consumers found by build
+- [x] T038 Extend `Systems/Core/EnemyHealthCompat.cs` with `TryReadHealth`, `TryIsAlive`, and `CountAliveAndNearby` per `specs/004-err-2-default-on-prompt/contracts/core-enemy-health.md`
+- [x] T039 Refactor `Systems/ErrorReporting/ErrorReportPayloadCapture.cs` `CaptureGameState` to use `EnemyScanCache.GetEnemies()` and `EnemyHealthCompat.CountAliveAndNearby` (remove `e.CurrentHealth`)
+- [x] T040 Refactor nearest-enemy loop in `Systems/DebugServerSystem.cs` to use `EnemyHealthCompat.TryIsAlive` instead of `e.CurrentHealth`
+- [x] T041 [P] Update `docs/agents/guides/reflection-inventory.md` paths and `error-payload-game-state` disposition in `docs/agents/guides/reflection-inventory.md`
+- [x] T042 [P] Add **Systems/Core** section to `docs/agents/guides/mod-architecture.md` and compat pointer in `CONTEXT.md`
+- [x] T043 [P] Add Fixed entry under `[Unreleased]` in `CHANGELOG.md` for error reporter game-state capture when `EnemyHealth` API differs from stubs
+- [x] T044 Add DeathMinimap / error-capture manual steps to `specs/004-err-2-default-on-prompt/quickstart.md` (no `get_CurrentHealth` warning after third-party NRE)
+- [x] T045 Run Tier 0 (`scripts/verify-dread.ps1`) and `dotnet test tests/Dread.ErrorReportJson.Tests/Dread.ErrorReportJson.Tests.csproj` per `specs/004-err-2-default-on-prompt/quickstart.md`
+- [x] T046 Grep `Systems/` for `\.CurrentHealth` in `*.cs` (expect zero hits) per `specs/004-err-2-default-on-prompt/contracts/core-enemy-health.md`
+- [ ] T046b Execute Phase 7 manual matrix in `specs/004-err-2-default-on-prompt/quickstart.md` (DeathMinimap NRE + no `get_CurrentHealth` warning; SC-005/SC-006)
+
+**Checkpoint**: Error reporting survives DeathMinimap (and similar) Unity errors without dropping batches due to stub `CurrentHealth` mismatch.
+
+---
+
 ## Dependencies and Execution Order
 
 ### Phase Dependencies
@@ -135,6 +162,7 @@ description: "Task list for ERR-2 default-on error reporting + first-run prompt"
 - **User Story 2 (Phase 4)**: Depends on US1 prompt + consent gate (validates upgrade behavior).
 - **User Story 3 (Phase 5)**: Depends on US1 consent gate; independent of US2 manual matrix.
 - **Polish (Phase 6)**: Depends on desired user stories complete (minimum US1 + US2 for #172).
+- **Core capture (Phase 7)**: Depends on Phase 6 (ERR-2 functional). Can ship in same PR as ERR-2 or immediately after merge.
 
 ### User Story Dependencies
 
@@ -156,6 +184,20 @@ description: "Task list for ERR-2 default-on error reporting + first-run prompt"
 - **Foundational**: T006 and T008 parallel with T007 after T004-T005
 - **US1**: T016 and T017 parallel after T015; T009-T014 are mostly sequential (same new file)
 - **Polish**: T025-T028 and T033 parallel; T029-T032 sequential verification
+- **Phase 7**: T035 parallel with T034; T041-T043 parallel after T039-T040; T036-T037 sequential before T038-T040
+
+---
+
+## Parallel Example: Phase 7
+
+```bash
+# After T034 spec/research updates:
+# T036-T037: Systems/Core/ move + consumer usings (sequential)
+# T038: Systems/Core/EnemyHealthCompat.cs API
+# T039-T040: ErrorReportPayloadCapture + DebugServerSystem (parallel after T038)
+# T041-T043: docs + CHANGELOG (parallel)
+# T045-T046: automated verification; T046b: manual Phase 7 matrix
+```
 
 ---
 
@@ -195,6 +237,7 @@ description: "Task list for ERR-2 default-on error reporting + first-run prompt"
 3. US2: upgrade manual matrix (required for #172)
 4. US3: post-prompt cfg toggle verification
 5. Polish: CHANGELOG, README, CI, grep acceptance
+6. Phase 7: Core folder + error capture fix (log-driven bugfix)
 
 ### Parallel Team Strategy
 
@@ -211,3 +254,4 @@ description: "Task list for ERR-2 default-on error reporting + first-run prompt"
 - Optional v1: block gameplay input while prompt visible (contract allows overlay-only).
 - Stub CI: guard OnGUI like `Systems/DebugOverlay/DebugOverlaySystem.cs` (no missing Unity GUI APIs at type load).
 - Do not add Worker, payload, or `manifest.json` / `Plugin.VERSION` changes in this feature.
+- Phase 7: DeathMinimap NRE may still log from the third-party mod; Dread must not fail batch processing with `get_CurrentHealth` (see `contracts/core-enemy-health.md`).

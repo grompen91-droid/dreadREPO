@@ -98,3 +98,14 @@ Before first prompt on upgraded installs, **do not** auto-flip an existing `fals
 **Decision**: Branch from `master` after ERR-3 merge (or merge `003-err-3-privacy-copy` first). Implementation uses `ErrorReportingPrivacyCopy` from ERR-3.
 
 **Rationale**: Roadmap dependency order.
+
+## Decision: Core namespace + EnemyHealthCompat for error capture
+
+**Decision**: Move all `*Compat.cs` helpers to `Systems/Core/` (`Dread.Systems.Core`). Extend `EnemyHealthCompat` with `TryReadHealth`, `TryIsAlive`, and `CountAliveAndNearby`. `ErrorReportPayloadCapture.CaptureGameState` uses `EnemyScanCache.GetEnemies()` plus Core compat (no compile-time `CurrentHealth`).
+
+**Rationale**: Player logs showed `MissingMethodException` for `EnemyHealth.get_CurrentHealth()` when DeathMinimap logged NREs after death; direct stub property access bypassed per-enemy `catch` and aborted the whole error batch. Reflection-based compat already used for psychotic break and tension.
+
+**Alternatives considered**:
+
+- Catch `MissingMethodException` only in `CaptureGameState`: rejected (does not fix `DebugServerSystem` or future call sites).
+- Leave compat in `Systems/` flat layout: rejected (user request for shared Core surface per ARCH-3).

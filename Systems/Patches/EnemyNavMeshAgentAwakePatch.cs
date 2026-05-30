@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using Dread.Config;
+using Dread.Systems.Core;
 using HarmonyLib;
 using UnityEngine.AI;
 

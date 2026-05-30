@@ -1,5 +1,6 @@
 using System;
 using Dread.Config;
+using Dread.Systems.Core;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -108,9 +109,8 @@ namespace Dread.Systems
 
             try
             {
-                var enemies = UnityEngine.Object.FindObjectsOfType<EnemyHealth>();
+                var enemies = EnemyScanCache.GetEnemies();
                 state.EnemiesTotal = enemies.Length;
-                int alive = 0, nearby = 0;
                 PlayerController? player = null;
                 try
                 {
@@ -121,25 +121,8 @@ namespace Dread.Systems
                     // ignore player lookup failures
                 }
 
-                foreach (var e in enemies)
-                {
-                    try
-                    {
-                        if (e.CurrentHealth > 0)
-                            alive++;
-                        if (player != null)
-                        {
-                            var dist = Vector3.Distance(e.transform.position, player.transform.position);
-                            if (dist < ProximityRange)
-                                nearby++;
-                        }
-                    }
-                    catch
-                    {
-                        // skip enemies with incompatible stubs / mods
-                    }
-                }
-
+                EnemyHealthCompat.CountAliveAndNearby(
+                    enemies, player, ProximityRange, out var alive, out var nearby);
                 state.EnemiesAlive = alive;
                 state.EnemiesNearby = nearby;
 

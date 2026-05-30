@@ -2,6 +2,7 @@ using BepInEx;
 using BepInEx.Logging;
 using Dread.Config;
 using Dread.Systems;
+using Dread.Systems.Core;
 using HarmonyLib;
 using System;
 using UnityEngine;

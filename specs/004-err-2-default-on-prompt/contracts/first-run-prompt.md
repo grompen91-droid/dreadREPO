@@ -2,6 +2,8 @@
 
 **Feature**: ERR-2 | **Consumers**: players, `ErrorReporterSystem`, agents
 
+**Consent gate**: `ErrorReportingConsent.IsReportingAllowed()` in `Systems/ErrorReporting/ErrorReportingConsent.cs` (see [data-model.md](../data-model.md)).
+
 ## Normative rules
 
 1. First-run UI MUST use `ErrorReportingPrivacyCopy.ShortSummary`, `DataBullets`, and `DisableInstructions` for player-visible text (no paraphrase of payload categories).

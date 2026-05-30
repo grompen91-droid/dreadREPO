@@ -213,14 +213,20 @@ namespace Dread.Systems
             GUI.EndScrollView();
             y += _scrollViewHeight + 10f;
 
-            GUI.Label(new Rect(innerX, y, innerW, _hintHeight), ErrorReportingPrivacyCopy.DisableInstructions, _hintStyle!);
+            GUI.Label(
+                new Rect(innerX, y, innerW, _hintHeight),
+                ErrorReportingPrivacyCopy.DisableInstructions,
+                _hintStyle!);
             y += _hintHeight + 12f;
 
             var buttonW = (innerW - ButtonGap) * 0.5f;
             if (GUI.Button(new Rect(innerX, y, buttonW, ButtonHeight), "Keep reporting on", _buttonPrimaryStyle!))
                 OnPromptChoice(keepReporting: true);
 
-            if (GUI.Button(new Rect(innerX + buttonW + ButtonGap, y, buttonW, ButtonHeight), "Turn off reporting", _buttonStyle!))
+            if (GUI.Button(
+                    new Rect(innerX + buttonW + ButtonGap, y, buttonW, ButtonHeight),
+                    "Turn off reporting",
+                    _buttonStyle!))
                 OnPromptChoice(keepReporting: false);
 
             GUI.depth = prevDepth;
@@ -339,7 +345,10 @@ namespace Dread.Systems
             catch { }
 
             if (!any)
-                LoggingService.LogVerbose("[Dread] Error reporting prompt: could not lock PlayerController input fields");
+            {
+                LoggingService.LogVerbose(
+                    "[Dread] Error reporting prompt: could not lock PlayerController input fields");
+            }
         }
 
         private void EnsureStyles()

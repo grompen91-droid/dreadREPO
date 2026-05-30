@@ -264,7 +264,7 @@ Dread is **dependency-free** (BepInEx only) and is tested alongside common mod s
 
 See **[docs/mod-compatibility.md](docs/mod-compatibility.md)** for the full matrix, isolation test steps, Linux DLL notes, and manual test checklist.
 
-**Planned work:** [docs/ROADMAP.md](docs/ROADMAP.md) (unified UI kit, debug overlay UX/fonts/drag, performance pass, non-blocking telemetry flush). ARCH-1/2/3, ERR-2/3, and audio hardening shipped 2026-05-29.
+**Planned work:** [docs/ROADMAP.md](docs/ROADMAP.md) (unified UI kit, debug overlay UX/fonts/drag, performance pass, non-blocking telemetry flush). ARCH-1/2/3, ERR-2/3, and audio hardening shipped 2026-05-29. Pending: error-report Core capture fix in [CHANGELOG.md](CHANGELOG.md) [Unreleased].
 
 **Contributor glossary:** [CONTEXT.md](CONTEXT.md) (domain terms for issues, PRs, and agents).
 

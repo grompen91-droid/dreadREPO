@@ -33,7 +33,7 @@ Config toggle (`10. Compatibility`) that keeps ambient audio while skipping mons
 _Avoid_: **Mod compatibility** (that term means working with modded enemies); using "compat" only for REPOConfig slider work
 
 **Compat layer**:
-Pattern for living next to other mods: detect optional dependencies after assemblies load, guard host-only behavior, apply Harmony only when safe. Documented in [docs/adr/0016-arch-3-extension-model.md](docs/adr/0016-arch-3-extension-model.md).
+Pattern for living next to other mods: detect optional dependencies after assemblies load, guard host-only behavior, apply Harmony only when safe. Shared helpers live in `Systems/Core/` (`Dread.Systems.Core`). Documented in [docs/adr/0016-arch-3-extension-model.md](docs/adr/0016-arch-3-extension-model.md).
 _Avoid_: "compat mode" when you mean only REPOConfig or slider label work
 
 **System initializer**:
