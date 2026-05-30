@@ -30,10 +30,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ![Status](https://img.shields.io/badge/status-development-yellow?style=flat-square)
 
 ### Added
+- **ERR-2 (#172):** Error reporting default-on for new cfg; one-time IMGUI first-run prompt on first non-menu gameplay scene; `ErrorReportingPromptShown` cfg key; `ErrorReportingConsent` blocks enqueue/send until prompt acknowledged; `ErrorReportingPromptSystem` registered in `DreadSystemRegistry`
 - **ERR-3 (#173):** Canonical error reporting privacy disclosure (`ErrorReportingPrivacyCopy`) wired to `ErrorReportingEnabled` config description; optional one-line log when reporting is enabled at runtime
 - **REPOConfig compat:** `RepoConfigCompat` entry point; `HideFromREPOConfig` only on the test crash button (debug server, overlay, logging, and compatibility toggles stay in REPOConfig)
 
 ### Changed
+- **ERR-2 (#172):** `ErrorReportingPrivacyCopy` and README/THUNDERSTORE/mod-compat/ADR-0010 updated for default-on + first-run prompt; existing saved `ErrorReportingEnabled = false` retained on upgrade
 - **Config section order:** Gameplay first (audio through compatibility), then error reporting (7), then debug overlay/server/logging (8-10); test crash remains section 11 and hidden from REPOConfig. Renumbered cfg section headers; existing installs may keep values under old section names until reset or manual merge.
 - **REPOConfig error reporting:** Removed disclosure label compat (REPOConfig has no bool description API). Full privacy text remains in `elytraking.dread.cfg` and Configuration Manager only.
 - **REPOConfig testing:** `Crash Game` (section 11) visible in REPOConfig as a toggle (turn on to test crash pipeline).

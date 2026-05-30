@@ -62,7 +62,7 @@ FakeFootstepsEnabled = true
 CrouchSpeedBoost = true
 
 [11. Error Reporting]
-ErrorReportingEnabled = false    # opt-in; full disclosure in generated cfg description (section 11)
+ErrorReportingEnabled = true     # default on; first-run prompt on first gameplay level
 
 [6. Psychotic Break]
 Enabled = true
@@ -88,7 +88,7 @@ Dread only requires BepInEx. It works with many popular mods (Mimic, Wesleys Ene
 **If something breaks:**
 
 - Enable **Compatibility mode** (`10. Compatibility`) for ambient audio only
-- Turn off **Error reporting** (default off) if logs grow too fast
+- Turn off **Error reporting** in cfg or the first-run prompt if you do not want crash telemetry
 - Keep **Debug console guard** on if MenuLib/REPOConfig spams console errors
 
 Full matrix, Proton DLL notes, and test checklist: [mod-compatibility.md](https://github.com/grompen91-droid/dreadREPO/blob/master/docs/mod-compatibility.md)

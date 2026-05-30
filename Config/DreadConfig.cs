@@ -5,6 +5,7 @@ namespace Dread.Config
 {
     public static class DreadConfig
     {
+        private static ConfigFile? _configFile;
         // 1. Audio Dread
         public static ConfigEntry<bool> AudioEnabled = null!;
         public static ConfigEntry<float> AudioFrequency = null!;
@@ -36,6 +37,7 @@ namespace Dread.Config
 
         // 7. Error Reporting
         public static ConfigEntry<bool> ErrorReportingEnabled = null!;
+        public static ConfigEntry<bool> ErrorReportingPromptShown = null!;
 
         // 8. Debug Overlay
         public static ConfigEntry<bool> DebugOverlayEnabled = null!;
@@ -55,6 +57,8 @@ namespace Dread.Config
         public static void Initialize(ConfigFile cfg)
         {
             if (_initialized) return;
+
+            _configFile = cfg;
 
             AudioEnabled = cfg.Bind("1. Audio Dread", "Enabled", true,
                 "Ambient horror sounds during runs.");
@@ -117,8 +121,15 @@ namespace Dread.Config
             ErrorReportingEnabled = cfg.Bind(
                 "7. Error Reporting",
                 "ErrorReportingEnabled",
-                false,
+                true,
                 ErrorReportingPrivacyCopy.FullDescription);
+
+            ErrorReportingPromptShown = cfg.Bind(
+                "7. Error Reporting",
+                "ErrorReportingPromptShown",
+                false,
+                "Internal: set true after first-run error reporting disclosure. "
+                    + "Do not edit unless resetting the prompt.");
 
             DebugOverlayEnabled = cfg.Bind(
                 "8. Debug Overlay",
@@ -162,7 +173,7 @@ namespace Dread.Config
                 PsychoticBreakEnabled, PsychoticBreakTriggerChance, PsychoticBreakDuration, PsychoticBreakOncePerMatch,
                 CrouchSpeedBoostEnabled,
                 CompatibilityMode, CompatibilitySkipConflictingPatches, DebugConsoleGuardEnabled,
-                ErrorReportingEnabled,
+                ErrorReportingEnabled, ErrorReportingPromptShown,
                 DebugOverlayEnabled, DebugServerEnabled, DebugServerPort,
                 LogLevelEntry, TestCrashButton,
             ];
@@ -182,6 +193,11 @@ namespace Dread.Config
         {
             if (!_initialized)
                 LoggingService.LogError("[Dread] DreadConfig accessed before Initialize() was called!");
+        }
+
+        public static void SaveToDisk()
+        {
+            _configFile?.Save();
         }
     }
 

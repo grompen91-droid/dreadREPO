@@ -15,7 +15,7 @@ namespace Dread.Systems
     internal static class ErrorReportingPrivacyCopy
     {
         public const string ShortSummary =
-            "Anonymous error reporting (opt-in, default off). When enabled, serious Unity errors "
+            "Anonymous error reporting (on by default for new installs). When enabled, serious Unity errors "
             + "may be sent to the developer to fix bugs.";
 
         public const string DisableInstructions =
@@ -33,7 +33,7 @@ namespace Dread.Systems
             "Screen resolution, refresh rate, DPI, and fullscreen mode",
             "Eleven named Dread settings (toggles plus audio frequency and volume), including this setting",
             "Not sent: your username, Steam profile, or deliberate PII",
-            "Opt-in today: default off until you enable",
+            "Default on for new installs; turn off anytime via the first-run prompt or cfg",
         };
 
         public static readonly string FullDescription;

@@ -26,7 +26,7 @@ If another mod already owns the target method (`Harmony.GetPatchInfo`), Dread sk
 
 Config: `DebugConsoleGuardEnabled` (default **true**).
 
-`DebugConsoleGuardPatch` suppresses `DebugConsoleUI` NRE spam from broken MenuLib/REPOConfig hooks. Pair with error reporting default off so telemetry does not amplify floods.
+`DebugConsoleGuardPatch` suppresses `DebugConsoleUI` NRE spam from broken MenuLib/REPOConfig hooks. Pair with `ErrorReportingEnabled = false` if telemetry should not amplify floods.
 
 ## Host-only monster patches
 

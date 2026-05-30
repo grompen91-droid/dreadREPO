@@ -31,6 +31,7 @@ namespace UnityEngine
     {
         public GUIStyle box { get; } = new GUIStyle();
         public GUIStyle label { get; } = new GUIStyle();
+        public GUIStyle button { get; } = new GUIStyle();
     }
 
     public static class GUI
@@ -39,5 +40,8 @@ namespace UnityEngine
         public static void Box(Rect position, GUIContent content, GUIStyle style) { }
         public static void Label(Rect position, string text) { }
         public static void Label(Rect position, string text, GUIStyle style) { }
+        public static bool Button(Rect position, string text, GUIStyle style) => false;
+        public static Vector2 BeginScrollView(Rect position, Vector2 scrollPosition, Rect viewRect) => scrollPosition;
+        public static void EndScrollView() { }
     }
 }

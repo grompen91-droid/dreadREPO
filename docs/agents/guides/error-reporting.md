@@ -1,13 +1,16 @@
 # Error reporting
 
-Opt-in telemetry from game to Cloudflare Worker to GitHub issues. Default **off** (ADR-0010). Code: `Systems/ErrorReporting/` (`ErrorReporterSystem.cs`, `ErrorReportLogQueue.cs`, `ErrorReportPayloadCapture.cs`, `ErrorReportUploader.cs`), `Systems/ErrorReportJson.cs`, `workers/error-reporter/`.
+Anonymous crash telemetry from game to Cloudflare Worker to GitHub issues. Default **on** for new cfg with a one-time first-run IMGUI prompt before any sends (ERR-2, ADR-0010). Code: `Systems/ErrorReporting/` (`ErrorReporterSystem.cs`, `ErrorReportLogQueue.cs`, `ErrorReportingPromptSystem.cs`, `ErrorReportingConsent.cs`, `ErrorReportPayloadCapture.cs`, `ErrorReportUploader.cs`), `Systems/ErrorReportJson.cs`, `workers/error-reporter/`.
 
 **Privacy copy (ERR-3):** canonical strings in `Systems/ErrorReporting/ErrorReportingPrivacyCopy.cs`; review checklist and required bullets in [specs/003-err-3-privacy-copy/contracts/privacy-copy.md](../../../specs/003-err-3-privacy-copy/contracts/privacy-copy.md).
+
+**First-run prompt (ERR-2):** [specs/004-err-2-default-on-prompt/contracts/first-run-prompt.md](../../../specs/004-err-2-default-on-prompt/contracts/first-run-prompt.md).
 
 ## Pipeline
 
 ```
 Unity Application.logMessageReceived (Exception/Error)
+  -> ErrorReportingConsent.IsReportingAllowed() (enabled + prompt shown)
   -> enqueue + dedupe (60s per hash)
   -> batch flush (5 min or buffer full)
   -> POST JSON via `HttpWebRequest` (`TryPostPayloadSync`; main thread, see roadmap ERR-4)
@@ -21,15 +24,16 @@ Test path: `TestCrashSystem` or MCP `trigger_test_crash` (see [debug-tooling.md]
 
 | Key | Section | Default |
 |-----|---------|---------|
-| `ErrorReportingEnabled` | `7. Error Reporting` | **false** (opt-in) |
+| `ErrorReportingEnabled` | `7. Error Reporting` | **true** (new cfg; existing `false` kept on upgrade) |
+| `ErrorReportingPromptShown` | `7. Error Reporting` | **false** until first-run prompt dismissed |
 
-When off, `EnqueueLog` returns immediately.
+When `IsReportingAllowed()` is false, `EnqueueLog` returns immediately.
 
 ## Spam and dedupe
 
 Ignored in pipeline:
 
-- `[Dread TestCrash]` / `TestCrashSystem` (sync test still sends via dedicated path)
+- `[Dread TestCrash]` / `TestCrashSystem` (sync test still sends via dedicated path when consent allows)
 - `DebugConsoleUI` noise (MenuLib/REPOConfig broken hooks)
 
 Dedupe: SHA-based hash prefix, 60s cooldown per hash. Buffer caps: pending logs, batch size, stack/message length trims.
@@ -64,7 +68,7 @@ Live smoke: `scripts/test-error-reporter.sh`
 
 ## Manual matrix
 
-Full checklist: [docs/agents/error-reporting-test-checklist.md](../error-reporting-test-checklist.md) (ERR-1).
+Full checklist: [docs/agents/error-reporting-test-checklist.md](../error-reporting-test-checklist.md) (ERR-1). ERR-2 scenarios: [specs/004-err-2-default-on-prompt/quickstart.md](../../../specs/004-err-2-default-on-prompt/quickstart.md).
 
 ## Agents: common tasks
 
@@ -73,17 +77,7 @@ Full checklist: [docs/agents/error-reporting-test-checklist.md](../error-reporti
 | New config in report | `ErrorReporterSystem` config snapshot + `ErrorReportTypes` |
 | Payload field | `ErrorReportJson.cs` + golden tests |
 | Worker validation | `workers/error-reporter` handlers |
-| Default opt-in change | Requires ADR + changelog; product decision |
-
-Never enable reporting by default without explicit issue/ADR approval.
-
-## ERR-2 first-run prompt (future)
-
-Issue [#172](https://github.com/grompen91-droid/dreadREPO/issues/172) owns default-on and first-run UI. When implementing:
-
-- Import `ErrorReportingPrivacyCopy.ShortSummary`, `DataBullets`, and `DisableInstructions` (do not rewrite disclosure).
-- Modal body should follow [privacy-copy.md](../../../specs/003-err-3-privacy-copy/contracts/privacy-copy.md) checklist rows 1-10.
-- Persist choice only via `ErrorReportingEnabled` in section `7. Error Reporting`.
+| Prompt / consent | `ErrorReportingPromptSystem`, `ErrorReportingConsent`, `DreadConfig` keys |
 
 ## ADRs
 

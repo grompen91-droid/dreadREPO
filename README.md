@@ -153,7 +153,7 @@ See [Psychotic Break Configuration](#psychotic-break) for the toggle, trigger ch
 
 ### Error Reporting
 
-Opt-in telemetry via Unity `Application.logMessageReceived` (`Exception` / `Error` logs), batched and sent to a Cloudflare Worker (may create public GitHub issues). Default **off**. The full disclosure is in the generated cfg description for `ErrorReportingEnabled` (section `7. Error Reporting` in cfg; REPOConfig shows the toggle only, full disclosure in cfg or F1 Configuration Manager). Summary table:
+Anonymous telemetry via Unity `Application.logMessageReceived` (`Exception` / `Error` logs), batched and sent to a Cloudflare Worker (may create public GitHub issues). Default **on** for new cfg files. The first time you enter a gameplay level, a one-time in-game prompt shows the full disclosure (same text as cfg). Choose **Keep reporting on** or **Turn off reporting**; the prompt does not appear again unless you reset cfg. The full disclosure is also in the generated cfg description for `ErrorReportingEnabled` (section `7. Error Reporting`; REPOConfig shows the toggle only, full text in cfg or F1 Configuration Manager). Summary table:
 
 | Data | Details |
 |------|---------|
@@ -165,8 +165,8 @@ Opt-in telemetry via Unity `Application.logMessageReceived` (`Exception` / `Erro
 | Config snapshot | Eleven named Dread settings (toggles plus audio frequency/volume); see cfg section 7 for full text |
 
 - Reports buffer in-memory and flush every 5 minutes or when the buffer is full (max 50 per batch)
-- Disabled entirely when `ErrorReportingEnabled` is false (default)
-- Opt-in only: set `ErrorReportingEnabled = true` in config to enable
+- No reports are sent until you acknowledge the first-run prompt (`ErrorReportingPromptShown`)
+- Disabled when `ErrorReportingEnabled` is false (turn off in the prompt, cfg, or REPOConfig)
 - Includes a **Test Crash** button (section 11, cfg only) to verify the pipeline works end-to-end
 
 ---
@@ -217,7 +217,8 @@ CrouchSpeedBoost = true
 CompatibilityMode = false
 
 [7. Error Reporting]
-ErrorReportingEnabled = false    # opt-in anonymous crash telemetry (see cfg description)
+ErrorReportingEnabled = true     # anonymous crash telemetry (see cfg description; first-run prompt on first level)
+ErrorReportingPromptShown = false   # internal: set by first-run prompt
 
 [8. Debug Overlay]
 DebugOverlayEnabled = false
@@ -269,7 +270,7 @@ See **[docs/mod-compatibility.md](docs/mod-compatibility.md)** for the full matr
 - **Modded enemies** (Mimic, WesleysEnemies, etc.): supported via `EnemyHealth` scan and host-only aggression patches when you are lobby host.
 - **REPOConfig / MenuLib**: usually fine; broken `DebugConsoleUI` hooks are mitigated by `DebugConsoleGuardEnabled` (default on). Slider names use a **temporary** Dread compat when REPOConfig is present (see [Configuration](#configuration)); upstream REPOConfig/MenuLib fix still desired.
 - **Sprint or stamina overhauls**: if movement feels wrong, disable `AdrenalineEnabled` / `PanicSprintEnabled` or enable **Compatibility mode** (ambient audio only).
-- **Broken profiles**: set `CompatibilityMode = true` or `ErrorReportingEnabled = false` (default) without uninstalling Dread.
+- **Broken profiles**: set `CompatibilityMode = true` or `ErrorReportingEnabled = false` without uninstalling Dread.
 - **REPOLib**: not required (removed in v1.4.0).
 
 The `audio/` folder includes `door_creak.ogg` which is shipped but not currently loaded by any system. It is available for future ambient variants or custom sound replacement.

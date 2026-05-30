@@ -7,7 +7,7 @@ Dread is **dependency-free** (BepInEx only) and works alongside many popular REP
 | Category | What Dread does | Risk |
 |----------|-----------------|------|
 | Harmony on shared methods | Postfix/prefix on `EnemyNavMeshAgent.Awake`, `PlayerController.Awake`, `EnemyDirector.SetInvestigate` | Another mod patching the same method can win or lose by load order |
-| Error telemetry | `Application.logMessageReceived` (opt-in, default off) | Was catastrophic when paired with broken mods flooding `Debug.LogException` (mitigated in v1.5.2+) |
+| Error telemetry | `Application.logMessageReceived` (default on for new cfg; first-run prompt before sends) | Was catastrophic when paired with broken mods flooding `Debug.LogException` (mitigated in v1.5.2+) |
 | Debug console guard | Optional finalizer on `DebugConsoleUI.Update` | Masks NREs from broken third-party hooks; console may still be broken underneath |
 | Runtime player mutation | `TensionSystem` changes sprint drain and `SprintSpeedMultiplier` | Conflicts with stamina or sprint overhaul mods |
 | Enemy audio scan | `MonsterOverhaulSystem` tweaks child `AudioSource` pitch/spatial blend | Can clash with mods that own enemy audio |
@@ -66,7 +66,8 @@ Dread loads OGG via NVorbis disk read first, then `UnityWebRequest` on Windows-n
 |-----|---------|---------|--------|
 | `CompatibilityMode` | 6. Compatibility | false | Ambient audio only: no monster Harmony patches, no adrenaline/panic sprint mutation, no psychotic break |
 | `CompatibilitySkipConflictingPatches` | 6. Compatibility | false | Skip Dread Harmony patch if target method already patched by another mod |
-| `ErrorReportingEnabled` | 7. Error Reporting | false | Opt-in anonymous crash telemetry |
+| `ErrorReportingEnabled` | 7. Error Reporting | true (new cfg) | Anonymous crash telemetry; first-run IMGUI prompt before sends |
+| `ErrorReportingPromptShown` | 7. Error Reporting | false | Internal: set true after first-run disclosure |
 | `DebugConsoleGuardEnabled` | 6. Compatibility | true | Suppress DebugConsoleUI NRE spam from broken hooks |
 | `MonsterAggressionEnabled` | 2. Monster Overhaul | true | Host-only speed/investigate patches |
 | `AdrenalineEnabled` / `PanicSprintEnabled` | 3. Tension | true | Disable if sprint/stamina mods conflict |
