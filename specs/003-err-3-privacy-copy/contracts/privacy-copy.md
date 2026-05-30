@@ -8,7 +8,7 @@
 2. Copy MUST NOT claim collection of account names, Steam IDs, voice/chat, or files outside Unity log context.
 3. Copy MUST state reports go to the developer via an automated service (Worker) and may create public GitHub issues labeled auto-reported.
 4. Copy MUST include disable instructions referencing `ErrorReportingEnabled` and `BepInEx/config/elytraking.dread.cfg`.
-5. While default is `false`, copy MUST describe behavior when enabled (data sent on `Exception` / `Error` logs per pipeline).
+5. Copy MUST describe behavior when enabled (data sent on `Exception` / `Error` logs per pipeline), including default-on wording after ERR-2.
 
 ## Required bullets (canonical)
 
@@ -25,7 +25,7 @@ Implementers MUST include equivalents of:
 | 7 | Eleven named Dread settings (toggles plus audio frequency/volume) | `CaptureConfigSafe` / `ConfigData` |
 | 8 | Not sent: your username, Steam profile, or deliberate PII | Product statement; verify no such fields in `ErrorReportTypes` |
 | 9 | Disable: `ErrorReportingEnabled = false` in section 5 | `DreadConfig.cs` bind |
-| 10 | Opt-in today: default off until you enable | `default false`; ERR-2 may change default later with new copy pass |
+| 10 | Default on for new installs; turn off via first-run prompt or cfg | `ErrorReportingEnabled` default `true` (ERR-2); existing saved `false` retained on upgrade |
 
 ## Review checklist (pre-merge)
 
@@ -34,15 +34,15 @@ Implementers MUST include equivalents of:
 - [x] Confirm `ErrorReportLogQueue` returns immediately when `ErrorReportingEnabled` is false.
 - [x] If README/THUNDERSTORE touched, pipeline description matches `Application.logMessageReceived` (not Harmony on Debug.Log).
 - [x] No em dash in any edited markdown file.
-- [x] ERR-2 not implemented in same PR (no default true, no prompt).
+- [x] ERR-2 default-on copy and first-run prompt implemented per issue #172 (separate feature branch).
 
-## ERR-2 integration (future)
+## ERR-2 integration
 
-ERR-2 first-run prompt MUST:
+ERR-2 first-run prompt (`ErrorReportingPromptSystem`) MUST:
 
-- Import canonical `ShortSummary` + `dataBullets` + `disableSteps` (or full text split for UI).
-- Not paraphrase payload categories.
-- Persist user choice only via `ErrorReportingEnabled` cfg (ERR-2 scope).
+- Import canonical `ShortSummary` + `DataBullets` + `DisableInstructions` (no paraphrase of payload categories).
+- Set `ErrorReportingPromptShown` on dismiss; set `ErrorReportingEnabled` per button choice.
+- Gate enqueue/send via `ErrorReportingConsent` until `ErrorReportingPromptShown` is true.
 
 ## Example shape (non-normative wording)
 

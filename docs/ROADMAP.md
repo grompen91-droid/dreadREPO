@@ -49,26 +49,27 @@ Work top to bottom within each phase. Do not skip **Depends on** unless the issu
 | 7 | ERR-3 | P1 | [#173](https://github.com/grompen91-droid/dreadREPO/issues/173) | ERR-1 | Privacy copy (`specs/003-err-3-privacy-copy/`) |
 | 8 | ERR-2 | P1 | [#172](https://github.com/grompen91-droid/dreadREPO/issues/172) | ERR-1, ERR-3 | Default-on + first-run prompt only after tests and copy |
 
-### Phase 4: Debug overlay polish
+### Phase 4: Player-facing UI and debug overlay polish
 
 | Order | ID | Priority | Issue | Depends on | Why |
 |-------|-----|----------|-------|------------|-----|
-| 9 | DBG-5 | P2 | (to file) | PERF-2 | Extensible panel API first: lets settings and other features register overlay sections/rows without editing `DebugOverlaySystem` |
-| 10 | DBG-3 | P2 | [#165](https://github.com/grompen91-droid/dreadREPO/issues/165) | PERF-2 | Font/legibility (user feedback: labels look odd vs toggles) |
-| 11 | DBG-1 | P2 | [#163](https://github.com/grompen91-droid/dreadREPO/issues/163) | DBG-3 (soft) | Draggable panel after text renders reliably |
-| 12 | DBG-2 | P2 | [#164](https://github.com/grompen91-droid/dreadREPO/issues/164) | DBG-1, DBG-5 (soft) | Richer cfg once layout UX is settled |
+| 9 | UI-1 | P2 | (to file) | ARCH-3 (soft) | Shared Dread UI kit (theme, modal, scroll body, buttons, cursor/input capture) as a reusable `MonoBehaviour` component so prompts, F10 overlay, and future panels do not each reimplement IMGUI layout |
+| 10 | DBG-5 | P2 | (to file) | PERF-2, UI-1 (soft) | Extensible panel API: register overlay sections/rows without editing `DebugOverlaySystem`; build on UI-1 primitives where possible |
+| 11 | DBG-3 | P2 | [#165](https://github.com/grompen91-droid/dreadREPO/issues/165) | PERF-2, UI-1 (soft) | Font/legibility (user feedback: labels look odd vs toggles) |
+| 12 | DBG-1 | P2 | [#163](https://github.com/grompen91-droid/dreadREPO/issues/163) | DBG-3 (soft) | Draggable panel after text renders reliably |
+| 13 | DBG-2 | P2 | [#164](https://github.com/grompen91-droid/dreadREPO/issues/164) | DBG-1, DBG-5 (soft) | Richer cfg once layout UX is settled |
 
 ### Phase 5: Performance optimization
 
 | Order | ID | Priority | Issue | Depends on | Why |
 |-------|-----|----------|-------|------------|-----|
-| 13 | PERF-1 | P2 | [#169](https://github.com/grompen91-droid/dreadREPO/issues/169) | ARCH-1, PERF-2 | Profile stable codebase; avoid optimizing files about to move |
+| 14 | PERF-1 | P2 | [#169](https://github.com/grompen91-droid/dreadREPO/issues/169) | ARCH-1, PERF-2 | Profile stable codebase; avoid optimizing files about to move |
 
 ### Phase 6: Upstream / cleanup
 
 | Order | ID | Priority | Issue | Depends on | Why |
 |-------|-----|----------|-------|------------|-----|
-| 14 | DBG-4 | P3 | [#166](https://github.com/grompen91-droid/dreadREPO/issues/166) | REPOConfig or MenuLib fix | Remove temporary slider compat; **blocked** on upstream |
+| 15 | DBG-4 | P3 | [#166](https://github.com/grompen91-droid/dreadREPO/issues/166) | REPOConfig or MenuLib fix | Remove temporary slider compat; **blocked** on upstream |
 
 ```mermaid
 flowchart TD
@@ -94,14 +95,25 @@ flowchart TD
   ARCH1 --> ARCH2
   ARCH1 --> ARCH3
   ERR1 --> ARCH3
+  ARCH3 --> UI1[UI-1 Unified UI kit]
+  UI1 --> DBG5
   PERF2 --> DBG5
   PERF2 --> DBG3
+  UI1 --> DBG3
   DBG3 --> DBG1
   DBG1 --> DBG2
   DBG5 --> DBG2
   ARCH1 --> PERF1
   DBG4
 ```
+
+---
+
+## Player-facing UI
+
+| ID | Priority | Item | Notes | Status | Issue |
+|----|----------|------|-------|--------|-------|
+| UI-1 | P2 | **Unified Dread UI kit** | Component-driven in-game UI module shared across features: REPO-style theme (dark panel, accent typography), modal overlay with cursor unlock and gameplay input lock, scrollable body with correct `CalcHeight` line layout, and standard action buttons. First consumers: error-reporting first-run prompt and F10 debug overlay; later panels plug in without copy-pasting IMGUI math. Design as internal `MonoBehaviour` + small API surface first; optional registration hooks for other Dread systems when ARCH-3 patterns settle. | idea | (to file) |
 
 ---
 
