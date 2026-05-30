@@ -58,27 +58,33 @@ PanicSprintEnabled = true
 LowStaminaSoundEnabled = true
 FakeFootstepsEnabled = true
 
-[4. QOL]
+[4. Psychotic Break]
+PsychoticBreakEnabled = true
+PsychoticBreakTriggerChance = 0.01
+PsychoticBreakDuration = 20
+PsychoticBreakOncePerMatch = true
+
+[5. QOL]
 CrouchSpeedBoost = true
 
-[11. Error Reporting]
-ErrorReportingEnabled = false    # opt-in; full disclosure in generated cfg description (section 11)
+[6. Compatibility]
+CompatibilityMode = false
 
-[6. Psychotic Break]
-Enabled = true
-TriggerChance = 0.01
-Duration = 20
-OncePerMatch = true
+[7. Error Reporting]
+ErrorReportingEnabled = false    # opt-in; full disclosure in generated cfg description
 
-[7. Testing]
-EnableTestCrashButton = false
+[8. Debug Overlay]
+DebugOverlayEnabled = false
 
-[8. Debug Server]
+[9. Debug Server]
 DebugServerEnabled = false
 DebugServerPort = 15432
 
-[9. Logging]
+[10. Logging]
 LogLevel = Debug
+
+[11. Testing]
+Crash Game = false
 ```
 
 ## Compatibility
@@ -87,7 +93,7 @@ Dread only requires BepInEx. It works with many popular mods (Mimic, Wesleys Ene
 
 **If something breaks:**
 
-- Enable **Compatibility mode** (`10. Compatibility`) for ambient audio only
+- Enable **Compatibility mode** (`6. Compatibility`) for ambient audio only
 - Turn off **Error reporting** (default off) if logs grow too fast
 - Keep **Debug console guard** on if MenuLib/REPOConfig spams console errors
 

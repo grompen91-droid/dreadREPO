@@ -53,7 +53,7 @@ May include: exception details; scene and gameplay stats (enemy counts, HP, posi
 PC and GPU info (may include VRAM and driver); screen settings; eleven named Dread settings.
 No account name or Steam ID.
 To disable: set ErrorReportingEnabled = false in BepInEx/config/elytraking.dread.cfg
-(section 11. Error Reporting), or the same toggle in REPOConfig when listed.
+(section 7. Error Reporting), or the same toggle in REPOConfig when listed.
 ```
 
 Final wording is implementation detail; checklist rows are normative.

@@ -162,12 +162,12 @@ Opt-in telemetry via Unity `Application.logMessageReceived` (`Exception` / `Erro
 | Game state | Scene name, enemies alive/nearby/total, player HP/stamina, play time |
 | System info | OS, CPU, GPU, RAM, VRAM, driver version, device model |
 | Display info | Resolution, refresh rate, DPI, fullscreen mode |
-| Config snapshot | Eleven named Dread settings (toggles plus audio frequency/volume); see cfg section 7 for full text |
+| Config snapshot | Eleven named Dread settings (toggles plus audio frequency/volume); see section 7 disclosure for full list |
 
 - Reports buffer in-memory and flush every 5 minutes or when the buffer is full (max 50 per batch)
 - Disabled entirely when `ErrorReportingEnabled` is false (default)
 - Opt-in only: set `ErrorReportingEnabled = true` in config to enable
-- Includes a **Test Crash** button (section 11, cfg only) to verify the pipeline works end-to-end
+- Includes a **Test Crash** toggle (section 11; REPOConfig or Configuration Manager) to verify the pipeline end-to-end
 
 ---
 
