@@ -28,6 +28,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- **CD / Thunderstore package:** ship `NVorbis.dll` and `System.*` plugin dependencies beside `Dread.dll` (same as `build.ps1`). v1.6.0 packages were missing them, causing `FileNotFoundException` for NVorbis at runtime.
 
 ## [1.6.0] - 2026-05-30
 
