@@ -9,6 +9,8 @@ namespace Dread.Systems.Core
     {
         private static readonly Dictionary<Type, FieldInfo[]> CrouchBoolFieldsByType = new();
         // REPO v0.4.x: PlayerController.Crouching/Crawling; PlayerAvatar.isCrouching/isCrawling
+        private const string SprintMultiplierField = "SprintSpeedMultiplier";
+
         private static readonly string[] CrouchMemberNames =
         {
             "Crouching", "Crawling", "isCrouching", "isCrawling",
@@ -92,6 +94,72 @@ namespace Dread.Systems.Core
         /// <summary>Crouch/crawl or REPO tumble/fallen hide pose (used for Psychotic Break triggers).</summary>
         public static bool IsHidingVulnerable(PlayerController pc) =>
             IsCrouching(pc) || PlayerTumbleCompat.IsInTumble(pc);
+
+        public static bool TryReadEnergySprintDrain(PlayerController pc, out float drain)
+        {
+            drain = 0f;
+            if (pc == null)
+                return false;
+
+            try
+            {
+                drain = pc.EnergySprintDrain;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static bool TrySetEnergySprintDrain(PlayerController pc, float drain)
+        {
+            if (pc == null)
+                return false;
+
+            try
+            {
+                pc.EnergySprintDrain = drain;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static bool TryReadSprintMultiplier(PlayerController pc, out float multiplier)
+        {
+            multiplier = 1f;
+            if (pc == null)
+                return false;
+
+            try
+            {
+                multiplier = Traverse.Create(pc).Field<float>(SprintMultiplierField).Value;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static bool TrySetSprintMultiplier(PlayerController pc, float multiplier)
+        {
+            if (pc == null)
+                return false;
+
+            try
+            {
+                Traverse.Create(pc).Field<float>(SprintMultiplierField).Value = multiplier;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
 
         private static bool TryReadCrouch(object target)
         {
