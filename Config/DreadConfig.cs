@@ -5,52 +5,52 @@ namespace Dread.Config
 {
     public static class DreadConfig
     {
-        // Audio Dread
+        // 1. Audio Dread
         public static ConfigEntry<bool> AudioEnabled = null!;
         public static ConfigEntry<float> AudioFrequency = null!;
         public static ConfigEntry<float> AudioVolume = null!;
 
-        // Monster Overhaul
+        // 2. Monster Overhaul
         public static ConfigEntry<bool> MonsterAggressionEnabled = null!;
         public static ConfigEntry<bool> MonsterAudioEnabled = null!;
 
-        private static bool _initialized;
-
-        // QOL
-        public static ConfigEntry<bool> CrouchSpeedBoostEnabled = null!;
-
-        // Tension
+        // 3. Tension
         public static ConfigEntry<bool> FakeFootstepsEnabled = null!;
         public static ConfigEntry<bool> AdrenalineEnabled = null!;
         public static ConfigEntry<bool> LowStaminaSoundEnabled = null!;
         public static ConfigEntry<bool> PanicSprintEnabled = null!;
 
-        // 5. Error Reporting
-        public static ConfigEntry<bool> ErrorReportingEnabled = null!;
-
-        // 10. Compatibility
-        public static ConfigEntry<bool> CompatibilityMode = null!;
-        public static ConfigEntry<bool> CompatibilitySkipConflictingPatches = null!;
-        public static ConfigEntry<bool> DebugConsoleGuardEnabled = null!;
-
-        // 6. Psychotic Break
+        // 4. Psychotic Break
         public static ConfigEntry<bool> PsychoticBreakEnabled = null!;
         public static ConfigEntry<float> PsychoticBreakTriggerChance = null!;
         public static ConfigEntry<float> PsychoticBreakDuration = null!;
         public static ConfigEntry<bool> PsychoticBreakOncePerMatch = null!;
 
-        // 7. Testing
-        public static ConfigEntry<bool> TestCrashButton = null!;
+        // 5. QOL
+        public static ConfigEntry<bool> CrouchSpeedBoostEnabled = null!;
 
-        // 8. Debug Server
+        // 6. Compatibility
+        public static ConfigEntry<bool> CompatibilityMode = null!;
+        public static ConfigEntry<bool> CompatibilitySkipConflictingPatches = null!;
+        public static ConfigEntry<bool> DebugConsoleGuardEnabled = null!;
+
+        // 7. Error Reporting
+        public static ConfigEntry<bool> ErrorReportingEnabled = null!;
+
+        // 8. Debug Overlay
+        public static ConfigEntry<bool> DebugOverlayEnabled = null!;
+
+        // 9. Debug Server
         public static ConfigEntry<bool> DebugServerEnabled = null!;
         public static ConfigEntry<int> DebugServerPort = null!;
 
-        // 11. Debug Overlay
-        public static ConfigEntry<bool> DebugOverlayEnabled = null!;
-
-        // 9. Logging
+        // 10. Logging
         public static ConfigEntry<LogLevel> LogLevelEntry = null!;
+
+        // 11. Testing
+        public static ConfigEntry<bool> TestCrashButton = null!;
+
+        private static bool _initialized;
 
         public static void Initialize(ConfigFile cfg)
         {
@@ -81,80 +81,90 @@ namespace Dread.Config
             PanicSprintEnabled = cfg.Bind("3. Tension", "PanicSprintEnabled", true,
                 "Brief 1.25x speed burst when sprinting near an enemy (within 15m). 20s cooldown.");
 
-            CrouchSpeedBoostEnabled = cfg.Bind("4. QOL", "CrouchSpeedBoost", true,
+            PsychoticBreakEnabled = cfg.Bind("4. Psychotic Break", "PsychoticBreakEnabled", true,
+                "Master toggle for the Psychotic Break system.");
+            PsychoticBreakTriggerChance = cfg.Bind("4. Psychotic Break", "PsychoticBreakTriggerChance", 0.01f,
+                new ConfigDescription(
+                    "Probability per 2s check (0-1). 0.01 = 1%.",
+                    new AcceptableValueRange<float>(0f, 1f)));
+            PsychoticBreakDuration = cfg.Bind("4. Psychotic Break", "PsychoticBreakDuration", 20f,
+                new ConfigDescription(
+                    "Episode length in seconds.",
+                    new AcceptableValueRange<float>(5f, 60f)));
+            PsychoticBreakOncePerMatch = cfg.Bind("4. Psychotic Break", "PsychoticBreakOncePerMatch", true,
+                "Limit to one episode per match.");
+
+            CrouchSpeedBoostEnabled = cfg.Bind("5. QOL", "CrouchSpeedBoost", true,
                 "Crouch movement is 30% faster.");
 
-            ErrorReportingEnabled = cfg.Bind("5. Error Reporting", "ErrorReportingEnabled", false,
-                "Send anonymous error reports to the developer when crashes occur. "
-                    + "Opt-in. Helps fix bugs faster. Leave off if you prefer no telemetry.");
-
-            CompatibilityMode = cfg.Bind("10. Compatibility", "CompatibilityMode", false,
+            CompatibilityMode = cfg.Bind("6. Compatibility", "CompatibilityMode", false,
                 "Ambient audio only: disables monster Harmony patches, adrenaline/panic sprint "
                     + "mutation, and psychotic break. Use when another mod conflicts with Dread.");
 
             CompatibilitySkipConflictingPatches = cfg.Bind(
-                "10. Compatibility",
+                "6. Compatibility",
                 "SkipConflictingPatches",
                 false,
                 "If another mod already patched the same game method, skip Dread's patch and log once.");
 
             DebugConsoleGuardEnabled = cfg.Bind(
-                "10. Compatibility",
+                "6. Compatibility",
                 "DebugConsoleGuardEnabled",
                 true,
                 "Suppress NullReferenceException spam from broken DebugConsoleUI hooks "
                     + "(common with MenuLib/REPOConfig). Disable to see raw console errors.");
 
-            PsychoticBreakEnabled = cfg.Bind("6. Psychotic Break", "PsychoticBreakEnabled", true,
-                "Master toggle for the Psychotic Break system.");
-            PsychoticBreakTriggerChance = cfg.Bind("6. Psychotic Break", "PsychoticBreakTriggerChance", 0.01f,
-                new ConfigDescription(
-                    "Probability per 2s check (0-1). 0.01 = 1%.",
-                    new AcceptableValueRange<float>(0f, 1f)));
-            PsychoticBreakDuration = cfg.Bind("6. Psychotic Break", "PsychoticBreakDuration", 20f,
-                new ConfigDescription(
-                    "Episode length in seconds.",
-                    new AcceptableValueRange<float>(5f, 60f)));
-            PsychoticBreakOncePerMatch = cfg.Bind("6. Psychotic Break", "PsychoticBreakOncePerMatch", true,
-                "Limit to one episode per match.");
-
-            TestCrashButton = cfg.Bind(
-                "7. Testing",
-                "Crash Game",
+            ErrorReportingEnabled = cfg.Bind(
+                "7. Error Reporting",
+                "ErrorReportingEnabled",
                 false,
-                new ConfigDescription(
-                    "Click to crash the game and verify error reporting works.",
-                    null,
-                    new ConfigurationManagerAttributes { ShowAsButton = true }
-                )
-            );
+                ErrorReportingPrivacyCopy.FullDescription);
 
-            DebugServerEnabled = cfg.Bind("8. Debug Server", "DebugServerEnabled", false,
+            DebugOverlayEnabled = cfg.Bind(
+                "8. Debug Overlay",
+                "DebugOverlayEnabled",
+                false,
+                "Show an in-game IMGUI debug HUD during runs. Press F10 to toggle visibility at runtime. "
+                    + "Hidden on menu levels.");
+
+            DebugServerEnabled = cfg.Bind(
+                "9. Debug Server",
+                "DebugServerEnabled",
+                false,
                 "Enable the TCP debug server for AI-assisted debugging (localhost only).");
-            DebugServerPort = cfg.Bind("8. Debug Server", "DebugServerPort", 15432,
+            DebugServerPort = cfg.Bind("9. Debug Server", "DebugServerPort", 15432,
                 new ConfigDescription(
                     "Port for the debug server. Falls back to +1 if unavailable.",
                     new AcceptableValueRange<int>(1024, 65535)));
 
-            DebugOverlayEnabled = cfg.Bind("11. Debug Overlay", "DebugOverlayEnabled", false,
-                "Show an in-game IMGUI debug HUD during runs. Press F10 to toggle visibility at runtime. "
-                    + "Hidden on menu levels.");
-
-            LogLevelEntry = cfg.Bind("9. Logging", "LogLevel", LogLevel.Debug,
+            LogLevelEntry = cfg.Bind(
+                "10. Logging",
+                "LogLevel",
+                LogLevel.Debug,
                 "Logging verbosity. None = suppress all output, Error = only errors, "
                     + "Debug = info + warnings + errors, Verbose = everything including debug traces.");
+
+            TestCrashButton = cfg.Bind(
+                "11. Testing",
+                "Crash Game",
+                false,
+                new ConfigDescription(
+                    "Turn ON to deliberately crash the game and verify error reporting (resets to off). "
+                        + "Use only when error reporting is enabled.",
+                    null,
+                    new ConfigurationManagerAttributes { ShowAsButton = true }));
 
             ConfigEntryBase?[] allFields =
             [
                 AudioEnabled, AudioFrequency, AudioVolume,
                 MonsterAggressionEnabled, MonsterAudioEnabled,
-                CrouchSpeedBoostEnabled,
                 FakeFootstepsEnabled, AdrenalineEnabled, LowStaminaSoundEnabled, PanicSprintEnabled,
-                ErrorReportingEnabled,
-                CompatibilityMode, CompatibilitySkipConflictingPatches, DebugConsoleGuardEnabled,
                 PsychoticBreakEnabled, PsychoticBreakTriggerChance, PsychoticBreakDuration, PsychoticBreakOncePerMatch,
-                TestCrashButton, DebugServerEnabled, DebugServerPort,
-                DebugOverlayEnabled, LogLevelEntry,
+                CrouchSpeedBoostEnabled,
+                CompatibilityMode, CompatibilitySkipConflictingPatches, DebugConsoleGuardEnabled,
+                ErrorReportingEnabled,
+                DebugOverlayEnabled, DebugServerEnabled, DebugServerPort,
+                LogLevelEntry, TestCrashButton,
             ];
             for (int i = 0; i < allFields.Length; i++)
             {

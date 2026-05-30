@@ -1,6 +1,6 @@
 # Compatibility and optional mods
 
-How Dread degrades when other mods conflict. Player-facing matrix: [docs/mod-compatibility.md](../../mod-compatibility.md). Code: `HarmonyPatchCompat`, `DreadConfig` section 10, `RepoConfigSliderLabelCompat`.
+How Dread degrades when other mods conflict. Player-facing matrix: [docs/mod-compatibility.md](../../mod-compatibility.md). Code: `HarmonyPatchCompat`, `DreadConfig` section 6, `RepoConfigSliderLabelCompat`.
 
 ## Compatibility mode
 
@@ -32,16 +32,26 @@ Config: `DebugConsoleGuardEnabled` (default **true**).
 
 `HarmonyPatchCompat.IsMasterClient()` gates aggression/investigate patches. ADR-0004.
 
-## REPOConfig slider labels
+## REPOConfig (in-game menu)
 
-Temporary Harmony compat when REPOConfig assembly is loaded:
+Temporary Harmony compat when the `REPOConfig` assembly is loaded. Entry point: `RepoConfigCompat.TryApply` from `Plugin.Start` and `DreadSystemInitializer`. Do not hard-reference REPOConfig types; use reflection like existing compat.
 
-- `RepoConfigSliderLabelCompat.TryApply` from `Plugin.Start` and `DreadSystemInitializer`
-- Fixes empty slider descriptions from `CreateREPOSlider(name, string.Empty, ...)`
+### Hidden from REPOConfig (`HideFromREPOConfig` tag)
 
-Full timeline: [docs/repo-config-slider-labels-investigation.md](../../repo-config-slider-labels-investigation.md). Also summarized in [domain.md](../domain.md).
+None for Dread currently. All sections including `11. Testing` (`Crash Game` toggle) appear in REPOConfig.
 
-Agents: do not hard-reference REPOConfig types; use reflection like existing compat.
+### Error reporting disclosure (REPOConfig limitation)
+
+REPOConfig upstream ([`REPOConfig/Entry.cs`](https://github.com/IsThatTheRealNick/REPOConfig): `showDescriptions` removed; [`ConfigMenu.cs`](https://github.com/IsThatTheRealNick/REPOConfig) passes `string.Empty` for slider descriptions and has **no** bool toggle description path). `CreateREPOLabel` is only used for **section headers** (bold orange), not setting help text. Dread does **not** inject privacy copy into REPOConfig.
+
+| Surface | Text |
+|---------|------|
+| `elytraking.dread.cfg` / Configuration Manager (F1) | `ErrorReportingPrivacyCopy.FullDescription` on `ErrorReportingEnabled` |
+| REPOConfig | Toggle **Error Reporting Enabled** only (no description field) |
+
+### Slider labels
+
+Fixes empty slider descriptions from `CreateREPOSlider(name, string.Empty, ...)`. Full timeline: [docs/repo-config-slider-labels-investigation.md](../../repo-config-slider-labels-investigation.md). Also summarized in [domain.md](../domain.md).
 
 ## Plugin dependencies (NVorbis)
 

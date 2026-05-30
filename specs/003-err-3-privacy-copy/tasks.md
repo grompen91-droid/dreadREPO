@@ -42,9 +42,9 @@
 
 **Purpose**: Branch hygiene and baseline before copy changes
 
-- [ ] T001 Rebase `003-err-3-privacy-copy` onto `origin/master` and confirm ERR-1 [#171] test matrix is green on merge base
-- [ ] T002 Run baseline Tier 0 per [quickstart.md](./quickstart.md): `pwsh -NoProfile .github/scripts/gen-stubs.ps1`, stub `dotnet build` on `Dread.csproj`, `pwsh -NoProfile ./scripts/verify-dread.ps1`, `dotnet test tests/Dread.ErrorReportJson.Tests/Dread.ErrorReportJson.Tests.csproj -c Release --nologo`
-- [ ] T003 Record baseline pass/fail in PR description for issue [#173](https://github.com/grompen91-droid/dreadREPO/issues/173)
+- [x] T001 Rebase `003-err-3-privacy-copy` onto `origin/master` and confirm ERR-1 [#171] test matrix is green on merge base
+- [x] T002 Run baseline Tier 0 per [quickstart.md](./quickstart.md): `pwsh -NoProfile .github/scripts/gen-stubs.ps1`, stub `dotnet build` on `Dread.csproj`, `pwsh -NoProfile ./scripts/verify-dread.ps1`, `dotnet test tests/Dread.ErrorReportJson.Tests/Dread.ErrorReportJson.Tests.csproj -c Release --nologo`
+- [x] T003 Record baseline pass/fail in PR description for issue [#173](https://github.com/grompen91-droid/dreadREPO/issues/173)
 
 ---
 
@@ -54,8 +54,8 @@
 
 **CRITICAL**: Do not start T006 until T004-T005 complete
 
-- [ ] T004 Draft payload-to-bullet mapping in PR notes from `Systems/ErrorReporting/ErrorReportPayloadCapture.cs`, `Systems/ErrorReporting/ErrorReportTypes.cs`, and `docs/adr/0010-error-telemetry.md` per [data-model.md](./data-model.md) `PayloadCategory` rows
-- [ ] T005 [P] Verify [contracts/config-keys.md](./contracts/config-keys.md) matches `Config/DreadConfig.cs` (`5. Error Reporting`, `ErrorReportingEnabled`, default `false`)
+- [x] T004 Draft payload-to-bullet mapping in PR notes from `Systems/ErrorReporting/ErrorReportPayloadCapture.cs`, `Systems/ErrorReporting/ErrorReportTypes.cs`, and `docs/adr/0010-error-telemetry.md` per [data-model.md](./data-model.md) `PayloadCategory` rows
+- [x] T005 [P] Verify [contracts/config-keys.md](./contracts/config-keys.md) matches `Config/DreadConfig.cs` (`5. Error Reporting`, `ErrorReportingEnabled`, default `false`)
 
 **Checkpoint**: Truth table ready; canonical copy can be authored
 
@@ -69,9 +69,9 @@
 
 ### Implementation for User Story 2
 
-- [ ] T006 [US2] Add `Systems/ErrorReporting/ErrorReportingPrivacyCopy.cs` with `FullDescription`, `ShortSummary`, `DisableInstructions`, and bullet text covering FR-001 through FR-003 per [contracts/privacy-copy.md](./contracts/privacy-copy.md) rows 1-10 (no Unity API at type load)
-- [ ] T007 [US2] Document ERR-2 consumption API on `Systems/ErrorReporting/ErrorReportingPrivacyCopy.cs` (which constants ERR-2 [#172] should import; no modal code in ERR-3) per FR-007
-- [ ] T008 [US2] Run `rg` across repo for error-reporting disclosure phrases; confirm no duplicate player-facing copy outside `ErrorReportingPrivacyCopy.cs` and `Config/DreadConfig.cs`
+- [x] T006 [US2] Add `Systems/ErrorReporting/ErrorReportingPrivacyCopy.cs` with `FullDescription`, `ShortSummary`, `DisableInstructions`, and bullet text covering FR-001 through FR-003 per [contracts/privacy-copy.md](./contracts/privacy-copy.md) rows 1-10 (no Unity API at type load)
+- [x] T007 [US2] Document ERR-2 consumption API on `Systems/ErrorReporting/ErrorReportingPrivacyCopy.cs` (which constants ERR-2 [#172] should import; no modal code in ERR-3) per FR-007
+- [x] T008 [US2] Run `rg` across repo for error-reporting disclosure phrases; confirm no duplicate player-facing copy outside `ErrorReportingPrivacyCopy.cs` and `Config/DreadConfig.cs`
 
 **Checkpoint**: Canonical strings exist; US1 wiring can proceed
 
@@ -85,10 +85,10 @@
 
 ### Copy review for User Story 1
 
-- [ ] T009 [US1] Wire `Config/DreadConfig.cs` `ErrorReportingEnabled` `ConfigDescription` to `ErrorReportingPrivacyCopy.FullDescription` (FR-004)
-- [ ] T010 [US1] Confirm `ErrorReportingEnabled` bind default remains `false` in `Config/DreadConfig.cs` (SC-002; no ERR-2 default change)
-- [ ] T011 [US1] Complete [contracts/privacy-copy.md](./contracts/privacy-copy.md) required bullets 1-10 and pre-merge checklist in PR description with pass/fail per row (SC-001)
-- [ ] T012 [P] [US1] Manual review: copy states opt-in default off, does not promise instant GitHub issue when offline, and does not blame third-party mods per [spec.md](./spec.md) edge cases
+- [x] T009 [US1] Wire `Config/DreadConfig.cs` `ErrorReportingEnabled` `ConfigDescription` to `ErrorReportingPrivacyCopy.FullDescription` (FR-004)
+- [x] T010 [US1] Confirm `ErrorReportingEnabled` bind default remains `false` in `Config/DreadConfig.cs` (SC-002; no ERR-2 default change)
+- [x] T011 [US1] Complete [contracts/privacy-copy.md](./contracts/privacy-copy.md) required bullets 1-10 and pre-merge checklist in PR description with pass/fail per row (SC-001)
+- [x] T012 [P] [US1] Manual review: copy states opt-in default off, does not promise instant GitHub issue when offline, and does not blame third-party mods per [spec.md](./spec.md) edge cases
 
 **Checkpoint**: US1 satisfied; cfg is primary v1 player surface
 
@@ -102,7 +102,7 @@
 
 ### Implementation for User Story 3
 
-- [ ] T013 [US3] OPTIONAL: On first transition to `ErrorReportingEnabled = true`, log one `LoggingService` info line pointing to `BepInEx/config/elytraking.dread.cfg` section 5 using `ErrorReportingPrivacyCopy` strings per [research.md](./research.md) (no load spam; no default change)
+- [x] T013 [US3] OPTIONAL: On first transition to `ErrorReportingEnabled = true`, log one `LoggingService` info line pointing to `BepInEx/config/elytraking.dread.cfg` section 5 using `ErrorReportingPrivacyCopy` strings per [research.md](./research.md) (no load spam; no default change)
 
 **Checkpoint**: US3 optional slice complete or explicitly deferred in PR
 
@@ -112,13 +112,13 @@
 
 **Purpose**: Docs alignment, contract checklist execution, CI verify
 
-- [ ] T014 [P] Update `docs/agents/guides/error-reporting.md` with link to `specs/003-err-3-privacy-copy/contracts/privacy-copy.md` and canonical module path `Systems/ErrorReporting/ErrorReportingPrivacyCopy.cs`
-- [ ] T015 [P] Align `README.md` and `THUNDERSTORE_README.md` error reporting paragraphs with ADR-0010 `Application.logMessageReceived` pipeline; fix stale Harmony / `Debug.LogError` wording only in touched sections (FR-006)
-- [ ] T016 Execute full [contracts/privacy-copy.md](./contracts/privacy-copy.md) pre-merge checklist: side-by-side `Systems/ErrorReporting/ErrorReportPayloadCapture.cs` + `docs/adr/0010-error-telemetry.md`, `dotnet test tests/Dread.ErrorReportJson.Tests`, `ErrorReportLogQueue` opt-out when false, README pipeline wording if touched, no em dash in edited markdown, no ERR-2 default/prompt in diff
-- [ ] T017 Add ERR-2 [#172] integration subsection in `docs/agents/guides/error-reporting.md` referencing `specs/003-err-3-privacy-copy/contracts/privacy-copy.md` for modal body (SC-004, FR-007)
-- [ ] T018 Add ERR-3 entry under `[Unreleased]` in `CHANGELOG.md` (privacy copy, cfg disclosure; no version bump)
-- [ ] T019 Run `dotnet format --verify-no-changes --no-restore` on touched C# files
-- [ ] T020 Re-run [quickstart.md](./quickstart.md) Tier 0 stub build, `verify-dread.ps1`, and `dotnet test tests/Dread.ErrorReportJson.Tests` after all changes (SC-003)
+- [x] T014 [P] Update `docs/agents/guides/error-reporting.md` with link to `specs/003-err-3-privacy-copy/contracts/privacy-copy.md` and canonical module path `Systems/ErrorReporting/ErrorReportingPrivacyCopy.cs`
+- [x] T015 [P] Align `README.md` and `THUNDERSTORE_README.md` error reporting paragraphs with ADR-0010 `Application.logMessageReceived` pipeline; fix stale Harmony / `Debug.LogError` wording only in touched sections (FR-006)
+- [x] T016 Execute full [contracts/privacy-copy.md](./contracts/privacy-copy.md) pre-merge checklist: side-by-side `Systems/ErrorReporting/ErrorReportPayloadCapture.cs` + `docs/adr/0010-error-telemetry.md`, `dotnet test tests/Dread.ErrorReportJson.Tests`, `ErrorReportLogQueue` opt-out when false, README pipeline wording if touched, no em dash in edited markdown, no ERR-2 default/prompt in diff
+- [x] T017 Add ERR-2 [#172] integration subsection in `docs/agents/guides/error-reporting.md` referencing `specs/003-err-3-privacy-copy/contracts/privacy-copy.md` for modal body (SC-004, FR-007)
+- [x] T018 Add ERR-3 entry under `[Unreleased]` in `CHANGELOG.md` (privacy copy, cfg disclosure; no version bump)
+- [x] T019 Run `dotnet format --verify-no-changes --no-restore` on touched C# files
+- [x] T020 Re-run [quickstart.md](./quickstart.md) Tier 0 stub build, `verify-dread.ps1`, and `dotnet test tests/Dread.ErrorReportJson.Tests` after all changes (SC-003)
 
 ---
 

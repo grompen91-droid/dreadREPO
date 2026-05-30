@@ -4,6 +4,8 @@ Conceptual entities for privacy disclosure (not persisted types).
 
 ## PrivacyDisclosure
 
+**Implementation**: `Systems/ErrorReporting/ErrorReportingPrivacyCopy.cs` (`ShortSummary`, `DataBullets`, `DisableInstructions`, `FullDescription`).
+
 | Field | Description |
 |-------|-------------|
 | `title` | Short label (e.g. "Anonymous error reporting") |
@@ -22,7 +24,7 @@ Conceptual entities for privacy disclosure (not persisted types).
 
 | Field | Description |
 |-------|-------------|
-| `section` | `5. Error Reporting` |
+| `section` | `11. Error Reporting` |
 | `key` | `ErrorReportingEnabled` |
 | `fileName` | `elytraking.dread.cfg` under `BepInEx/config/` |
 | `defaultValue` | `false` (unchanged in ERR-3) |

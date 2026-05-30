@@ -28,7 +28,7 @@ Ship **accurate, reviewable privacy disclosure** for opt-in error reporting: one
 
 **Constraints**: No version bumps; no em dash in markdown; ERR-1 dependency for payload truth; ERR-2 out of scope
 
-**Scale/Scope**: ~2-4 files (`Config/DreadConfig.cs`, new `PrivacyDisclosure` or `ErrorReportingCopy.cs`, docs), optional README touch
+**Scale/Scope**: ~2-4 files (`Config/DreadConfig.cs`, `ErrorReportingPrivacyCopy.cs`, docs), optional README touch
 
 ## Constitution Check
 
@@ -64,7 +64,7 @@ specs/003-err-3-privacy-copy/
 
 ```text
 Config/DreadConfig.cs                    # ErrorReportingEnabled description uses canonical copy
-Systems/ErrorReporting/                  # Optional ErrorReportingPrivacyCopy.cs (NEW)
+Systems/ErrorReporting/                  # ErrorReportingPrivacyCopy.cs (NEW)
 docs/agents/guides/error-reporting.md    # Link to contract + canonical bullets
 README.md / THUNDERSTORE_README.md       # Align telemetry bullets if edited
 ```

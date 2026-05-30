@@ -6,7 +6,7 @@
 
 | Property | Value |
 |----------|--------|
-| Section | `5. Error Reporting` |
+| Section | `11. Error Reporting` |
 | Key | `ErrorReportingEnabled` |
 | Type | `bool` |
 | Default (ERR-3) | `false` |

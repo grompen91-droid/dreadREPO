@@ -64,10 +64,10 @@ Dread loads OGG via NVorbis disk read first, then `UnityWebRequest` on Windows-n
 
 | Key | Section | Default | Effect |
 |-----|---------|---------|--------|
-| `CompatibilityMode` | 10. Compatibility | false | Ambient audio only: no monster Harmony patches, no adrenaline/panic sprint mutation, no psychotic break |
-| `CompatibilitySkipConflictingPatches` | 10. Compatibility | false | Skip Dread Harmony patch if target method already patched by another mod |
-| `ErrorReportingEnabled` | 5. Error Reporting | false | Opt-in anonymous crash telemetry |
-| `DebugConsoleGuardEnabled` | 10. Compatibility | true | Suppress DebugConsoleUI NRE spam from broken hooks |
+| `CompatibilityMode` | 6. Compatibility | false | Ambient audio only: no monster Harmony patches, no adrenaline/panic sprint mutation, no psychotic break |
+| `CompatibilitySkipConflictingPatches` | 6. Compatibility | false | Skip Dread Harmony patch if target method already patched by another mod |
+| `ErrorReportingEnabled` | 7. Error Reporting | false | Opt-in anonymous crash telemetry |
+| `DebugConsoleGuardEnabled` | 6. Compatibility | true | Suppress DebugConsoleUI NRE spam from broken hooks |
 | `MonsterAggressionEnabled` | 2. Monster Overhaul | true | Host-only speed/investigate patches |
 | `AdrenalineEnabled` / `PanicSprintEnabled` | 3. Tension | true | Disable if sprint/stamina mods conflict |
 

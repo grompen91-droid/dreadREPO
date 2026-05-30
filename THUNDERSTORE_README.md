@@ -61,8 +61,8 @@ FakeFootstepsEnabled = true
 [4. QOL]
 CrouchSpeedBoost = true
 
-[5. Error Reporting]
-ErrorReportingEnabled = true
+[11. Error Reporting]
+ErrorReportingEnabled = false    # opt-in; full disclosure in generated cfg description (section 11)
 
 [6. Psychotic Break]
 Enabled = true

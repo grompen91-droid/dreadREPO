@@ -21,6 +21,7 @@ namespace Dread.Systems
             LoggingService.LogVerbose("[ErrorReporter] Awake starting...");
             Application.logMessageReceived += OnLogMessageReceived;
             SceneManager.sceneLoaded += OnSceneLoaded;
+            DreadConfig.ErrorReportingEnabled.SettingChanged += OnErrorReportingSettingChanged;
             _lastFlushTime = Time.realtimeSinceStartup;
         }
 
@@ -28,7 +29,20 @@ namespace Dread.Systems
         {
             Application.logMessageReceived -= OnLogMessageReceived;
             SceneManager.sceneLoaded -= OnSceneLoaded;
+            DreadConfig.ErrorReportingEnabled.SettingChanged -= OnErrorReportingSettingChanged;
             FlushNow();
+        }
+
+        private static void OnErrorReportingSettingChanged(object sender, EventArgs e)
+        {
+            if (!DreadConfig.ErrorReportingEnabled.Value)
+                return;
+
+            LoggingService.LogInfo(
+                "[Dread] Error reporting enabled. "
+                    + ErrorReportingPrivacyCopy.ShortSummary
+                    + " "
+                    + ErrorReportingPrivacyCopy.DisableInstructions);
         }
 
         private static void OnLogMessageReceived(string logString, string stackTrace, LogType type)

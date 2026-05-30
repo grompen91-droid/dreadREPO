@@ -20,21 +20,21 @@ Implementers MUST include equivalents of:
 | 2 | Active scene name and session play time | `GameStateData.SceneName`, `PlayTimeSeconds` |
 | 3 | Enemy counts (alive, total, nearby) | `CaptureGameState` |
 | 4 | Player HP, stamina, world position (when available) | `CaptureGameState` player block |
-| 5 | OS, CPU, RAM, GPU, device model | `CaptureSystemInfoSafe` |
+| 5 | OS, CPU, RAM, GPU, device model; may include VRAM, driver, shader level | `CaptureSystemInfoSafe` |
 | 6 | Screen resolution, refresh, DPI, fullscreen mode | `CaptureDisplayInfoSafe` |
-| 7 | Snapshot of Dread mod toggles (booleans) | `CaptureConfigSafe` / `ConfigData` |
+| 7 | Eleven named Dread settings (toggles plus audio frequency/volume) | `CaptureConfigSafe` / `ConfigData` |
 | 8 | Not sent: your username, Steam profile, or deliberate PII | Product statement; verify no such fields in `ErrorReportTypes` |
 | 9 | Disable: `ErrorReportingEnabled = false` in section 5 | `DreadConfig.cs` bind |
 | 10 | Opt-in today: default off until you enable | `default false`; ERR-2 may change default later with new copy pass |
 
 ## Review checklist (pre-merge)
 
-- [ ] Read `Systems/ErrorReporting/ErrorReportPayloadCapture.cs` and ADR-0010 payload table side by side with final strings.
-- [ ] Run `dotnet test tests/Dread.ErrorReportJson.Tests` (payload shape unchanged).
-- [ ] Confirm `ErrorReportLogQueue` returns immediately when `ErrorReportingEnabled` is false.
-- [ ] If README/THUNDERSTORE touched, pipeline description matches `Application.logMessageReceived` (not Harmony on Debug.Log).
-- [ ] No em dash in any edited markdown file.
-- [ ] ERR-2 not implemented in same PR (no default true, no prompt).
+- [x] Read `Systems/ErrorReporting/ErrorReportPayloadCapture.cs` and ADR-0010 payload table side by side with final strings.
+- [x] Run `dotnet test tests/Dread.ErrorReportJson.Tests` (payload shape unchanged).
+- [x] Confirm `ErrorReportLogQueue` returns immediately when `ErrorReportingEnabled` is false.
+- [x] If README/THUNDERSTORE touched, pipeline description matches `Application.logMessageReceived` (not Harmony on Debug.Log).
+- [x] No em dash in any edited markdown file.
+- [x] ERR-2 not implemented in same PR (no default true, no prompt).
 
 ## ERR-2 integration (future)
 
@@ -50,9 +50,10 @@ ERR-2 first-run prompt MUST:
 Anonymous error reporting (opt-in, default off).
 When enabled, serious game errors may be sent to the developer to fix bugs.
 May include: exception details; scene and gameplay stats (enemy counts, HP, position);
-PC and GPU info; screen settings; Dread config toggles. No account name or Steam ID.
+PC and GPU info (may include VRAM and driver); screen settings; eleven named Dread settings.
+No account name or Steam ID.
 To disable: set ErrorReportingEnabled = false in BepInEx/config/elytraking.dread.cfg
-(section 5. Error Reporting).
+(section 11. Error Reporting), or the same toggle in REPOConfig when listed.
 ```
 
 Final wording is implementation detail; checklist rows are normative.

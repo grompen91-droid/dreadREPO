@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-30
 
-**Status**: Draft
+**Status**: Implemented (pending merge; disclosure aligned with payload capture 2026-05-30)
 
 **Roadmap**: ERR-3 (P1) | **Issue**: [#173](https://github.com/grompen91-droid/dreadREPO/issues/173)
 
