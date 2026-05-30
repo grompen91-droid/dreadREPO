@@ -35,6 +35,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **REPOConfig compat:** `RepoConfigCompat` entry point; `HideFromREPOConfig` only on the test crash button (debug server, overlay, logging, and compatibility toggles stay in REPOConfig)
 
 ### Changed
+- **Docs:** `docs/ROADMAP.md` merge log for 2026-05-29 PRs (#194-#208); phases 2-3 marked finished; ERR-2/AUDIO-1 status; README project tree + registry init + tech stack (Vitest 4, Zod 4, NVorbis, GPL-3.0)
 - **ERR-2 (#172):** First-run error reporting prompt shows clear Dread mod branding, fixes bullet text clipping via measured row heights, unlocks the mouse cursor, blocks gameplay input while open, and uses dark-panel styling aligned with the Dread debug overlay
 - **Roadmap:** **UI-1** unified in-game UI kit (modular component for modals, overlay, and future panels; see `docs/ROADMAP.md`)
 - **ERR-2 (#172):** `ErrorReportingPrivacyCopy` and README/THUNDERSTORE/mod-compat/ADR-0010 updated for default-on + first-run prompt; existing saved `ErrorReportingEnabled = false` retained on upgrade
@@ -62,13 +63,15 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 Tracked in [docs/ROADMAP.md](docs/ROADMAP.md):
 
-- Debug overlay: draggable panel, better config, font fixes
-- Codebase refactor into smaller files; fewer reflection/DLL dependencies where possible
-- Extensibility and hardened core (extension points, fail-safe init, compat patterns)
-- Performance pass
-- Error reporting: full test matrix; default-on + first-run opt-in/out prompt (today default is off, ADR-0010)
+- **UI-1:** unified in-game UI kit (modals, overlay, future panels)
+- Debug overlay: draggable panel (DBG-1), fonts (DBG-3), extensible panel API (DBG-5)
+- Performance pass (PERF-1)
+- Error reporting: non-blocking batch flush (ERR-4)
+- Audio: `AudioPlayUtil` unit tests (AUDIO-2), NVorbis perf (AUDIO-3)
 
-GitHub backlog: issues #163-#175, table in [docs/ROADMAP.md](docs/ROADMAP.md).
+**Shipped on master 2026-05-29 (see roadmap merge log):** ARCH-1/2/3 (#201-#204), ERR-2/3 (#207-#208), audio hardening (#203), repo hygiene (#194), toolchain (#195-#198, #200).
+
+GitHub backlog: issues #163-#166, #169, and new rows in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 </details>
 
