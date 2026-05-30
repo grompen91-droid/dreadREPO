@@ -411,7 +411,9 @@ jobs:
           $publishOutput = tcli publish --file $zipFile 2>&1 | Out-String
           Write-Host $publishOutput
           if ($publishOutput -match 'Successfully published') {
-            Write-Host "Thunderstore publish succeeded"
-          } elseif ($LASTEXITCODE -ne 0) {
+            Write-Host "Thunderstore publish succeeded (tcli may exit non-zero after update-checker bug)"
+            exit 0
+          }
+          if ($LASTEXITCODE -ne 0) {
             throw "tcli publish failed (exit $LASTEXITCODE)"
           }
