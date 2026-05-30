@@ -408,5 +408,10 @@ jobs:
             Write-Error "tcli install failed (exit $LASTEXITCODE)"
             exit 1
           }
-          tcli publish --file $zipFile
-          if ($LASTEXITCODE -ne 0) { throw "tcli publish failed" }
+          $publishOutput = tcli publish --file $zipFile 2>&1 | Out-String
+          Write-Host $publishOutput
+          if ($publishOutput -match 'Successfully published') {
+            Write-Host "Thunderstore publish succeeded"
+          } elseif ($LASTEXITCODE -ne 0) {
+            throw "tcli publish failed (exit $LASTEXITCODE)"
+          }

@@ -28,8 +28,6 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-## [1.5.3] - 2026-05-30
-
 ![Status](https://img.shields.io/badge/status-development-yellow?style=flat-square)
 
 ### Added
@@ -78,66 +76,15 @@ GitHub backlog: issues #163-#166, #169, and new rows in [docs/ROADMAP.md](docs/R
 
 </details>
 
-### Added
-- **Agent implementation guides:** complete set under `docs/agents/guides/` (architecture, audio, tension, psychotic break, Harmony, monsters, error reporting, debug/MCP, config/logging, compatibility); superpowers archived under `docs/agents/archive/superpowers/` with redirect at `docs/superpowers/README.md`
-- **Agent orchestration:** `docs/agents/README.md` hub, `docs/agents/orchestration.md` workflows; cross-links across agent docs, `AGENTS.md`, `CONTEXT.md`, and `.claude/` subagent prompts
-- Cloudflare Worker integration tests (Vitest) for error reporting pipeline (ERR-1)
-- Manual error reporting test checklist (`docs/agents/error-reporting-test-checklist.md`)
-- Live smoke test script for deployed Worker (`scripts/test-error-reporter.sh`)
-- **Domain glossary:** root [`CONTEXT.md`](CONTEXT.md) (DOCS-1, #174): behavior-first vocabulary (`run` vs `match`, tension sub-features, psychotic break audio names, compat terms) and agent file map
-- **Verify automation:** `scripts/verify-dread.ps1` (Tier 0 static, optional Tier 1 TCP, Tier 2 log patterns), `docs/agents/verify-dread.md` runbook, `docs/agents/verify-dread-checklist.json`
-- **Debug APIs:** `TestCrashSystem.TriggerForDebug()`, `PsychoticBreakSystem.ForceEpisodeForDebug()` for debug server / MCP
-- **Debug overlay:** `DebugOverlaySystem` IMGUI HUD (section 11. Debug Overlay, `DebugOverlayEnabled` default off). Shows nearest enemy distance, tension/adrenaline/panic sprint, psychotic break readiness with block reasons, audio clip count and next play ETA, config flags, and Dread Harmony patch count. F10 toggles visibility at runtime when enabled. Hidden on menu levels via `SemiFunc.MenuLevel()`.
-- **Runtime state:** `DreadRuntimeState` snapshot updated by tension, psychotic break, and audio systems for overlay and tooling.
-- **Compatibility:** `docs/mod-compatibility.md` with known-mod table, isolation test, Proton/DLL notes, DebugConsoleUI guidance, and manual test matrix
-- **Config:** `CompatibilityMode` (ambient audio only), `CompatibilitySkipConflictingPatches`, `DebugConsoleGuardEnabled` (section 10. Compatibility)
-- **Harmony:** `HarmonyPatchCompat` for `IsMasterClient()` gates and optional skip when another mod already patched the target method
-- **Host-only:** `EnemyNavMeshAgent` and `EnemyDirector` patches no-op on non-host clients (ADR-0004)
-- Debug server: `DebugServerSystem` -- TCP server on `127.0.0.1` for AI-assisted debugging. Supports 11 commands (`ping`, `get_state`, `get_config`, `set_config`, `get_patches`, `get_logs`, `shutdown`, `verify`, `trigger_test_crash`, `force_psychotic_break`, `get_runtime_state`) via newline-delimited JSON. Config entries under "8. Debug Server" (`DebugServerEnabled`, `DebugServerPort`). Default disabled. (ADR-0013)
-- Configurable logging: `LoggingService` static wrapper with `LogLevel` enum (None/Error/Debug/Verbose), level-gated log methods, Verbose prefixing, and ASCII art on mod injection. Config entry under "9. Logging" (`LogLevel`, default Debug). All ~110 existing `Plugin.Logger.Log*` calls migrated to `LoggingService.Log*`. (ADR-0014)
-- MCP server: `dread-mcp-server` TypeScript MCP server using `@modelcontextprotocol/sdk` wrapping the debug TCP protocol as 11 MCP tools (`dread_ping`, `dread_get_state`, `dread_get_config`, `dread_set_config`, `dread_get_patches`, `dread_get_logs`, `dread_shutdown`, `dread_verify`, `dread_trigger_test_crash`, `dread_force_psychotic_break`, `dread_get_runtime_state`) via stdio transport. Config via env vars (`DREAD_HOST`, `DREAD_PORT`, `DREAD_TIMEOUT`). Supports `json` and `text` response formats. (ADR-0013)
-- `FlashlightStateTracker.cs`: standalone MonoBehaviour extracted from nested class in PsychoticBreakSystem to fix Unity type registration failure preventing AddComponent. (PR #158)
-- `breath2.ogg`, `breath3.ogg`: audio files for TensionSystem breath variant loading (referenced since v1.4.0 but missing)
+---
 
-### Changed
-- **Debug overlay (redesign):** more concise grouped layout (one line per system) on a semi-transparent panel with an accent header and separators. Adds a performance/system section: smoothed **FPS** (color-coded green/amber/red), rolling **min FPS**, frame time (ms), managed **memory** (MB) via `GC.GetTotalMemory`, **GC** collection counts, **screen** resolution, and **frame** count. Mod state shown across Enemy / Tension / Sprint / Break / Break+ / Audio / Config / Patches rows; the panel is positioned lower so it clears the game's top HUD
-- **Debug overlay (PERF-2):** `DebugOverlaySystem` is now fully dormant when `DebugOverlayEnabled` is off (component disabled, so Unity invokes neither `Update` nor `OnGUI`); `enabled` tracks the config flag live. Adds a one-shot logged guard if the disabled-state invariant is ever violated. (#170)
-- **Error reporting:** re-queue reports when the Worker returns per-report GitHub failures; ignore TestCrash log spam in the async pipeline (sync POST still sends)
-- **CI:** run `workers/error-reporter` Vitest in CI and before Worker deploy
-- **Debug server / MCP:** `get_config` returns flat keys plus grouped `sections` with `debugKey`; `set_config` supports all DreadConfig entries including `debugServer.*`, `overlay.enabled`, `compatibility.*`, `testing.crash`, `logging.level`
-- **Docs:** README psychotic break audio table uses shipped clip names (`scream_peak`, `scream_distant`, `scream_threat`); tension feature titled **Low stamina sound** (canonical term in `CONTEXT.md`)
-- **Docs:** README and THUNDERSTORE compatibility sections no longer claim conflict-free operation; `mod-profile-conflicts.md` points to `mod-compatibility.md`
-- **Error reporting:** default `ErrorReportingEnabled` to **false** (opt-in); hooks `Application.logMessageReceived` instead of Harmony on `Debug.LogError` / `Debug.LogException` (ADR-0010)
-- **Debug console guard:** config-toggle `DebugConsoleGuardEnabled` (default on), wired in `Plugin.cs`
-- **Compatibility mode:** disables monster Harmony patches, adrenaline/panic sprint mutation, and psychotic break; keeps ambient audio
-- **Harmony priority:** `Priority.Last` on enemy speed postfix, `Priority.First` on investigate prefix
-- CD pipeline: fixed Thunderstore publish (`tcli` 0.2.2 `--file` / `--package-version` conflict)
-- THUNDERSTORE_README.md: Psychotic Break, error telemetry, CD pipeline docs
-- Logging: hot-path guards, level demotions, prefix consistency across systems and `dread-mcp-server`
+## [1.5.3] - 2026-05-30
 
-### Fixed
-- **Debug overlay (F10 toggle):** F10 now actually toggles the overlay. The stub `KeyCode.F10` value was `290` (real Unity F9); since enum constants are inlined at compile time, the built DLL listened for the wrong key. Corrected the stub F-key values to match real Unity (`F10 = 291`)
-- **Debug overlay (F10 crash):** overlay no longer throws `MissingMethodException: GUIContent.get_none()` or `MissingFieldException: Rect.y` when shown. IMGUI types (`GUI`, `GUIStyle`, `GUIContent`, `GUISkin`) now resolve from `UnityEngine.IMGUIModule` (where the game actually defines them) instead of being lumped into the `UnityEngine` stub assembly; the box draw uses a cached empty `GUIContent` rather than the stub-only `GUIContent.none` property; and the stub `Rect` now models `x`/`y`/`width`/`height` as properties (matching real Unity) so stub-built IL does not emit field access that fails at runtime
-- **Debug overlay (PERF-2):** Harmony patch-count reflection no longer runs while the HUD is toggled off with F10; it runs only when the overlay is actually visible. (#170)
-- **REPOConfig sliders (temporary):** when REPOConfig + MenuLib are present, `RepoConfigSliderLabelCompat` restores slider setting names for empty descriptions (label at x=100, compact row); upstream REPOConfig/MenuLib fix preferred; skipped when REPOConfig is absent. See `docs/repo-config-slider-labels-investigation.md`
-- **TestCrash:** defer from `SettingChanged`, synchronous HTTP POST via `ReportTestCrashAndWait` (completes before `Process.Kill()`)
-- **Error reporting:** top-level DTOs in `ErrorReportTypes.cs` plus `ErrorReportJson` manual serializer (runtime: JsonUtility emitted only Mod/Game/Unity fields, omitted `Reports[]`); safe `CaptureSystemInfoSafe` / `CaptureDisplayInfoSafe` for prod path; re-queue batch on failed send; xUnit golden tests in `tests/Dread.ErrorReportJson.Tests`
-- **Docs:** ADR-0015 (error report JSON); ADR-0010/0012 updated; ERR-1 checklist dedupe vs TestCrash clarified; ROADMAP ERR-1 marked done
-- **PsychoticBreak / AudioDread:** seed `_sceneLoaded` from active scene on `Start` so audio loads without waiting for a second scene load
-- **CI stubs:** `UnityEngine.UI.dll` stub for `RawImage` / `RectTransform`; `JsonUtility.FromJson`; cross-platform `build.ps1` stub detection (PR #146, #161)
-- **Init (Proton):** `DreadSystemInitializer` defers until `UnityEngine.UI` loads; PsychoticBreak uses runtime `RawImage` and layer mask `-1` instead of stub-only `Physics.DefaultRaycastLayers`
-- **CI stubs:** `Canvas` moved from `UnityEngine.dll` to `UnityEngine.UIModule.dll` stub; PsychoticBreak overlay uses `GameObject` + runtime `Canvas` resolution (fixes `could not be instantiated` on stub-built packages)
-- **Psychotic Break (compat):** port from `fix/debug-server-mcp` (`PlayerControllerCompat`, `EnemyHealthCompat`, `OverlayTextureUtil`): multi-field crouch detection (`Crouching`/`Crawling`/avatar), tumble-as-hiding, Proton-safe vignette textures (fixes false "not crouching" and MCP `force_psychotic_break` texture errors on REPO v0.4.x)
-- **Psychotic Break (threat):** threat memory uses `EnemyScanCache`, player position for range checks, and no `IsAlive` gate on threat registration (fixes permanent "no recent threat" when `EnemyHealthCompat` misread health); `EnemyHealthCompat` tries direct `CurrentHealth` plus float field fallbacks
-- **Psychotic Break (trigger/episode):** single `_threatMemoryUntil` timestamp (no per-frame list growth); threat refresh every frame; visibility skips dead enemies via `EnemyHealthCompat`; block reason `not hiding`; `AudioClipLoader` for episode clips; `PlayerTumbleCompat` for forced tumble; episode ends on timer even if overlay failed; debug force ignores menu and does not consume once-per-match
-- **Psychotic Break (docs/MCP):** agent guide updated for `EnemyScanCache` and threat seconds; `get_runtime_state` includes `psychoticBreakEnemyCount`
-- **Psychotic Break (enemy scan):** guard destroyed `EnemyHealth` references, drop direct `CurrentHealth` and collider reflection spam, filter cache on refresh, throttle visibility checks (0.25s)
-- **Audio (Proton):** NVorbis disk load with dependency DLLs and `PluginDependencyResolver`; Wine `file://` path mapping; PCM via `AudioClip.Create` (no `SetData`); correct PCM read position (no stutter); menu/startup guards for ambient and fake footsteps
-- **Harmony:** runtime `AccessTools.TypeByName` + `object` patch args (no `BadImageFormatException` on stub-built DLLs); monster pitch tweaks skip playing sources
-- **Debug / MCP:** player HP/stamina via Traverse; nested `logs` / `patches` JSON parsing
-- **ErrorReporter:** ignore `DebugConsoleUI` / `DebugTester` spam, dedupe reports, cap processing per frame, capture game state once per batch (fixes lag when other mods flood `Debug.LogException`)
-- **Debug console:** Harmony finalizer on `DebugConsoleUI.Update` suppresses broken `SemiFunc.DebugTester` `NullReferenceException` spam (stops console flood at source)
-- **Debug server / MCP:** non-blocking accept loop, `Application.quitting` shutdown, pending command release, and socket close on exit (fixes game freeze on quit when debug server enabled or MCP connected)
+![Status](https://img.shields.io/badge/status-development-yellow?style=flat-square)
+
+> **Note:** Accidental patch publish on Thunderstore during a mis-tagged release. Use **v1.6.0** (minor) for the canonical package and release notes.
+
+---
 
 ## [1.5.1] - 2026-05-21
 

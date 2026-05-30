@@ -1,11 +1,11 @@
 # Dread
 
-![Version](https://img.shields.io/badge/version-1.5.3-crimson?style=flat-square)
+![Version](https://img.shields.io/badge/version-1.6.0-crimson?style=flat-square)
 ![Status](https://img.shields.io/badge/status-release-brightgreen?style=flat-square)
 
 Atmospheric horror overhaul for R.E.P.O. Seven runtime systems that layer ambient dread, scarier monsters, real-time proximity tension, psychotic episodes, automated error reporting, and AI-assisted debugging.
 
-## What's new (1.5.3)
+## What's new (1.6.0)
 
 - **Error reporting:** default **on** for new installs; one-time in-game privacy prompt before any data is sent (turn off in prompt, cfg, or REPOConfig)
 - **Stability:** cleaner mod file layout, safer system startup, better audio on low pitch, fewer stub-build crashes
