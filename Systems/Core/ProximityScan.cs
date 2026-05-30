@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Dread.Systems.Core
 {
@@ -7,6 +8,11 @@ namespace Dread.Systems.Core
     /// </summary>
     internal static class ProximityScan
     {
+        static ProximityScan()
+        {
+            SceneManager.sceneLoaded += (_, _) => Invalidate();
+        }
+
         private static EnemyHealth[] _enemies = System.Array.Empty<EnemyHealth>();
         private static float _nextRefresh = -1f;
         private const float RefreshInterval = 0.5f;

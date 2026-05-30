@@ -11,7 +11,7 @@ namespace Dread.Systems
         {
             if (!_enabled)
                 return "disabled";
-            if (DreadConfig.CompatibilityMode.Value)
+            if (DreadFeaturePolicy.CompatibilityMode)
                 return "compatibility mode";
             if (GameplayContext.IsMenuLevel())
                 return "menu level";

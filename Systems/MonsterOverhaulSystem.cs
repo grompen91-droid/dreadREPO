@@ -35,7 +35,7 @@ namespace Dread.Systems
                 LoggingService.LogVerbose($"[MonsterOverhaul] Processing {enemies.Length} enemies...");
                 foreach (var e in enemies)
                 {
-                    if (e == null) continue;
+                    if (!EnemyHealthCompat.IsValid(e)) continue;
                     if (e.GetComponent<DreadAudioTweaked>() != null) continue;
                     e.gameObject.AddComponent<DreadAudioTweaked>();
                     ApplyAudioTweaks(e.gameObject);

@@ -113,7 +113,6 @@ namespace Dread.Systems
             _threatMemoryUntil = 0f;
             _cachedEnemies = null;
             _mainCam = Camera.main;
-            ProximityScan.Invalidate();
             CleanupOverlay();
             CleanupFootstepSource();
             CleanupDistantScreamSource();
@@ -142,7 +141,7 @@ namespace Dread.Systems
         {
             if (_episodeActive)
             {
-                if (DreadConfig.CompatibilityMode.Value)
+                if (DreadFeaturePolicy.CompatibilityMode)
                 {
                     EndEpisode();
                     return;
@@ -187,7 +186,7 @@ namespace Dread.Systems
 
         private void PublishRuntimeState()
         {
-            DreadRuntimeState.PsychoticBreakEnabled = _enabled && !DreadConfig.CompatibilityMode.Value;
+            DreadRuntimeState.PsychoticBreakEnabled = _enabled && DreadFeaturePolicy.PsychoticBreakEnabled;
             DreadRuntimeState.PsychoticBreakEpisodeActive = _episodeActive;
             DreadRuntimeState.PsychoticBreakEpisodeTimer = _episodeTimer;
             DreadRuntimeState.PsychoticBreakEpisodeDuration = _episodeDuration;
