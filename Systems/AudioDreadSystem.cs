@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Dread.Config;
+using Dread.Systems.Core;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -49,7 +50,7 @@ namespace Dread.Systems
 
         private IEnumerator LoadClips()
         {
-            while (!_sceneLoaded || SemiFunc.MenuLevel())
+            while (!_sceneLoaded || GameplayContext.IsMenuLevel())
                 yield return null;
 
             yield return AudioClipLoader.LoadClips(ClipNames, (name, clip) =>
@@ -76,7 +77,7 @@ namespace Dread.Systems
 
                 LoggingService.LogVerbose("[AudioDread] Checking audio play...");
 
-                if (!DreadConfig.AudioEnabled.Value || SemiFunc.MenuLevel() || _clips.Count == 0)
+                if (!DreadConfig.AudioEnabled.Value || GameplayContext.IsMenuLevel() || _clips.Count == 0)
                     continue;
 
                 if (_mainCam == null)
@@ -132,20 +133,18 @@ namespace Dread.Systems
                 Random.Range(-1f, 1f)).normalized * Random.Range(5f, 15f);
             var pos = cam.transform.position + offset;
 
-            var host = new GameObject("DreadSound");
-            host.transform.position = pos;
-            var src = host.AddComponent<AudioSource>();
-            src.clip = clip;
             var pitch = Random.Range(0.5f, 1.5f);
-            src.pitch = pitch;
-            src.spatialBlend = 1.0f;
-            src.volume = DreadConfig.AudioVolume.Value;
-            src.rolloffMode = AudioRolloffMode.Linear;
-            src.minDistance = 1f;
-            src.maxDistance = 25f;
-            src.Play();
-
-            Destroy(host, AudioPlayUtil.PlayLifetimeSeconds(clip, pitch));
+            SpatialAudio3D.PlayAt(
+                pos,
+                clip,
+                new SpatialAudio3D.PlayOptions
+                {
+                    Volume = DreadConfig.AudioVolume.Value,
+                    MinDistance = 1f,
+                    MaxDistance = 25f,
+                    Pitch = pitch,
+                    HostName = "DreadSound",
+                });
         }
     }
 }

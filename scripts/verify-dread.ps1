@@ -98,6 +98,7 @@ $arch3ManifestTypes = @(
     "MonsterOverhaulSystem",
     "TensionSystem",
     "ErrorReporterSystem",
+    "ErrorReportingPromptSystem",
     "PsychoticBreakSystem",
     "TestCrashSystem",
     "DebugServerSystem",
@@ -118,7 +119,7 @@ if ($arch3Missing.Count -gt 0) {
         -Message "DreadSystemRegistry missing baseline types: $missingList"
 } else {
     Add-Check -Tier "tier0" -Id "arch3_registry_manifest" -Ok $true `
-        -Message "Registry manifest: eight baseline system types present"
+        -Message "Registry manifest: nine baseline system types present"
 }
 
 # MCP npm build

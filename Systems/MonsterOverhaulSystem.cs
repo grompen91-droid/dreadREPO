@@ -4,33 +4,21 @@
 
 using System.Collections;
 using Dread.Config;
+using Dread.Systems.Core;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-
 namespace Dread.Systems
 {
     public class MonsterOverhaulSystem : MonoBehaviour
     {
-        private bool _inLevel;
-
         private void Start()
         {
             LoggingService.LogVerbose("[MonsterOverhaul] Awake starting...");
-            SceneManager.sceneLoaded += OnSceneLoaded;
-            var sceneName = SceneManager.GetActiveScene().name;
-            _inLevel = !sceneName.Contains("Menu") && !sceneName.Contains("Main");
             StartCoroutine(MonsterAudioLoop());
         }
 
         private void OnDestroy()
         {
             StopAllCoroutines();
-            SceneManager.sceneLoaded -= OnSceneLoaded;
-        }
-
-        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-        {
-            _inLevel = !scene.name.Contains("Menu") && !scene.name.Contains("Main");
         }
 
         // Scans for enemies periodically and applies audio tweaks.
@@ -41,13 +29,13 @@ namespace Dread.Systems
             {
                 yield return new WaitForSeconds(4f);
 
-                if (!DreadConfig.MonsterAudioEnabled.Value || !_inLevel || SemiFunc.MenuLevel()) continue;
+                if (!DreadConfig.MonsterAudioEnabled.Value || !GameplayContext.IsRun()) continue;
 
-                var enemies = FindObjectsOfType<EnemyHealth>();
+                var enemies = ProximityScan.GetEnemies();
                 LoggingService.LogVerbose($"[MonsterOverhaul] Processing {enemies.Length} enemies...");
                 foreach (var e in enemies)
                 {
-                    if (e == null) continue;
+                    if (!EnemyHealthCompat.IsValid(e)) continue;
                     if (e.GetComponent<DreadAudioTweaked>() != null) continue;
                     e.gameObject.AddComponent<DreadAudioTweaked>();
                     ApplyAudioTweaks(e.gameObject);

@@ -1,5 +1,4 @@
 using Dread.Systems.Core;
-using HarmonyLib;
 using UnityEngine;
 
 namespace Dread.Systems
@@ -12,7 +11,7 @@ namespace Dread.Systems
                 return;
 
             DisableFlashlight(pc);
-            LockInput(pc);
+            PlayerInputLockCompat.SetLocked(pc, locked: true);
             if (!PlayerTumbleCompat.ApplyForcedTumble(pc))
                 LoggingService.LogVerbose("[PsychoticBreak] Tumble lock unavailable; input lock only");
         }
@@ -23,7 +22,7 @@ namespace Dread.Systems
                 return;
 
             PlayerTumbleCompat.MaintainForcedTumble(pc);
-            LockInput(pc);
+            PlayerInputLockCompat.SetLocked(pc, locked: true);
         }
 
         private static void RestorePlayerControl(PlayerController? pc)
@@ -32,7 +31,7 @@ namespace Dread.Systems
             if ((object)pc == null)
                 return;
 
-            UnlockInput(pc);
+            PlayerInputLockCompat.SetLocked(pc, locked: false);
             RestoreFlashlight(pc);
         }
 
@@ -57,34 +56,5 @@ namespace Dread.Systems
             Destroy(tracker?.gameObject);
         }
 
-        private static void LockInput(PlayerController pc)
-        {
-            bool any = false;
-            try { Traverse.Create(pc).Field<bool>("inputLocked").Value = true; any = true; }
-            catch { }
-            try { Traverse.Create(pc).Field<bool>("interactDisabled").Value = true; any = true; }
-            catch { }
-            try { Traverse.Create(pc).Field<bool>("InputLocked").Value = true; any = true; }
-            catch { }
-            try { Traverse.Create(pc).Field<bool>("InteractDisabled").Value = true; any = true; }
-            catch { }
-            if (!any)
-                LoggingService.LogWarning("[Dread] LockInput: no matching field found on PlayerController");
-        }
-
-        private static void UnlockInput(PlayerController pc)
-        {
-            bool any = false;
-            try { Traverse.Create(pc).Field<bool>("inputLocked").Value = false; any = true; }
-            catch { }
-            try { Traverse.Create(pc).Field<bool>("interactDisabled").Value = false; any = true; }
-            catch { }
-            try { Traverse.Create(pc).Field<bool>("InputLocked").Value = false; any = true; }
-            catch { }
-            try { Traverse.Create(pc).Field<bool>("InteractDisabled").Value = false; any = true; }
-            catch { }
-            if (!any)
-                LoggingService.LogWarning("[Dread] UnlockInput: no matching field found on PlayerController");
-        }
     }
 }

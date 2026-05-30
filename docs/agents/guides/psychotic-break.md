@@ -28,7 +28,7 @@ Block reasons on `DreadRuntimeState.PsychoticBreakBlockReason` (overlay + `dread
 
 ## Enemy scan
 
-Uses shared **`EnemyScanCache`** (0.5s refresh, same pattern as tension proximity). Do not add a second static enemy list for psychotic break.
+Uses shared **`ProximityScan`** in `Systems/Core/` (0.5s refresh, same pattern as tension proximity). Do not add a second static enemy list for psychotic break.
 
 ## Audio clips
 

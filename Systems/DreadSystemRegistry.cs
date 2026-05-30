@@ -70,6 +70,7 @@ namespace Dread.Systems
                 typeof(PsychoticBreakSystem),
                 "DreadPsychoticBreakHost",
                 SystemOrderGroup.Core),
+            // Debug hosts omit IsEnabled per ADR-0016: hosts always spawn; cfg gates behavior inside systems.
             new SystemRegistration(
                 "test-crash",
                 typeof(TestCrashSystem),
