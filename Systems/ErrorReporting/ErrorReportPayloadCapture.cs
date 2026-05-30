@@ -109,7 +109,7 @@ namespace Dread.Systems
 
             try
             {
-                var enemies = EnemyScanCache.GetEnemies();
+                var enemies = ProximityScan.GetEnemies();
                 state.EnemiesTotal = enemies.Length;
                 PlayerController? player = null;
                 try

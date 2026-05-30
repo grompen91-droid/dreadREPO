@@ -13,7 +13,7 @@ namespace Dread.Systems
                 return "disabled";
             if (DreadConfig.CompatibilityMode.Value)
                 return "compatibility mode";
-            if (SemiFunc.MenuLevel())
+            if (GameplayContext.IsMenuLevel())
                 return "menu level";
             if (_oncePerMatch && _hasTriggeredThisMatch)
                 return "once per match";
@@ -44,13 +44,13 @@ namespace Dread.Systems
             if (!origin.HasValue)
                 return;
 
-            _cachedEnemies = EnemyScanCache.GetEnemies();
+            _cachedEnemies = ProximityScan.GetEnemies();
             foreach (var e in _cachedEnemies)
             {
                 if (!EnemyHealthCompat.IsValid(e))
                     continue;
 
-                float d = Vector3.Distance(origin.Value, EnemyScanCache.GetFocusPosition(e));
+                float d = Vector3.Distance(origin.Value, ProximityScan.GetFocusPosition(e));
                 if (d < ThreatRange)
                 {
                     _threatMemoryUntil = Time.time + ThreatMemoryDuration;
@@ -164,7 +164,7 @@ namespace Dread.Systems
                     if (!EnemyHealthCompat.IsAliveForVisibility(e))
                         continue;
 
-                    var target = EnemyScanCache.GetFocusPosition(e);
+                    var target = ProximityScan.GetFocusPosition(e);
 
                     if (Vector3.Distance(origin, target) < 0.75f)
                         return true;

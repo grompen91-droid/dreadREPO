@@ -405,13 +405,17 @@ namespace Dread.Systems
             try
             {
                 scene = SceneManager.GetActiveScene().name ?? "unknown";
-                var enemies = FindObjectsOfType<EnemyHealth>();
+                var enemies = ProximityScan.GetEnemies();
                 enemyCount = enemies.Length;
                 var player = FindObjectOfType<PlayerController>();
                 if (player != null)
                 {
-                    playerHp = ReadPlayerFloat(player, "Health", "health", "playerHealth");
-                    playerStamina = ReadPlayerFloat(player, "stamina", "Stamina", "energy");
+                    playerHp = PlayerControllerCompat.GetHealth(player);
+                    playerStamina = PlayerControllerCompat.GetStamina(player);
+                    if (playerHp < 0f)
+                        playerHp = ReadPlayerFloat(player, "Health", "health", "playerHealth");
+                    if (playerStamina < 0f)
+                        playerStamina = ReadPlayerFloat(player, "stamina", "Stamina", "energy");
                     foreach (var e in enemies)
                     {
                         if (EnemyHealthCompat.TryIsAlive(e))

@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Dread.Config;
-using HarmonyLib;
+using Dread.Systems.Core;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -13,8 +13,6 @@ namespace Dread.Systems
         private readonly List<AudioClip> _breathClips = new();
         private AudioClip? _footstepClip;
 
-        // Proximity scan shared by adrenaline and panic sprint
-        private float _nextScan;
         private float _nearestDist = float.MaxValue;
         private Camera? _mainCam;
 
@@ -74,11 +72,9 @@ namespace Dread.Systems
 
         private void Update()
         {
-            if (Time.time >= _nextScan)
-            {
-                _nextScan = Time.time + 0.5f;
-                _nearestDist = SemiFunc.MenuLevel() ? float.MaxValue : FindNearestEnemyDist();
-            }
+            _nearestDist = GameplayContext.IsMenuLevel()
+                ? float.MaxValue
+                : ProximityScan.NearestDistance(GetScanOrigin());
 
             UpdateAdrenaline();
             UpdateLowStamina();
@@ -93,12 +89,12 @@ namespace Dread.Systems
             var pc = PlayerController.instance;
             bool adrenaline = false;
             if ((object)pc != null && _originalDrain >= 0f
-                && DreadConfig.AdrenalineEnabled.Value
-                && !DreadConfig.CompatibilityMode.Value
-                && !SemiFunc.MenuLevel()
-                && _nearestDist < ProximityRange)
+                && DreadFeaturePolicy.AdrenalineEnabled
+                && !GameplayContext.IsMenuLevel()
+                && _nearestDist < ProximityRange
+                && PlayerControllerCompat.TryReadEnergySprintDrain(pc, out var currentDrain))
             {
-                adrenaline = pc.EnergySprintDrain < _originalDrain * 0.95f;
+                adrenaline = currentDrain < _originalDrain * 0.95f;
             }
 
             DreadRuntimeState.AdrenalineActive = adrenaline;
@@ -110,7 +106,7 @@ namespace Dread.Systems
 
         private void UpdateAdrenaline()
         {
-            if (!DreadConfig.AdrenalineEnabled.Value || DreadConfig.CompatibilityMode.Value || SemiFunc.MenuLevel())
+            if (!DreadFeaturePolicy.AdrenalineEnabled || GameplayContext.IsMenuLevel())
             {
                 RestoreDrain();
                 return;
@@ -119,28 +115,31 @@ namespace Dread.Systems
             var pc = PlayerController.instance;
             if ((object)pc == null) return;
 
-            if (_originalDrain < 0f)
-                _originalDrain = pc.EnergySprintDrain;
+            if (_originalDrain < 0f && !PlayerControllerCompat.TryReadEnergySprintDrain(pc, out _originalDrain))
+                return;
 
             float targetDrain = _nearestDist < ProximityRange
                 ? _originalDrain * Mathf.Lerp(0.30f, 1f, _nearestDist / ProximityRange)
                 : _originalDrain;
 
-            pc.EnergySprintDrain = Mathf.MoveTowards(pc.EnergySprintDrain, targetDrain, 0.5f * Time.deltaTime);
+            if (PlayerControllerCompat.TryReadEnergySprintDrain(pc, out var current))
+            {
+                var next = Mathf.MoveTowards(current, targetDrain, 0.5f * Time.deltaTime);
+                PlayerControllerCompat.TrySetEnergySprintDrain(pc, next);
+            }
         }
 
         private void RestoreDrain()
         {
             if (_originalDrain >= 0f && (object)PlayerController.instance != null)
-                PlayerController.instance.EnergySprintDrain = _originalDrain;
+                PlayerControllerCompat.TrySetEnergySprintDrain(PlayerController.instance, _originalDrain);
         }
 
         private void RestoreSprintMultiplier()
         {
             if (_originalSprintMultiplier >= 0f && (object)PlayerController.instance != null)
             {
-                var sprintField = Traverse.Create(PlayerController.instance).Field<float>("SprintSpeedMultiplier");
-                sprintField.Value = _originalSprintMultiplier;
+                PlayerControllerCompat.TrySetSprintMultiplier(PlayerController.instance, _originalSprintMultiplier);
                 _originalSprintMultiplier = -1f;
             }
         }
@@ -149,7 +148,7 @@ namespace Dread.Systems
 
         private void UpdateLowStamina()
         {
-            if (!DreadConfig.LowStaminaSoundEnabled.Value || SemiFunc.MenuLevel())
+            if (!DreadFeaturePolicy.LowStaminaSoundEnabled || GameplayContext.IsMenuLevel())
             {
                 _breathCooldown = 0f;
                 return;
@@ -164,7 +163,6 @@ namespace Dread.Systems
 
             bool currentlySprinting = pc.sprinting;
 
-            // Trigger each time player stops sprinting because energy ran out
             var lowEnergy = pc.EnergyCurrent <= pc.EnergyStart * 0.1f;
             if (_wasSprintingForBreath && !currentlySprinting && lowEnergy && _breathCooldown <= 0f)
             {
@@ -184,7 +182,7 @@ namespace Dread.Systems
 
         private void UpdatePanicSprint()
         {
-            if (!DreadConfig.PanicSprintEnabled.Value || DreadConfig.CompatibilityMode.Value || SemiFunc.MenuLevel())
+            if (!DreadFeaturePolicy.PanicSprintEnabled || GameplayContext.IsMenuLevel())
             {
                 if (_originalSprintMultiplier >= 0f)
                     RestoreSprintMultiplier();
@@ -206,16 +204,16 @@ namespace Dread.Systems
                     _panicCooldown = 20f;
                     if (_originalSprintMultiplier >= 0f)
                     {
-                        Traverse.Create(pc).Field<float>("SprintSpeedMultiplier").Value = _originalSprintMultiplier;
+                        PlayerControllerCompat.TrySetSprintMultiplier(pc, _originalSprintMultiplier);
                         _originalSprintMultiplier = -1f;
                     }
                 }
             }
-            else if (!_wasSprinting && currentlySprinting && _nearestDist < ProximityRange && _panicCooldown <= 0f)
+            else if (!_wasSprinting && currentlySprinting && _nearestDist < ProximityRange && _panicCooldown <= 0f
+                     && PlayerControllerCompat.TryReadSprintMultiplier(pc, out var currentMult))
             {
-                var tpc = Traverse.Create(pc);
-                _originalSprintMultiplier = tpc.Field<float>("SprintSpeedMultiplier").Value;
-                tpc.Field<float>("SprintSpeedMultiplier").Value = _originalSprintMultiplier * 1.25f;
+                _originalSprintMultiplier = currentMult;
+                PlayerControllerCompat.TrySetSprintMultiplier(pc, _originalSprintMultiplier * 1.25f);
                 _panicTimer = 2f;
             }
 
@@ -224,20 +222,11 @@ namespace Dread.Systems
 
         // ── Shared ────────────────────────────────────────────────────────────
 
-        private float FindNearestEnemyDist()
+        private Vector3 GetScanOrigin()
         {
-            if (_mainCam == null) _mainCam = Camera.main;
-            var cam = _mainCam;
-            if (cam == null) return float.MaxValue;
-
-            float nearest = float.MaxValue;
-            foreach (var e in FindObjectsOfType<EnemyHealth>())
-            {
-                if (e == null) continue;
-                float d = Vector3.Distance(cam.transform.position, e.transform.position);
-                if (d < nearest) nearest = d;
-            }
-            return nearest;
+            if (_mainCam == null)
+                _mainCam = Camera.main;
+            return _mainCam != null ? _mainCam.transform.position : Vector3.zero;
         }
 
         // ── Breath Clips ──────────────────────────────────────────────────────
@@ -267,8 +256,8 @@ namespace Dread.Systems
 
             while (true)
             {
-                if (!DreadConfig.FakeFootstepsEnabled.Value || SemiFunc.MenuLevel() || _footstepClip == null
-                    || (object)PlayerController.instance == null)
+                if (!DreadFeaturePolicy.FakeFootstepsEnabled || GameplayContext.IsMenuLevel()
+                    || _footstepClip == null || (object)PlayerController.instance == null)
                 {
                     yield return new WaitForSeconds(1f);
                     continue;
@@ -296,23 +285,18 @@ namespace Dread.Systems
             var pos = cam.transform.position + (behind + side).normalized * Random.Range(2.5f, 5f);
             pos.y -= 1.5f;
 
-            var host = new GameObject("DreadFakeStep");
-            host.transform.position = pos;
-            var src = host.AddComponent<AudioSource>();
-            src.clip = _footstepClip;
             var pitch = Random.Range(0.5f, 1.5f);
-            src.pitch = pitch;
-            src.spatialBlend = 1f;
-            src.volume = 0.55f;
-            src.rolloffMode = AudioRolloffMode.Linear;
-            src.minDistance = 0.5f;
-            src.maxDistance = 8f;
-            src.Play();
-
-            if (_footstepClip != null)
-                Destroy(host, AudioPlayUtil.PlayLifetimeSeconds(_footstepClip, pitch));
-            else
-                Destroy(host, 0.5f);
+            SpatialAudio3D.PlayAt(
+                pos,
+                _footstepClip!,
+                new SpatialAudio3D.PlayOptions
+                {
+                    Volume = 0.55f,
+                    MinDistance = 0.5f,
+                    MaxDistance = 8f,
+                    Pitch = pitch,
+                    HostName = "DreadFakeStep",
+                });
         }
     }
 }

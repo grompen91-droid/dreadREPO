@@ -1,12 +1,11 @@
-using Dread.Systems.Core;
 using UnityEngine;
 
-namespace Dread.Systems
+namespace Dread.Systems.Core
 {
     /// <summary>
-    /// Shared enemy list refreshed at a fixed interval to avoid repeated FindObjectsOfType scans.
+    /// Shared enemy list refreshed at a fixed interval (proximity scan for tension and related features).
     /// </summary>
-    internal static class EnemyScanCache
+    internal static class ProximityScan
     {
         private static EnemyHealth[] _enemies = System.Array.Empty<EnemyHealth>();
         private static float _nextRefresh = -1f;

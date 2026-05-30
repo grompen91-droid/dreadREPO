@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using Dread.Config;
+using Dread.Systems.Core;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Random = UnityEngine.Random;
@@ -112,11 +113,11 @@ namespace Dread.Systems
             _threatMemoryUntil = 0f;
             _cachedEnemies = null;
             _mainCam = Camera.main;
-            EnemyScanCache.Invalidate();
+            ProximityScan.Invalidate();
             CleanupOverlay();
             CleanupFootstepSource();
             CleanupDistantScreamSource();
-            if (SemiFunc.MenuLevel())
+            if (GameplayContext.IsMenuLevel())
                 _hasTriggeredThisMatch = false;
         }
 
@@ -152,7 +153,7 @@ namespace Dread.Systems
                 return;
             }
 
-            if (!_enabled || DreadConfig.CompatibilityMode.Value || SemiFunc.MenuLevel())
+            if (!_enabled || !DreadFeaturePolicy.PsychoticBreakEnabled || GameplayContext.IsMenuLevel())
             {
                 PublishRuntimeState();
                 return;
@@ -193,7 +194,7 @@ namespace Dread.Systems
             var nextCheck = _nextTriggerCheck - Time.time;
             DreadRuntimeState.PsychoticBreakNextCheckIn = nextCheck < 0f ? 0f : nextCheck;
             DreadRuntimeState.PsychoticBreakThreatCount = GetThreatMemorySecondsRemaining();
-            DreadRuntimeState.PsychoticBreakEnemyCount = EnemyScanCache.Count;
+            DreadRuntimeState.PsychoticBreakEnemyCount = ProximityScan.Count;
             DreadRuntimeState.PsychoticBreakClipsLoaded = AreClipsLoaded();
 
             if (_episodeActive)
@@ -230,7 +231,7 @@ namespace Dread.Systems
         {
             if (_episodeActive)
                 return;
-            if (SemiFunc.MenuLevel())
+            if (GameplayContext.IsMenuLevel())
             {
                 LoggingService.LogWarning("[PsychoticBreak] ForceEpisode ignored on menu level");
                 return;
