@@ -344,6 +344,7 @@ Dread/
 
 | Version | Highlights |
 |---------|------------|
+| **v1.5.3** | ARCH-1/2/3 (split systems, registry, reflection docs), ERR-2/3 (default-on telemetry + privacy prompt), audio/stub hardening, GPL-3.0, Dependabot/CodeQL, Vitest 4 + Zod 4 toolchain |
 | **v1.5.2** | Debug server, MCP server, configurable logging system, stub fixes, Psychotic Break instantiation fix, audio loading fix, cross-platform build |
 | **v1.5.1** | CD pipeline: `vmajor`/`vminor`/`vpatch` tags trigger version bumps, auto-generated GitHub Releases, changelog management |
 | **v1.5.0** | Pitch randomization across all audio systems, rarer ambient sounds (60-180s, reduced weights), rarer fake footsteps (3-6 min, 20%), state leak fixes, config bounds fixes |
@@ -420,12 +421,12 @@ npm run build
 | `dotnet build -c Release` | Release build only |
 
 ```powershell
-.\build.ps1 -Version "1.5.2"
+.\build.ps1 -Version "1.5.3"
 ```
 
-Output in `dist/`:
-- `elytraking-Dread-1.5.2/`: unpacked package folder
-- `elytraking-Dread-1.5.2.zip`: ready for Thunderstore upload
+Output in `dist/` (version from `manifest.json` after CD bump):
+- `elytraking-Dread-<version>/`: unpacked package folder
+- `elytraking-Dread-<version>.zip`: ready for Thunderstore upload
 
 ---
 

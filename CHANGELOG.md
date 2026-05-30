@@ -56,7 +56,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **REPOConfig slider labels:** reverted experimental `MidlineLeft`/pivot tweak that overlapped slider text; compat back to `Left` alignment + x=100 column only (see `docs/repo-config-slider-labels-investigation.md`)
 - GitHub boilerplate: GPL-3.0 `LICENSE`, Dread-tailored Dependabot (mod, MCP, worker, CI), `SECURITY.md`, CodeQL with stub build and path filters
 
-> **Highlight:** Honest mod compatibility docs, opt-in telemetry, Compatibility mode for broken profiles, and host-only monster patch guards.
+> **Highlight:** ARCH refactor + system registry, error reporting default-on with first-run privacy prompt, audio/stub hardening, GPL-3.0 and modern CI/deps (Vitest 4, Zod 4).
 
 <details>
 <summary>Planned (not in this release)</summary>
