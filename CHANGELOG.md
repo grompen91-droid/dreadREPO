@@ -28,6 +28,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+
+## [1.6.0] - 2026-05-30
+
 ![Status](https://img.shields.io/badge/status-development-yellow?style=flat-square)
 
 ### Added
@@ -300,5 +303,6 @@ These were rapid hotfix commits resolving reference and dependency issues during
 ---
 
 *Maintained by [elytraking](https://github.com/grompen91-droid)*
+
 
 
