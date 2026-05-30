@@ -47,6 +47,21 @@ Glossary names: [CONTEXT.md](../../../CONTEXT.md).
 
 `EnvironmentalSystem` and `VisualCorruptionSystem` were removed (ADR-0001). PostProcessing v2 volume patching did not work reliably in R.E.P.O. Do not copy old superpowers tasks that recreate them.
 
+## Systems/Core (shared compat)
+
+Version-tolerant access to game types (`EnemyHealth`, `PlayerController`, optional REPOConfig, Harmony gates) lives under `Systems/Core/` in namespace `Dread.Systems.Core`. Feature systems MUST use Core helpers instead of compile-time properties that may differ between stubs and REPO v0.4.x.
+
+| Helper | Role |
+|--------|------|
+| `EnemyHealthCompat` | HP read, alive/nearby counts, validity |
+| `PlayerControllerCompat` | Health, crouch/hide checks |
+| `PlayerTumbleCompat` | Tumble pose for psychotic break |
+| `HarmonyPatchCompat` | Host-only and foreign-patch skip |
+| `RepoConfigCompat` / `RepoConfigSliderLabelCompat` | Optional REPOConfig UI |
+| `UnityWebRequestCompat` | Stub-safe UWR probe |
+
+Contract for enemy HP: `specs/004-err-2-default-on-prompt/contracts/core-enemy-health.md`.
+
 ## Config
 
 - Source of truth in code: `Config/DreadConfig.cs`
@@ -79,7 +94,8 @@ Use `SemiFunc.MenuLevel()` for menu/main UI. `MonsterOverhaulSystem` also tracks
 |------|------|
 | Plugin + patch apply | `Plugin.cs` |
 | Config | `Config/DreadConfig.cs` |
-| Systems (overview) | `Systems/` (subfolders: `Patches/`, `PsychoticBreak/`, `ErrorReporting/`, `DebugOverlay/`; other hosts at `Systems/*.cs`) |
+| Core compat | `Systems/Core/` |
+| Systems (overview) | `Systems/` (subfolders: `Core/`, `Patches/`, `PsychoticBreak/`, `ErrorReporting/`, `DebugOverlay/`; other hosts at `Systems/*.cs`) |
 | Audio assets | `audio/*.ogg` |
 | ADRs | `docs/adr/` |
 | Per-system agent guides | `docs/agents/guides/README.md` |

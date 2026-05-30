@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 
-namespace Dread.Systems
+namespace Dread.Systems.Core
 {
     internal static class PlayerControllerCompat
     {

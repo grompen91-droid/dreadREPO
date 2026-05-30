@@ -43,6 +43,10 @@ Dismissed -> (terminal; no re-entry unless cfg reset)
 
 **Relationships**: Runtime gate for `ErrorReportLogQueue` and capture; set by prompt buttons and later cfg edits.
 
+### GameState capture (error reports)
+
+`ErrorReportPayloadCapture.CaptureGameState` fills `EnemiesTotal`, `EnemiesAlive`, and `EnemiesNearby` via `EnemyScanCache.GetEnemies()` and `Dread.Systems.Core.EnemyHealthCompat.CountAliveAndNearby` (no compile-time `EnemyHealth.CurrentHealth`).
+
 ### ErrorReportingConsent (logical helper, implementation)
 
 Static helper recommended:

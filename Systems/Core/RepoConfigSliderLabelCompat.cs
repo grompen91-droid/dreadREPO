@@ -1,9 +1,10 @@
 using System;
 using System.Reflection;
+using Dread.Systems;
 using HarmonyLib;
 using UnityEngine;
 
-namespace Dread.Systems
+namespace Dread.Systems.Core
 {
     /// <summary>
     /// REPOConfig-only MenuLib compat. Without REPOConfig, Dread uses BepInEx cfg / ConfigurationManager (no patch).

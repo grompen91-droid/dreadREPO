@@ -261,7 +261,7 @@ Dread is **dependency-free** (BepInEx only) and is tested alongside common mod s
 
 See **[docs/mod-compatibility.md](docs/mod-compatibility.md)** for the full matrix, isolation test steps, Linux DLL notes, and manual test checklist.
 
-**Planned work:** [docs/ROADMAP.md](docs/ROADMAP.md) (debug overlay UX, refactor, extensibility and hardened core, performance, error reporting defaults + first-run prompt).
+**Planned work:** [docs/ROADMAP.md](docs/ROADMAP.md) (debug overlay UX, refactor, extensibility and hardened core, performance). Error reporting default-on + first-run prompt (ERR-2) ships in the next release; see [CHANGELOG.md](CHANGELOG.md) [Unreleased].
 
 **Contributor glossary:** [CONTEXT.md](CONTEXT.md) (domain terms for issues, PRs, and agents).
 

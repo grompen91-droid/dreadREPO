@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Reflection;
 using Dread;
 using Dread.Config;
+using Dread.Systems;
 using HarmonyLib;
 
-namespace Dread.Systems
+namespace Dread.Systems.Core
 {
     /// <summary>
     /// Shared helpers for host-only patch gates and optional skip when other mods already patch a method.

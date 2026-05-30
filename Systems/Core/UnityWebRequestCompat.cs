@@ -1,7 +1,8 @@
 using System;
+using Dread.Systems;
 using UnityEngine.Networking;
 
-namespace Dread.Systems
+namespace Dread.Systems.Core
 {
     /// <summary>
     /// Stub-built Dread.dll can reference empty UnityWebRequest bodies (zero RVA). Probe once and skip those paths.

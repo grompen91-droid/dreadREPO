@@ -47,6 +47,20 @@ ARCH-3 documents existing behavior:
 
 Matrix: [specs/002-arch-3-extensible-core/quickstart.md](../../specs/002-arch-3-extensible-core/quickstart.md), [docs/agents/guides/compatibility.md](../agents/guides/compatibility.md).
 
+### `Systems/Core/` (version-tolerant game types)
+
+Static helpers in namespace `Dread.Systems.Core` (ERR-2 Phase 7, FR-011). Feature and error-reporting code MUST use these instead of compile-time game properties that differ between stubs and REPO v0.4.4.3 runtime (e.g. `EnemyHealth.CurrentHealth`).
+
+| Type | Role |
+|------|------|
+| `EnemyHealthCompat` | HP read, alive check, nearby counts for tension and error payloads |
+| `PlayerControllerCompat` / `PlayerTumbleCompat` | Player state without stub mismatch |
+| `HarmonyPatchCompat` | Master-client and patch guards |
+| `RepoConfigCompat` / `RepoConfigSliderLabelCompat` | REPOConfig soft dependency |
+| `UnityWebRequestCompat` | UWR availability gate |
+
+Contract: [specs/004-err-2-default-on-prompt/contracts/core-enemy-health.md](../../specs/004-err-2-default-on-prompt/contracts/core-enemy-health.md). Reflection inventory: [docs/agents/guides/reflection-inventory.md](../agents/guides/reflection-inventory.md).
+
 ### Verification
 
 `scripts/verify-dread.ps1` Tier 0: `arch3_try_add_system` (no stray `TryAddSystem<` outside initializer/registry) and `arch3_registry_manifest` (eight baseline system types present in `DreadSystemRegistry.cs`).

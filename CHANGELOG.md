@@ -48,6 +48,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **MCP server:** Zod 4 `z.strictObject()` for tool input schemas (replaces deprecated `.strict()`)
 
 ### Fixed
+- **Error reporting:** Game-state capture for crash reports no longer calls compile-time `EnemyHealth.CurrentHealth` (fixes `get_CurrentHealth` MissingMethodException when third-party mods log errors, e.g. DeathMinimap after death); uses `Systems/Core/EnemyHealthCompat` and `EnemyScanCache`
 - **ERR-2 (#172):** Resetting `ErrorReportingPromptShown` to false in cfg or REPOConfig shows the first-run prompt again on scene load or when the setting changes, without restarting the game
 - **ERR-3 disclosure accuracy:** Privacy copy now matches `ErrorReportPayloadCapture` (eleven config fields including audio frequency/volume; system info may include VRAM and GPU driver); `FullDescription` composed from `DataBullets`; REPOConfig/Configuration Manager called out in disable steps
 - **Audio:** ambient/psychotic clips no longer cut off early when pitch is below 1.0 (`AudioPlayUtil` destroy lifetime); NVorbis reads full OGG streams

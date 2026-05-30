@@ -52,6 +52,23 @@ Repeat with **Keep reporting on** on a fresh cfg.
 1. After prompt, set `ErrorReportingEnabled = false` in cfg or REPOConfig.
 2. Confirm queue does not enqueue (existing checklist).
 
+## Manual: error capture after third-party NRE (Phase 7)
+
+Requires DeathMinimap (or another mod that logs NREs) and error reporting enabled with prompt acknowledged.
+
+1. Load a gameplay level with enemies; confirm `ErrorReportingEnabled = true` and `ErrorReportingPromptShown = true`.
+2. Die or trigger DeathMinimap NRE (check BepInEx log for `DeathMinimap.UpdateCameraTransform`).
+3. Confirm log does **not** contain `[ErrorReporter] Failed to process pending logs` with `get_CurrentHealth`.
+4. Optional: confirm a report is still queued/sent (Worker log) with `enemies_total` / `enemies_alive` when applicable.
+
+Repo grep (no direct `CurrentHealth` in Systems):
+
+```bash
+rg '\.CurrentHealth' Systems/ --glob '*.cs'
+```
+
+Expect zero matches.
+
 ## Docs / ADR
 
 - Update `docs/adr/0010-error-telemetry.md` (default-on, first-run UI).

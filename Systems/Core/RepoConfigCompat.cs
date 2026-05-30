@@ -1,6 +1,6 @@
 using HarmonyLib;
 
-namespace Dread.Systems
+namespace Dread.Systems.Core
 {
     /// <summary>
     /// REPOConfig-specific Harmony compat (slider labels only). REPOConfig has no API for bool toggle descriptions.
