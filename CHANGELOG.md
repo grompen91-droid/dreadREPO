@@ -28,6 +28,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+
+## [1.6.1] - 2026-05-30
+
 ### Fixed
 - **CD / Thunderstore package:** ship `NVorbis.dll` and `System.*` plugin dependencies beside `Dread.dll` (same as `build.ps1`). v1.6.0 packages were missing them, causing `FileNotFoundException` for NVorbis at runtime.
 
@@ -305,6 +308,7 @@ These were rapid hotfix commits resolving reference and dependency issues during
 ---
 
 *Maintained by [elytraking](https://github.com/grompen91-droid)*
+
 
 
 
