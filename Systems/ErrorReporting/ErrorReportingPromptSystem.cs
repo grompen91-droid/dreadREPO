@@ -100,7 +100,8 @@ namespace Dread.Systems
         }
 
         /// <summary>
-        /// Keeps in-memory prompt state aligned with cfg (supports resetting ErrorReportingPromptShown without restarting).
+        /// Keeps in-memory prompt state aligned with cfg (resetting ErrorReportingPromptShown
+        /// via cfg or REPOConfig works without restart).
         /// </summary>
         private void SyncPromptStateFromConfig()
         {
