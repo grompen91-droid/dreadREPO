@@ -18,6 +18,8 @@ namespace Dread.Config
         public static ConfigEntry<float> LureSafeDistance = null!;
         public static ConfigEntry<float> LureCampSeconds = null!;
         public static ConfigEntry<float> LureEscalateSeconds = null!;
+        public static ConfigEntry<bool> SnitchEnabled = null!;
+        public static ConfigEntry<float> SnitchPOIDurationSeconds = null!;
 
         // 3. Tension
         public static ConfigEntry<bool> FakeFootstepsEnabled = null!;
@@ -95,6 +97,12 @@ namespace Dread.Config
                     "Seconds of continued camping per escalation step (the pull reaches farther each "
                     + "step). Lower = the lure ramps up faster.",
                     new AcceptableValueRange<float>(5f, 120f)));
+            SnitchEnabled = cfg.Bind("2. Monster Overhaul", "SnitchEnabled", true,
+                "One random item per run is the snitch. Picking it up first triggers a loud bang and draws all enemies to that spot. HOST ONLY.");
+            SnitchPOIDurationSeconds = cfg.Bind("2. Monster Overhaul", "SnitchPOIDurationSeconds", 180f,
+                new ConfigDescription(
+                    "Seconds enemies keep returning to the snitch pickup position.",
+                    new AcceptableValueRange<float>(30f, 300f)));
 
             FakeFootstepsEnabled = cfg.Bind("3. Tension", "FakeFootstepsEnabled", true,
                 "Occasionally plays footstep sounds behind you with no source.");
@@ -188,7 +196,7 @@ namespace Dread.Config
             ConfigEntryBase?[] allFields =
             [
                 AudioEnabled, AudioFrequency, AudioVolume,
-                MonsterAggressionEnabled, MonsterAudioEnabled,
+                MonsterAggressionEnabled, MonsterAudioEnabled, SnitchEnabled, SnitchPOIDurationSeconds,
                 FakeFootstepsEnabled, AdrenalineEnabled, LowStaminaSoundEnabled, PanicSprintEnabled,
                 PsychoticBreakEnabled, PsychoticBreakTriggerChance, PsychoticBreakDuration, PsychoticBreakOncePerMatch,
                 CrouchSpeedBoostEnabled,

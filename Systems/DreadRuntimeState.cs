@@ -33,6 +33,14 @@ namespace Dread.Systems
         public static float LureCampTimer { get; internal set; }
         /// <summary>Escalation step of the active lure (0 = inactive).</summary>
         public static int LurePullStep { get; internal set; }
+        /// <summary>Current snitch state: "disarmed", "armed", or "triggered".</summary>
+        public static string SnitchState { get; internal set; } = "disarmed";
+        /// <summary>Seconds remaining on the snitch POI loop (0 = inactive).</summary>
+        public static float SnitchPoiRemaining { get; internal set; }
+        /// <summary>Distance in metres from local camera to snitch item (-1 = unknown).</summary>
+        public static float SnitchItemDistance { get; internal set; } = -1f;
+        /// <summary>Seconds until next arm attempt (-1 = armed/triggered).</summary>
+        public static float SnitchNextCheckIn { get; internal set; } = -1f;
 
         public static int DreadPatchCount { get; internal set; }
     }

@@ -291,6 +291,7 @@ namespace Dread.Systems
 
             AddRow("Audio", AudioSummary(), ColValue);
             AddRow("Lure", LureSummary(), LureColor());
+            AddRow("Snitch", SnitchSummary(), SnitchColor());
 
             AddSection("System");
             AddRow("Config",
@@ -368,6 +369,21 @@ namespace Dread.Systems
 
         private static Color LureColor()
             => DreadRuntimeState.LureTarget.Length == 0 ? ColDim : ColWarn;
+
+        private static string SnitchSummary()
+        {
+            var state = DreadRuntimeState.SnitchState;
+            if (state == "triggered")
+                return $"triggered  POI {DreadRuntimeState.SnitchPoiRemaining:F0}s";
+            if (state == "armed" && DreadRuntimeState.SnitchItemDistance >= 0f)
+                return $"armed  {DreadRuntimeState.SnitchItemDistance:F1}m";
+            if (state == "disarmed" && DreadRuntimeState.SnitchNextCheckIn > 0f)
+                return $"disarmed  check {DreadRuntimeState.SnitchNextCheckIn:F1}s";
+            return state;
+        }
+
+        private static Color SnitchColor()
+            => DreadRuntimeState.SnitchState == "triggered" ? ColBad : ColDim;
 
         private static string OnOff(bool value) => value ? "ON" : "off";
 
