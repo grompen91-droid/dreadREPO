@@ -52,6 +52,11 @@ namespace UnityEngine
             return false;
         }
     }
+    public class Rigidbody : Component
+    {
+        public bool isKinematic { get; set; }
+        public Vector3 velocity { get; set; }
+    }
     public class Object
     {
         public string name { get; set; } = string.Empty;
