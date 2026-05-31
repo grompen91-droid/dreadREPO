@@ -87,7 +87,8 @@ namespace Dread.Systems.AudioAssets
             if (!DreadConfig.AudioAssetsShowFirstRunNotice.Value || _firstRunNoticeShown)
                 return;
 
-            var marker = Path.Combine(AudioCachePaths.CacheRoot, ".notified-v" + _manifest!.ModVersion);
+            var version = _manifest?.ModVersion ?? "";
+            var marker = Path.Combine(AudioCachePaths.CacheRoot, ".notified-v" + version);
             if (File.Exists(marker))
                 return;
 
@@ -156,7 +157,14 @@ namespace Dread.Systems.AudioAssets
                 }
 
                 LoggingService.LogVerbose($"[AudioAssets] Downloading {entry.Path}...");
-                var result = AudioAssetDownloader.TryDownload(_manifest!, entry, dest);
+                var manifest = _manifest;
+                if (manifest == null)
+                {
+                    FulfillPath(entry.Path, null);
+                    yield break;
+                }
+
+                var result = AudioAssetDownloader.TryDownload(manifest, entry, dest);
                 if (result.Success)
                 {
                     _downloadAttempts.Remove(entry.Path);
@@ -197,7 +205,14 @@ namespace Dread.Systems.AudioAssets
             AudioClip? clip = null;
             try
             {
-                var entry = _manifest!.FindByPath(manifestPath);
+                var manifest = _manifest;
+                if (manifest == null)
+                {
+                    FulfillPath(manifestPath, null);
+                    yield break;
+                }
+
+                var entry = manifest.FindByPath(manifestPath);
                 if (entry == null)
                 {
                     FulfillPath(manifestPath, null);

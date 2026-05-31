@@ -8,8 +8,15 @@ namespace Dread.Systems.AudioAssets
 {
     internal static class AudioCachePaths
     {
-        public static string PluginDirectory { get; } =
-            Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
+        public static string PluginDirectory { get; } = GetPluginDirectory();
+
+        private static string GetPluginDirectory()
+        {
+            var location = Assembly.GetExecutingAssembly().Location;
+            if (string.IsNullOrEmpty(location))
+                return "";
+            return Path.GetDirectoryName(location) ?? "";
+        }
 
         public static string CacheRoot => Path.Combine(PluginDirectory, "audio-cache");
 
