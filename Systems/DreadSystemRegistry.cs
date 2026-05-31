@@ -80,6 +80,11 @@ namespace Dread.Systems
                 typeof(CampLureSystem),
                 "DreadCampLureHost",
                 SystemOrderGroup.Core),
+            new SystemRegistration(
+                "snitch",
+                typeof(SnitchSystem),
+                "DreadSnitchHost",
+                SystemOrderGroup.Core),
             // Debug hosts omit IsEnabled per ADR-0016: hosts always spawn; cfg gates behavior inside systems.
             new SystemRegistration(
                 "test-crash",
