@@ -17,6 +17,7 @@ namespace Dread.Config
         public static ConfigEntry<bool> MonsterLureEnabled = null!;
         public static ConfigEntry<float> LureSafeDistance = null!;
         public static ConfigEntry<float> LureCampSeconds = null!;
+        public static ConfigEntry<float> LureEscalateSeconds = null!;
 
         // 3. Tension
         public static ConfigEntry<bool> FakeFootstepsEnabled = null!;
@@ -86,8 +87,14 @@ namespace Dread.Config
                     new AcceptableValueRange<float>(5f, 60f)));
             LureCampSeconds = cfg.Bind("2. Monster Overhaul", "LureCampSeconds", 90f,
                 new ConfigDescription(
-                    "Seconds a player must stay isolated before enemies start being drawn to them.",
+                    "Seconds a player must stay isolated before enemies start being drawn to them. "
+                    + "Lower = triggers faster.",
                     new AcceptableValueRange<float>(10f, 300f)));
+            LureEscalateSeconds = cfg.Bind("2. Monster Overhaul", "LureEscalateSeconds", 30f,
+                new ConfigDescription(
+                    "Seconds of continued camping per escalation step (the pull reaches farther each "
+                    + "step). Lower = the lure ramps up faster.",
+                    new AcceptableValueRange<float>(5f, 120f)));
 
             FakeFootstepsEnabled = cfg.Bind("3. Tension", "FakeFootstepsEnabled", true,
                 "Occasionally plays footstep sounds behind you with no source.");

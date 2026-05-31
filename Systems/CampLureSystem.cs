@@ -19,7 +19,6 @@ namespace Dread.Systems
     {
         private const float TickInterval = 1.0f;   // re-evaluate camp state each second
         private const float PullInterval = 4.0f;   // re-issue the lure this often while active
-        private const float EscalateEvery = 30f;   // grow the pull every N seconds past threshold
         private const float BasePullRadius = 25f;  // investigate radius at step 1
         private const float RadiusPerStep = 15f;   // added reach per escalation step
         private const float MaxPullRadius = 90f;
@@ -113,7 +112,8 @@ namespace Dread.Systems
             _targetLabel = bestLabel;
             _targetPos = bestPos;
             _targetCamp = bestCamp;
-            _pullStep = 1 + (int)((bestCamp - threshold) / EscalateEvery);
+            float escalate = Mathf.Max(1f, DreadConfig.LureEscalateSeconds.Value);
+            _pullStep = 1 + (int)((bestCamp - threshold) / escalate);
 
             if (newTarget)
             {

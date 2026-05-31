@@ -20,7 +20,7 @@ them until they move. Works in solo as well (the lone player counts).
   moment an enemy comes within that distance.
 - **Target selection.** Among players whose camp timer is at least `LureCampSeconds`
   (default 90 s), the most isolated one becomes the lure target.
-- **Escalation.** The pull starts gentle and grows: step `1 + (camp - threshold) / 30s`.
+- **Escalation.** The pull starts gentle and grows: step `1 + (camp - threshold) / LureEscalateSeconds`.
   Step drives the investigate radius (`25 m + 15 m per step`, capped at 90 m), so the
   longer they camp, the more / farther enemies are drawn. The lure is re-issued every
   4 s while active.
@@ -50,7 +50,8 @@ them until they move. Works in solo as well (the lone player counts).
 
 - `LureEnabled` (bool, default on)
 - `LureSafeDistance` (float, 5-60, default 20)
-- `LureCampSeconds` (float, 10-300, default 90)
+- `LureCampSeconds` (float, 10-300, default 90) - how soon it triggers
+- `LureEscalateSeconds` (float, 5-120, default 30) - how fast it ramps up
 
 ## Components
 
