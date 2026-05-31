@@ -167,33 +167,34 @@ jobs:
         shell: bash
         run: |
           has_issues=0
+          cs_glob=(./*.cs Systems/*.cs Systems/AudioAssets/*.cs Config/*.cs)
 
-          if grep -rnP '\w+!\.|\)!\.' *.cs Systems/*.cs Config/*.cs 2>/dev/null | grep -v '!= '; then
+          if grep -rnP '\w+!\.|\)!\.' "${cs_glob[@]}" 2>/dev/null | grep -v '!= '; then
             echo "::error::Null-forgiving operator (!) usage found"
             has_issues=1
           fi
 
-          if grep -rni '[A-Z]:\\' *.cs Systems/*.cs Config/*.cs 2>/dev/null; then
+          if grep -rni '[A-Z]:\\' "${cs_glob[@]}" 2>/dev/null; then
             echo "::error::Hardcoded Windows paths found"
             has_issues=1
           fi
 
-          if grep -rnI '[[:blank:]]$' *.cs Systems/*.cs Config/*.cs 2>/dev/null; then
+          if grep -rnI '[[:blank:]]$' "${cs_glob[@]}" 2>/dev/null; then
             echo "::error::Trailing whitespace found"
             has_issues=1
           fi
 
-          if grep -rnI $'\t' *.cs Systems/*.cs Config/*.cs 2>/dev/null; then
+          if grep -rnI $'\t' "${cs_glob[@]}" 2>/dev/null; then
             echo "::error::Tab characters found"
             has_issues=1
           fi
 
-          if grep -rnP '.{121}' *.cs Systems/*.cs Config/*.cs 2>/dev/null; then
+          if grep -rnP '.{121}' "${cs_glob[@]}" 2>/dev/null; then
             echo "::error::Lines exceeding 120 characters found"
             has_issues=1
           fi
 
-          if grep -rnl $'\xEF\xBB\xBF' *.cs Systems/*.cs Config/*.cs 2>/dev/null; then
+          if grep -rnl $'\xEF\xBB\xBF' "${cs_glob[@]}" 2>/dev/null; then
             echo "::error::BOM (byte order mark) found"
             has_issues=1
           fi

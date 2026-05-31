@@ -120,7 +120,8 @@ namespace Dread.Systems.AudioAssets
             if (cap != _effectiveConcurrent)
             {
                 LoggingService.LogVerbose(
-                    $"[AudioAssets] Policy: concurrent={cap} (down={FormatSpeed(_emaBytesPerSec)}, cpuCap={cpuCap}, netTier={_networkTier})");
+                    $"[AudioAssets] Policy: concurrent={cap} "
+                    + $"(down={FormatSpeed(_emaBytesPerSec)}, cpuCap={cpuCap}, netTier={_networkTier})");
             }
 
             _effectiveConcurrent = cap;

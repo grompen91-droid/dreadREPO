@@ -88,7 +88,8 @@ namespace Dread.Systems.AudioAssets
                         msg = $"HTTP {(int)err.StatusCode}: {ex.Message}";
                     if (attempt == MaxAttempts)
                         return Fail(sw, msg);
-                    LoggingService.LogVerbose($"[AudioAssets] Download attempt {attempt} failed for {entry.Path}: {msg}");
+                    LoggingService.LogVerbose(
+                        $"[AudioAssets] Download attempt {attempt} failed for {entry.Path}: {msg}");
                 }
                 catch (Exception ex)
                 {

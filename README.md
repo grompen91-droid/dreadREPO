@@ -276,7 +276,7 @@ See **[docs/mod-compatibility.md](docs/mod-compatibility.md)** for the full matr
 - **Broken profiles**: set `CompatibilityMode = true` or `ErrorReportingEnabled = false` without uninstalling Dread.
 - **REPOLib**: not required (removed in v1.4.0).
 
-The repo `audio/` tree includes `ambient_dread/door_creak.ogg` on the release manifest but not loaded by any system yet. It is available for future ambient variants.
+The repo `audio/` tree includes `ambient_dread/door_creak.ogg` for future ambient variants (not in the embedded download manifest yet).
 
 **Offline / slow network:** ambient and tension features work with whatever clips are already cached; missing files stay queued until download succeeds. Pin parallel downloads in config (`1b. Audio Assets` > `MaxConcurrentDownloads`, 0 = auto).
 

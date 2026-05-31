@@ -77,7 +77,8 @@ namespace Dread.Systems
                     if (_clips.Count > 0 && !_playLoopStarted)
                     {
                         _playLoopStarted = true;
-                        LoggingService.LogInfo($"[AudioDread] Loaded {_clips.Count}/{ClipNames.Length} clips (progressive).");
+                        LoggingService.LogInfo(
+                            $"[AudioDread] Loaded {_clips.Count}/{ClipNames.Length} clips (progressive).");
                         StartCoroutine(PlayLoop());
                     }
                 });
