@@ -19,10 +19,14 @@ namespace Dread.Systems
         private static readonly Color ColGood = new(0.79f, 0.81f, 0.79f);    // status ok (light neutral)
         private static readonly Color ColWarn = new(0.85f, 0.79f, 0.65f);    // status warn (warm gray)
         private static readonly Color ColBad = new(0.84f, 0.70f, 0.68f);     // status bad (rosy gray)
+        private static readonly Color ColButton = new(0.11f, 0.12f, 0.14f, 0.92f);      // button rest
+        private static readonly Color ColButtonHover = new(0.17f, 0.18f, 0.21f, 0.96f); // button hover
 
         private Texture2D? _bgTex;
         private Texture2D? _sepTex;
         private Texture2D? _railTex;
+        private Texture2D? _buttonTex;
+        private Texture2D? _buttonHoverTex;
         private GUIStyle? _boxStyle;
         private GUIStyle? _railStyle;
         private GUIStyle? _headerStyle;
@@ -31,6 +35,7 @@ namespace Dread.Systems
         private GUIStyle? _valueStyle;
         private GUIStyle? _sectionStyle;
         private GUIStyle? _sepStyle;
+        private GUIStyle? _buttonStyle;
 
         private void EnsureStyles()
         {
@@ -64,6 +69,16 @@ namespace Dread.Systems
 
             _sepStyle = new GUIStyle(GUI.skin.box);
             _sepStyle.normal.background = _sepTex;
+
+            _buttonTex = MakeTexture(ColButton);
+            _buttonHoverTex = MakeTexture(ColButtonHover);
+            _buttonStyle = new GUIStyle(GUI.skin.button) { fontSize = 11, wordWrap = false };
+            _buttonStyle.normal.background = _buttonTex;
+            _buttonStyle.normal.textColor = ColValue;
+            _buttonStyle.hover.background = _buttonHoverTex;
+            _buttonStyle.hover.textColor = ColAccent;
+            _buttonStyle.active.background = _buttonHoverTex;
+            _buttonStyle.active.textColor = ColAccent;
         }
 
         private static Texture2D MakeTexture(Color color)

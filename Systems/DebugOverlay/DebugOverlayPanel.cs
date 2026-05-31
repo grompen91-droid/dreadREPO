@@ -11,6 +11,9 @@ namespace Dread.Systems
     {
         private readonly List<RowData> _rows = new(16);
 
+        // Panel zoom (whole panel scales). Adjusted by the footer +/- buttons.
+        private float _zoom = 1f;
+
         // Cached empty content. Avoids GUIContent.none, which the build resolves
         // against a stub property getter (get_none) that does not exist in the
         // game's real UnityEngine, throwing MissingMethodException in OnGUI.
@@ -25,23 +28,27 @@ namespace Dread.Systems
                 return;
 
             EnsureStyles();
+            ApplyZoom();
             BuildRows();
 
-            const float width = 320f;
-            const float padX = 10f;
-            const float padTop = 6f;
-            const float padBottom = 10f;
-            const float lineH = 18f;
-            const float labelW = 82f;
+            float z = _zoom;
+            float width = 320f * z;
+            float padX = 10f * z;
+            float padTop = 6f * z;
+            float padBottom = 10f * z;
+            float lineH = 18f * z;
+            float labelW = 82f * z;
             const float marginX = 12f;
             const float marginY = 140f; // moved down from the top so it clears the game's top HUD
-            float height = padTop + padBottom + _rows.Count * lineH;
+            float btnH = 20f * z;
+            float footerH = btnH + 8f * z;
+            float height = padTop + padBottom + _rows.Count * lineH + footerH;
 
             var panel = new Rect(marginX, marginY, width, height);
             GUI.Box(panel, EmptyContent, _boxStyle!);
 
             // Solid steel accent rail down the left edge (S2 "Slate HUD" look).
-            GUI.Box(new Rect(panel.x, panel.y, 3f, height), EmptyContent, _railStyle!);
+            GUI.Box(new Rect(panel.x, panel.y, 3f * z, height), EmptyContent, _railStyle!);
 
             float x = panel.x + padX;
             float y = panel.y + padTop;
@@ -57,24 +64,68 @@ namespace Dread.Systems
                 else if (row.Kind == RowSection)
                 {
                     // Short steel tick, then the uppercase section label.
-                    GUI.Box(new Rect(x, y + lineH * 0.5f - 0.5f, 9f, 1f), EmptyContent, _railStyle!);
-                    GUI.Label(new Rect(x + 15f, y, innerW - 15f, lineH), row.Left, _sectionStyle!);
+                    GUI.Box(new Rect(x, y + lineH * 0.5f - 0.5f, 9f * z, 1f), EmptyContent, _railStyle!);
+                    GUI.Label(new Rect(x + 15f * z, y, innerW - 15f * z, lineH), row.Left, _sectionStyle!);
                 }
                 else if (row.Kind == RowHeader)
                 {
                     GUI.Label(new Rect(x, y, innerW, lineH), row.Left, _headerStyle!);
-                    GUI.Label(new Rect(x + innerW - 36f, y + 2f, 36f, lineH), row.Right, _hintStyle!);
+                    GUI.Label(new Rect(x + innerW - 36f * z, y + 2f * z, 36f * z, lineH), row.Right, _hintStyle!);
                 }
                 else
                 {
                     GUI.Label(new Rect(x, y, labelW, lineH), row.Left, _labelStyle!);
-                    GUIStyle valueStyle = _valueStyle;
+                    GUIStyle valueStyle = _valueStyle!;
                     valueStyle.normal.textColor = row.Color;
                     GUI.Label(new Rect(x + labelW, y, innerW - labelW, lineH), row.Right, valueStyle);
                 }
 
                 y += lineH;
             }
+
+            DrawZoomFooter(x, panel.y + height - padBottom - btnH, innerW, btnH, z);
+        }
+
+        private void DrawZoomFooter(float x, float y, float innerW, float btnH, float z)
+        {
+            float gap = 4f * z;
+            float bw = 22f * z;
+
+            GUI.Label(new Rect(x, y, 36f * z, btnH), "ZOOM", _sectionStyle!);
+            float cx = x + 38f * z;
+
+            if (GUI.Button(new Rect(cx, y, bw, btnH), "-", _buttonStyle!))
+                SetZoom(_zoom - 0.1f);
+            cx += bw + gap;
+
+            if (GUI.Button(new Rect(cx, y, bw, btnH), "+", _buttonStyle!))
+                SetZoom(_zoom + 0.1f);
+            cx += bw + gap;
+
+            int pct = (int)(_zoom * 100f + 0.5f);
+            GUI.Label(new Rect(cx, y, 42f * z, btnH), pct + "%", _labelStyle!);
+
+            float resetW = 54f * z;
+            if (GUI.Button(new Rect(x + innerW - resetW, y, resetW, btnH), "Reset", _buttonStyle!))
+                SetZoom(1f);
+        }
+
+        private void SetZoom(float value) => _zoom = Mathf.Clamp(value, 0.6f, 1.6f);
+
+        private void ApplyZoom()
+        {
+            _headerStyle!.fontSize = Scaled(15);
+            _hintStyle!.fontSize = Scaled(11);
+            _labelStyle!.fontSize = Scaled(13);
+            _valueStyle!.fontSize = Scaled(13);
+            _sectionStyle!.fontSize = Scaled(11);
+            _buttonStyle!.fontSize = Scaled(11);
+        }
+
+        private int Scaled(int baseSize)
+        {
+            int v = (int)(baseSize * _zoom + 0.5f);
+            return v < 1 ? 1 : v;
         }
 
         private void BuildRows()

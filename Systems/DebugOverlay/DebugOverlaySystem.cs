@@ -1,4 +1,5 @@
 using Dread.Config;
+using Dread.Systems.Core;
 using UnityEngine;
 
 namespace Dread.Systems
@@ -7,6 +8,12 @@ namespace Dread.Systems
     {
         private bool _visible;
         private bool _loggedDisabledWhileRunning;
+
+        // Cursor and input capture so the overlay can be clicked (pause to inspect).
+        private bool _cursorCaptured;
+        private CursorLockMode _savedLockState;
+        private bool _savedCursorVisible;
+        private bool _inputLocked;
 
         // Performance sampling.
         private float _smoothedDelta;
@@ -25,6 +32,7 @@ namespace Dread.Systems
         private void OnDestroy()
         {
             DreadConfig.DebugOverlayEnabled.SettingChanged -= OnOverlayConfigChanged;
+            ReleaseOverlayCapture();
         }
 
         private void OnOverlayConfigChanged(object? sender, System.EventArgs e)
@@ -44,7 +52,13 @@ namespace Dread.Systems
                 _visible = !_visible;
 
             if (!IsOverlayVisible())
+            {
+                if (_cursorCaptured)
+                    ReleaseOverlayCapture();
                 return;
+            }
+
+            MaintainOverlayCursor();
 
             if (Time.realtimeSinceStartup >= _nextStatRefresh)
             {
@@ -92,6 +106,49 @@ namespace Dread.Systems
             }
 
             return false;
+        }
+
+        // Free and show the cursor and suspend player input while the overlay is open.
+        // The game re-locks the cursor each frame, so this is reasserted every frame.
+        private void MaintainOverlayCursor()
+        {
+            if (!_cursorCaptured)
+            {
+                _savedLockState = Cursor.lockState;
+                _savedCursorVisible = Cursor.visible;
+                _cursorCaptured = true;
+            }
+
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+
+            if (!_inputLocked)
+            {
+                var pc = PlayerController.instance;
+                if ((object)pc != null)
+                {
+                    PlayerInputLockCompat.SetLocked(pc, locked: true);
+                    _inputLocked = true;
+                }
+            }
+        }
+
+        private void ReleaseOverlayCapture()
+        {
+            if (_cursorCaptured)
+            {
+                Cursor.lockState = _savedLockState;
+                Cursor.visible = _savedCursorVisible;
+                _cursorCaptured = false;
+            }
+
+            if (_inputLocked)
+            {
+                var pc = PlayerController.instance;
+                if ((object)pc != null)
+                    PlayerInputLockCompat.SetLocked(pc, locked: false);
+                _inputLocked = false;
+            }
         }
     }
 }
