@@ -10,6 +10,8 @@ namespace Dread.Systems
         private bool _loggedDisabledWhileRunning;
 
         // Cursor and input capture so the overlay can be clicked (pause to inspect).
+        // Toggled by F9, independent of the F10 show/hide toggle.
+        private bool _interactive;
         private bool _cursorCaptured;
         private CursorLockMode _savedLockState;
         private bool _savedCursorVisible;
@@ -51,14 +53,23 @@ namespace Dread.Systems
             if (Input.GetKeyDown(KeyCode.F10))
                 _visible = !_visible;
 
+            // F9 toggles interactive mode (free the mouse to click the controls).
+            // F10 only shows/hides the panel; it no longer steals the cursor.
+            if (Input.GetKeyDown(KeyCode.F9))
+                _interactive = !_interactive;
+
             if (!IsOverlayVisible())
             {
+                _interactive = false;
                 if (_cursorCaptured)
                     ReleaseOverlayCapture();
                 return;
             }
 
-            MaintainOverlayCursor();
+            if (_interactive)
+                MaintainOverlayCursor();
+            else if (_cursorCaptured)
+                ReleaseOverlayCapture();
 
             if (Time.realtimeSinceStartup >= _nextStatRefresh)
             {

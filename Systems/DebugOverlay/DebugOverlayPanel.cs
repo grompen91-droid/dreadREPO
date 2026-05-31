@@ -42,7 +42,9 @@ namespace Dread.Systems
             float padX = 10f * z;
             float padTop = 6f * z;
             float padBottom = 10f * z;
-            float lineH = 18f * z;
+            // Row height must clear the largest font's line box (header is 15pt)
+            // or glyph descenders get clipped at the bottom of each row.
+            float lineH = 22f * z;
             float labelW = 82f * z;
             const float marginX = 12f;
             const float marginY = 140f; // moved down from the top so it clears the game's top HUD
@@ -76,7 +78,7 @@ namespace Dread.Systems
                 else if (row.Kind == RowHeader)
                 {
                     GUI.Label(new Rect(x, y, innerW, lineH), row.Left, _headerStyle!);
-                    GUI.Label(new Rect(x + innerW - 36f * z, y + 2f * z, 36f * z, lineH), row.Right, _hintStyle!);
+                    GUI.Label(new Rect(x + innerW - 70f * z, y + 3f * z, 70f * z, lineH), row.Right, _hintStyle!);
                 }
                 else
                 {
@@ -129,7 +131,7 @@ namespace Dread.Systems
         {
             float padX = 10f * z;
             float padY = 8f * z;
-            float lineH = 18f * z;
+            float lineH = 22f * z;
             float barH = 6f * z;
             float btnH = 20f * z;
             float gap = 6f * z;
@@ -198,7 +200,7 @@ namespace Dread.Systems
         {
             _rows.Clear();
 
-            AddHeader("DREAD " + Dread.Plugin.VERSION, "F10");
+            AddHeader("DREAD " + Dread.Plugin.VERSION, _interactive ? "mouse on" : "F9 mouse");
             AddSep();
 
             // Performance
