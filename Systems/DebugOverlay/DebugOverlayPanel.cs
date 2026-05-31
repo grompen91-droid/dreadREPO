@@ -102,7 +102,15 @@ namespace Dread.Systems
                 $"clips {OnOff(DreadRuntimeState.PsychoticBreakClipsLoaded)}   "
                 + $"enemies {DreadRuntimeState.PsychoticBreakEnemyCount}   "
                 + $"threat {DreadRuntimeState.PsychoticBreakThreatCount}s   "
+                + $"eng {OnOff(DreadRuntimeState.PsychoticBreakThreatEngaged)}   "
+                + $"vis {OnOff(DreadRuntimeState.PsychoticBreakEnemyVisible)}   "
+                + $"los {DreadRuntimeState.PsychoticBreakLosLostIn}s   "
                 + $"next {DreadRuntimeState.PsychoticBreakNextCheckIn:F0}s",
+                ColDim);
+            AddRow("Break~",
+                $"roll {DreadRuntimeState.PsychoticBreakPerRollChance:P2}   "
+                + $"int {DreadRuntimeState.PsychoticBreakCheckInterval:F0}s   "
+                + $"est {DreadRuntimeState.PsychoticBreakEstimatedWindowChance:P1}",
                 ColDim);
 
             AddRow("Audio", AudioSummary(), ColValue);

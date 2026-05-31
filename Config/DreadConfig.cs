@@ -23,9 +23,10 @@ namespace Dread.Config
 
         // 4. Psychotic Break
         public static ConfigEntry<bool> PsychoticBreakEnabled = null!;
-        public static ConfigEntry<float> PsychoticBreakTriggerChance = null!;
+        public static ConfigEntry<float> PsychoticBreakChancePercent = null!;
         public static ConfigEntry<float> PsychoticBreakDuration = null!;
         public static ConfigEntry<bool> PsychoticBreakOncePerMatch = null!;
+        public static ConfigEntry<bool> PsychoticBreakAccentEnabled = null!;
 
         // 5. QOL
         public static ConfigEntry<bool> CrouchSpeedBoostEnabled = null!;
@@ -87,10 +88,13 @@ namespace Dread.Config
 
             PsychoticBreakEnabled = cfg.Bind("4. Psychotic Break", "PsychoticBreakEnabled", true,
                 "Master toggle for the Psychotic Break system.");
-            PsychoticBreakTriggerChance = cfg.Bind("4. Psychotic Break", "PsychoticBreakTriggerChance", 0.01f,
+            PsychoticBreakChancePercent = cfg.Bind("4. Psychotic Break", "PsychoticBreakChancePercent", 1.0f,
                 new ConfigDescription(
-                    "Probability per 2s check (0-1). 0.01 = 1%.",
-                    new AcceptableValueRange<float>(0f, 1f)));
+                    "Target chance (percent) per full eligible hide window when solo and hiding. "
+                        + "Internal timing adjusts automatically (0.1-25).",
+                    new AcceptableValueRange<float>(0.1f, 25f)));
+            PsychoticBreakAccentEnabled = cfg.Bind("4. Psychotic Break", "PsychoticBreakAccentEnabled", true,
+                "Horror-colored edge accents during psychotic break (darkness/vignette always on).");
             PsychoticBreakDuration = cfg.Bind("4. Psychotic Break", "PsychoticBreakDuration", 20f,
                 new ConfigDescription(
                     "Episode length in seconds.",
@@ -170,7 +174,8 @@ namespace Dread.Config
                 AudioEnabled, AudioFrequency, AudioVolume,
                 MonsterAggressionEnabled, MonsterAudioEnabled,
                 FakeFootstepsEnabled, AdrenalineEnabled, LowStaminaSoundEnabled, PanicSprintEnabled,
-                PsychoticBreakEnabled, PsychoticBreakTriggerChance, PsychoticBreakDuration, PsychoticBreakOncePerMatch,
+                PsychoticBreakEnabled, PsychoticBreakChancePercent, PsychoticBreakDuration,
+                PsychoticBreakOncePerMatch, PsychoticBreakAccentEnabled,
                 CrouchSpeedBoostEnabled,
                 CompatibilityMode, CompatibilitySkipConflictingPatches, DebugConsoleGuardEnabled,
                 ErrorReportingEnabled, ErrorReportingPromptShown,

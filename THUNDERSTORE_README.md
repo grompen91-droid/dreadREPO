@@ -71,7 +71,8 @@ FakeFootstepsEnabled = true
 
 [4. Psychotic Break]
 PsychoticBreakEnabled = true
-PsychoticBreakTriggerChance = 0.01
+PsychoticBreakChancePercent = 1.0
+PsychoticBreakAccentEnabled = true
 PsychoticBreakDuration = 20
 PsychoticBreakOncePerMatch = true
 

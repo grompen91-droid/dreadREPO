@@ -76,8 +76,11 @@ namespace Dread.Systems.Core
             int write = 0;
             for (int i = 0; i < found.Length; i++)
             {
-                if (EnemyHealthCompat.IsValid(found[i]))
-                    found[write++] = found[i];
+                var e = found[i];
+                if (DreadHallucinationMob.IsHallucination(e))
+                    continue;
+                if (EnemyHealthCompat.IsValid(e))
+                    found[write++] = e;
             }
 
             if (write == 0)

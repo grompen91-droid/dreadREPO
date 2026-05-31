@@ -29,6 +29,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Changed
+- **Psychotic Break:** Single `PsychoticBreakChancePercent` slider derives check interval, LoS-lost delay, and per-roll chance; true LoS-lost gate (saw enemy, then hidden); silent tumble hold (no repeated fall SFX)
+- **Psychotic Break:** Staggered walk/run footsteps (`footsteps_run.ogg`), scheduled distant/peak screams, client-local hallucination mob attack with damage block, horror-only side accent colors on blackout overlay
+
 - **Core:** `ProximityScan` in `Systems/Core/` replaces `EnemyScanCache`; tension, monster audio, debug server, psychotic break, and error reporting share one scan seam (ADR-0008 proximity pattern consolidated)
 - **Core:** `HarmonyPatchRegistry` + `PatchLifecycle` centralize patch apply/remove; `Plugin.cs` delegates patch wiring (ADR-0009 preserved)
 - **Core:** `PlayerInputLockCompat` shared by psychotic break and error-reporting prompt
@@ -38,6 +41,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **Verify:** Tier 0 registry manifest includes `ErrorReportingPromptSystem`
 
 ### Fixed
+- **Psychotic Break:** Hallucination mob is a client-local baked mesh snapshot from a live enemy (no prefab instantiate, no Photon/Enemy scripts); fallback silhouette + lunge if no mesh. Debug-forced episodes block real mob damage; natural triggers stay vulnerable
+- **Psychotic Break:** Hallucination picks ranked nearby enemies (skips player avatars only, max 28m, relaxed 65m if none close), walks parent hierarchy for `SkinnedMeshRenderer`/`MeshFilter`, retries until mesh snapshot succeeds; snapshot parts placed at spawn via world offset (not template-local); hard mob + overlay strobe (near-black flashes, full reveal on lunge attack)
+- **Psychotic Break:** LoS gate no longer stuck on `los not lost` when threat was active but visibility raycasts never hit (engagement now arms on enemy within 15m or visible; settle timer starts reliably; multi-height visibility samples)
+- **Psychotic Break:** Engagement latch now arms when threat memory refreshes (same `EnemyHealth` rules as threat scan); threat distance uses camera origin like tension; overlay shows `eng` / `vis`
 - **Error reporting:** Game-state capture for crash reports no longer calls compile-time `EnemyHealth.CurrentHealth` (fixes `get_CurrentHealth` MissingMethodException when third-party mods log errors, e.g. DeathMinimap after death); uses `Systems/Core/EnemyHealthCompat` and `EnemyScanCache`
 
 ## [1.6.1] - 2026-05-30

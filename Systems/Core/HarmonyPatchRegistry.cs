@@ -68,6 +68,12 @@ namespace Dread.Systems.Core
                     DebugConsoleGuardPatch.Apply,
                     DebugConsoleGuardPatch.Remove,
                     () => DreadConfig.DebugConsoleGuardEnabled.Value),
+                new(
+                    "psychotic-break-hallucination-damage",
+                    PatchGroup.Player,
+                    Dread.Systems.Patches.PsychoticBreakHallucinationDamagePatch.Apply,
+                    Dread.Systems.Patches.PsychoticBreakHallucinationDamagePatch.Remove,
+                    () => DreadConfig.PsychoticBreakEnabled.Value),
             };
 
         private static bool MonsterHarmonyPatchesEnabled() =>

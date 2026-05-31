@@ -40,6 +40,24 @@ namespace Dread.Systems
             return null;
         }
 
+        /// <summary>Horizontal edge gradient: opaque at x=0, transparent at x=width-1.</summary>
+        public static Texture2D? CreateEdgeAccent(int width, int height)
+        {
+            foreach (var formatName in new[] { "ARGB32", "RGBA32", "RGB24", "Alpha8", "RGBA4444" })
+            {
+                var tex = TryCreateFilled(width, height, formatName, (x, _) =>
+                {
+                    float t = width <= 1 ? 1f : x / (float)(width - 1);
+                    float alpha = 1f - t;
+                    return new Color(1f, 1f, 1f, alpha);
+                });
+                if (tex != null)
+                    return tex;
+            }
+
+            return null;
+        }
+
         private static Texture2D? TryCreateFilled(
             int width,
             int height,

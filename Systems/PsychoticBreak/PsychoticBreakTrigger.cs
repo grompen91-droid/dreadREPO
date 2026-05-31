@@ -7,6 +7,11 @@ namespace Dread.Systems
 {
     public partial class PsychoticBreakSystem
     {
+        private bool _sawEnemyWhileThreatActive;
+        private float _losLostEligibleAt;
+        private bool _wasEnemyVisibleLastRefresh;
+        private float _hidingSince = -1f;
+
         private string? GetTriggerBlockReason()
         {
             if (!_enabled)
@@ -27,12 +32,93 @@ namespace Dread.Systems
                 return "not solo";
             if (!HasRecentThreat())
                 return "no recent threat";
-            if (IsAnyEnemyVisibleCached())
-                return "visible enemy";
+            if (!HasLostLineOfSight())
+                return GetLosBlockReason();
             if (!IsHidingVulnerable(pc))
                 return "not hiding";
+            if (!HasHidingMinDuration())
+                return "hiding too short";
 
             return null;
+        }
+
+        private string GetLosBlockReason()
+        {
+            if (IsAnyEnemyVisibleCached())
+                return "visible enemy";
+            if (!_sawEnemyWhileThreatActive)
+                return "no threat engagement";
+            if (_losLostEligibleAt <= 0f)
+                return "los pending";
+            if (Time.time < _losLostEligibleAt)
+                return "los settle";
+            return "los pending";
+        }
+
+        private bool HasLostLineOfSight()
+        {
+            if (IsAnyEnemyVisibleCached())
+                return false;
+            if (!_sawEnemyWhileThreatActive)
+                return false;
+            if (_losLostEligibleAt <= 0f)
+                return false;
+            return Time.time >= _losLostEligibleAt;
+        }
+
+        private bool HasHidingMinDuration()
+        {
+            if (_hidingSince < 0f)
+                return false;
+            return Time.time - _hidingSince >= PsychoticBreakTriggerTuning.HidingMinSeconds;
+        }
+
+        private void UpdateLosLostTracking()
+        {
+            if (!HasRecentThreat())
+            {
+                _sawEnemyWhileThreatActive = false;
+                _losLostEligibleAt = 0f;
+                _wasEnemyVisibleLastRefresh = false;
+                return;
+            }
+
+            if (!_sawEnemyWhileThreatActive)
+                _sawEnemyWhileThreatActive = true;
+
+            bool visible = RefreshEnemyVisibilityNow();
+
+            if (visible)
+            {
+                _losLostEligibleAt = 0f;
+            }
+            else if (_sawEnemyWhileThreatActive)
+            {
+                if (_wasEnemyVisibleLastRefresh || _losLostEligibleAt <= 0f)
+                    _losLostEligibleAt = Time.time + _losLostDelaySeconds;
+            }
+
+            _wasEnemyVisibleLastRefresh = visible;
+        }
+
+        private void UpdateHidingTimestamp()
+        {
+            var pc = PlayerController.instance;
+            if ((object)pc == null)
+            {
+                _hidingSince = -1f;
+                return;
+            }
+
+            if (IsHidingVulnerable(pc))
+            {
+                if (_hidingSince < 0f)
+                    _hidingSince = Time.time;
+            }
+            else
+            {
+                _hidingSince = -1f;
+            }
         }
 
         private void UpdateThreatTimestamps()
@@ -49,11 +135,14 @@ namespace Dread.Systems
             {
                 if (!EnemyHealthCompat.IsValid(e))
                     continue;
+                if (DreadHallucinationMob.IsHallucination(e))
+                    continue;
 
                 float d = Vector3.Distance(origin.Value, ProximityScan.GetFocusPosition(e));
                 if (d < ThreatRange)
                 {
                     _threatMemoryUntil = Time.time + ThreatMemoryDuration;
+                    _sawEnemyWhileThreatActive = true;
                     return;
                 }
             }
@@ -68,8 +157,37 @@ namespace Dread.Systems
             return (int)Math.Ceiling(_threatMemoryUntil - Time.time);
         }
 
+        private int GetLosLostEligibleInSeconds()
+        {
+            if (!_sawEnemyWhileThreatActive || IsAnyEnemyVisibleCached())
+                return 0;
+            if (_losLostEligibleAt <= 0f || Time.time >= _losLostEligibleAt)
+                return 0;
+            return (int)Math.Ceiling(_losLostEligibleAt - Time.time);
+        }
+
+        private bool RefreshEnemyVisibilityNow()
+        {
+            _mainCam = Camera.main;
+            _nextVisibilityRefresh = Time.time + VisibilityRefreshInterval;
+            _cachedEnemies = ProximityScan.GetEnemies();
+            _cachedAnyEnemyVisible = IsAnyEnemyVisible(_cachedEnemies);
+            return _cachedAnyEnemyVisible;
+        }
+
         private Vector3? GetThreatScanOrigin()
         {
+            if (_mainCam == null)
+                _mainCam = Camera.main;
+            if (_mainCam != null)
+            {
+                try
+                {
+                    return _mainCam.transform.position;
+                }
+                catch { }
+            }
+
             var pc = PlayerController.instance;
             if ((object)pc != null)
             {
@@ -80,24 +198,13 @@ namespace Dread.Systems
                 catch { }
             }
 
-            if (_mainCam == null)
-                _mainCam = Camera.main;
-            return _mainCam != null ? _mainCam.transform.position : null;
+            return null;
         }
 
         private bool CanTrigger()
         {
             LoggingService.LogVerbose("[PsychoticBreak] Checking trigger condition...");
-            var pc = PlayerController.instance;
-            if ((object)pc == null) return false;
-
-            if (!IsSolo(pc)) return false;
-            if (!HasRecentThreat()) return false;
-            if (IsAnyEnemyVisibleCached()) return false;
-            if (!IsHidingVulnerable(pc)) return false;
-            if (!AreClipsLoaded()) return false;
-
-            return true;
+            return GetTriggerBlockReason() == null;
         }
 
         private static PlayerController[]? _cachedPlayers;
@@ -134,14 +241,24 @@ namespace Dread.Systems
                 return _cachedAnyEnemyVisible;
 
             _nextVisibilityRefresh = Time.time + VisibilityRefreshInterval;
+            _cachedEnemies = ProximityScan.GetEnemies();
             _cachedAnyEnemyVisible = IsAnyEnemyVisible(_cachedEnemies);
             return _cachedAnyEnemyVisible;
         }
 
+        private static readonly Vector3[] VisibilitySampleOffsets =
+        {
+            new Vector3(0f, 0.5f, 0f),
+            new Vector3(0f, 1.2f, 0f),
+            new Vector3(0f, 1.8f, 0f),
+        };
+
         private bool IsAnyEnemyVisible(EnemyHealth[]? enemies)
         {
+            _mainCam = Camera.main;
             var cam = _mainCam;
-            if (cam == null || enemies == null) return false;
+            if (cam == null || enemies == null)
+                return false;
 
             Vector3 origin;
             try
@@ -158,30 +275,42 @@ namespace Dread.Systems
                 var e = enemies[i];
                 if (!EnemyHealthCompat.IsValid(e))
                     continue;
+                if (DreadHallucinationMob.IsHallucination(e))
+                    continue;
 
                 try
                 {
                     if (!EnemyHealthCompat.IsAliveForVisibility(e))
                         continue;
 
-                    var target = ProximityScan.GetFocusPosition(e);
-
-                    if (Vector3.Distance(origin, target) < 0.75f)
+                    if (IsEnemyVisibleFrom(origin, e))
                         return true;
-
-                    if (Physics.Linecast(origin, target, out var hit, VisionBlockMask, QueryTriggerInteraction.Ignore))
-                    {
-                        if (hit.collider != null && hit.collider.transform.IsChildOf(e.transform))
-                            return true;
-                        continue;
-                    }
-
-                    return true;
                 }
                 catch
                 {
                     continue;
                 }
+            }
+
+            return false;
+        }
+
+        private static bool IsEnemyVisibleFrom(Vector3 origin, EnemyHealth enemy)
+        {
+            var baseTarget = ProximityScan.GetFocusPosition(enemy);
+
+            for (int s = 0; s < VisibilitySampleOffsets.Length; s++)
+            {
+                var target = baseTarget + VisibilitySampleOffsets[s];
+                float dist = Vector3.Distance(origin, target);
+                if (dist < 0.75f)
+                    return true;
+
+                if (!Physics.Linecast(origin, target, out var hit, VisionBlockMask, QueryTriggerInteraction.Ignore))
+                    return true;
+
+                if (hit.collider != null && hit.collider.transform.IsChildOf(enemy.transform))
+                    return true;
             }
 
             return false;

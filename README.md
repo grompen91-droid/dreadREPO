@@ -209,7 +209,8 @@ FakeFootstepsEnabled = true
 
 [4. Psychotic Break]
 PsychoticBreakEnabled = true
-PsychoticBreakTriggerChance = 0.01     # 1% per 2s check
+PsychoticBreakChancePercent = 1.0        # target % per hide window (derived timing)
+PsychoticBreakAccentEnabled = true       # horror edge accents on blackout
 PsychoticBreakDuration = 20            # episode length in seconds
 PsychoticBreakOncePerMatch = true
 

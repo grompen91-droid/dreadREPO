@@ -54,7 +54,7 @@ namespace Dread.Systems.Core
             return true;
         }
 
-        private static bool HasForeignOwners(Patches info)
+        private static bool HasForeignOwners(HarmonyLib.Patches info)
         {
             foreach (var patch in info.Prefixes)
             {
