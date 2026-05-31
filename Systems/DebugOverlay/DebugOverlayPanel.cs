@@ -40,6 +40,9 @@ namespace Dread.Systems
             var panel = new Rect(marginX, marginY, width, height);
             GUI.Box(panel, EmptyContent, _boxStyle!);
 
+            // Solid steel accent rail down the left edge (S2 "Slate HUD" look).
+            GUI.Box(new Rect(panel.x, panel.y, 3f, height), EmptyContent, _railStyle!);
+
             float x = panel.x + padX;
             float y = panel.y + padTop;
             float innerW = width - padX * 2f;
@@ -50,6 +53,12 @@ namespace Dread.Systems
                 if (row.Kind == RowSep)
                 {
                     GUI.Box(new Rect(x, y + lineH * 0.5f - 1f, innerW, 1f), EmptyContent, _sepStyle!);
+                }
+                else if (row.Kind == RowSection)
+                {
+                    // Short steel tick, then the uppercase section label.
+                    GUI.Box(new Rect(x, y + lineH * 0.5f - 0.5f, 9f, 1f), EmptyContent, _railStyle!);
+                    GUI.Label(new Rect(x + 15f, y, innerW - 15f, lineH), row.Left, _sectionStyle!);
                 }
                 else if (row.Kind == RowHeader)
                 {
@@ -76,6 +85,7 @@ namespace Dread.Systems
             AddSep();
 
             // Performance
+            AddSection("Performance");
             float fps = _smoothedDelta > 0f ? 1f / _smoothedDelta : 0f;
             float ms = _smoothedDelta * 1000f;
             Color fpsCol = fps >= 60f ? ColGood : fps >= 30f ? ColWarn : ColBad;
@@ -85,9 +95,9 @@ namespace Dread.Systems
             AddRow("GC", $"g0 {GC.CollectionCount(0)}  g1 {GC.CollectionCount(1)}  g2 {GC.CollectionCount(2)}", ColDim);
             AddRow("Screen", $"{Screen.width}x{Screen.height}", ColDim);
             AddRow("Frames", Time.frameCount.ToString(), ColDim);
-            AddSep();
 
             // Mod state
+            AddSection("Mod State");
             float nearest = DreadRuntimeState.NearestEnemyDist;
             string enemy = nearest >= float.MaxValue * 0.5f ? "none" : $"{nearest:F1} m  (range 15m)";
             AddRow("Enemy", enemy, ColValue);
@@ -107,7 +117,7 @@ namespace Dread.Systems
 
             AddRow("Audio", AudioSummary(), ColValue);
 
-            AddSep();
+            AddSection("System");
             AddRow("Config",
                 $"compat{PlusMinus(DreadConfig.CompatibilityMode.Value)} "
                 + $"aggr{PlusMinus(DreadConfig.MonsterAggressionEnabled.Value)} "
@@ -124,6 +134,9 @@ namespace Dread.Systems
 
         private void AddHeader(string left, string right)
             => _rows.Add(new RowData { Left = left, Right = right, Kind = RowHeader });
+
+        private void AddSection(string label)
+            => _rows.Add(new RowData { Left = label.ToUpperInvariant(), Right = string.Empty, Kind = RowSection });
 
         private void AddSep()
             => _rows.Add(new RowData { Left = string.Empty, Right = string.Empty, Kind = RowSep });
