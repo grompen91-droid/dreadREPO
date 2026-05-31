@@ -290,6 +290,7 @@ namespace Dread.Systems
                 ColDim);
 
             AddRow("Audio", AudioSummary(), ColValue);
+            AddRow("Lure", LureSummary(), LureColor());
 
             AddSection("System");
             AddRow("Config",
@@ -355,6 +356,18 @@ namespace Dread.Systems
                 : "next n/a";
             return $"{DreadRuntimeState.AudioClipCount}/4  {next}";
         }
+
+        private static string LureSummary()
+        {
+            if (DreadRuntimeState.LureTarget.Length == 0)
+                return "idle";
+
+            return $"{DreadRuntimeState.LureTarget}  step {DreadRuntimeState.LurePullStep}  "
+                + $"camp {DreadRuntimeState.LureCampTimer:F0}s";
+        }
+
+        private static Color LureColor()
+            => DreadRuntimeState.LureTarget.Length == 0 ? ColDim : ColWarn;
 
         private static string OnOff(bool value) => value ? "ON" : "off";
 
