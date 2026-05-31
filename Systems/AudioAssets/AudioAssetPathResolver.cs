@@ -6,6 +6,9 @@ namespace Dread.Systems.AudioAssets
     /// <summary>Maps feature category + file name to canonical manifest paths.</summary>
     internal static class AudioAssetPathResolver
     {
+        private static readonly HashSet<string> KnownManifestPaths =
+            new(StringComparer.OrdinalIgnoreCase);
+
         private static readonly Dictionary<(string Category, string FileName), string> Map =
             new(StringTupleComparer.Instance)
             {
@@ -39,24 +42,34 @@ namespace Dread.Systems.AudioAssets
             }
         }
 
+        public static void RegisterManifestPaths(IEnumerable<string> paths)
+        {
+            KnownManifestPaths.Clear();
+            foreach (var path in paths)
+                KnownManifestPaths.Add(path);
+        }
+
+        public static bool IsKnownManifestPath(string manifestPath)
+            => KnownManifestPaths.Contains(manifestPath);
+
         public static bool TryResolve(string category, string fileName, out string manifestPath)
         {
             manifestPath = "";
             if (Map.TryGetValue((category, fileName), out var path))
             {
                 manifestPath = path;
-                return true;
+                return IsKnownManifestPath(path);
             }
 
             if (fileName.Contains("/") || fileName.Contains("\\"))
             {
                 manifestPath = fileName.Replace('\\', '/');
-                return true;
+                return IsKnownManifestPath(manifestPath);
             }
 
             var combined = category.TrimEnd('/') + "/" + fileName;
             manifestPath = combined;
-            return true;
+            return IsKnownManifestPath(manifestPath);
         }
 
         private sealed class StringTupleComparer : IEqualityComparer<(string Category, string FileName)>

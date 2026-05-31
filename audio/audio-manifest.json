@@ -66,13 +66,6 @@
       "sizeBytes": 342908,
       "priority": 42,
       "sha256": "9b1e41ba7a0d37e237d04fff8e0f49558307e26f4177952efcde9f98f6fc868b"
-    },
-    {
-      "path": "ambient_dread/door_creak.ogg",
-      "assetName": "ambient_dread__door_creak.ogg",
-      "sizeBytes": 57891,
-      "priority": 99,
-      "sha256": "4bef7e1535959a6b34939200ce10edee42b766d99ae74b994b739137ab5b3603"
     }
   ]
 }

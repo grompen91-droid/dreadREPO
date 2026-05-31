@@ -52,6 +52,15 @@ foreach ($entry in $manifest.files) {
         exit 1
     }
 
+    if ($entry.sha256) {
+        $hash = (Get-FileHash -Path $filePath -Algorithm SHA256).Hash.ToLowerInvariant()
+        $expected = $entry.sha256.ToLowerInvariant()
+        if ($hash -ne $expected) {
+            Write-Error "sha256 mismatch for $($entry.path): manifest=$expected disk=$hash"
+            exit 1
+        }
+    }
+
     $count++
 }
 

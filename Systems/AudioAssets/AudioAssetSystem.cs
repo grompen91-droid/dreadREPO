@@ -15,6 +15,10 @@ namespace Dread.Systems.AudioAssets
         private readonly Dictionary<string, List<Action<AudioClip?>>> _pending = new(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> _categoryFirstReady = new(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> _decodeInFlight = new(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> _downloadInFlight = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, int> _downloadAttempts = new(StringComparer.OrdinalIgnoreCase);
+
+        private const int MaxDownloadAttempts = 3;
 
         private AudioManifest? _manifest;
         private readonly List<AudioManifestFile> _downloadQueue = new();
@@ -23,7 +27,6 @@ namespace Dread.Systems.AudioAssets
         private bool _allReadyRaised;
         private bool _firstRunNoticeShown;
         private bool _startupDone;
-        private int _decodedCount;
 
         private void Awake()
         {
@@ -50,8 +53,7 @@ namespace Dread.Systems.AudioAssets
 
             var inRun = !GameplayContext.IsMenuLevel();
             _policy.OnFrameSample(Time.unscaledDeltaTime, inRun);
-            DreadRuntimeState.AudioAssetsQueueRemaining = _downloadQueue.Count
-                + (_activeDownloads > 0 ? _activeDownloads : 0);
+            DreadRuntimeState.AudioAssetsQueueRemaining = _downloadQueue.Count + _activeDownloads;
         }
 
         private IEnumerator StartupRoutine()
@@ -61,6 +63,9 @@ namespace Dread.Systems.AudioAssets
                 LoggingService.LogError($"[AudioAssets] Failed to load manifest: {err}");
                 yield break;
             }
+
+            AudioAssetPathResolver.RegisterManifestPaths(
+                Array.ConvertAll(_manifest.Files, f => f.Path));
 
             var reconcile = AudioCacheReconciler.Reconcile(_manifest);
             LoggingService.LogInfo(
@@ -134,11 +139,18 @@ namespace Dread.Systems.AudioAssets
 
         private IEnumerator DownloadOne(AudioManifestFile entry)
         {
+            if (!_downloadInFlight.Add(entry.Path))
+            {
+                _activeDownloads = Math.Max(0, _activeDownloads - 1);
+                yield break;
+            }
+
             try
             {
                 var dest = AudioCachePaths.FilePathForManifestEntry(entry.Path);
                 if (AudioCacheValidator.IsValidOnDisk(dest, entry))
                 {
+                    _downloadAttempts.Remove(entry.Path);
                     yield return DecodeAndFulfill(entry.Path);
                     yield break;
                 }
@@ -147,6 +159,7 @@ namespace Dread.Systems.AudioAssets
                 var result = AudioAssetDownloader.TryDownload(_manifest!, entry, dest);
                 if (result.Success)
                 {
+                    _downloadAttempts.Remove(entry.Path);
                     _policy.RecordDownload(result.BytesReceived, result.ElapsedSeconds);
                     yield return DecodeAndFulfill(entry.Path);
                 }
@@ -154,12 +167,17 @@ namespace Dread.Systems.AudioAssets
                 {
                     LoggingService.LogWarning($"[AudioAssets] Failed {entry.Path}: {result.Error}");
                     _policy.ResetSessionOnError();
-                    _downloadQueue.Add(entry);
-                    FulfillPath(entry.Path, null);
+                    var attempts = _downloadAttempts.TryGetValue(entry.Path, out var n) ? n + 1 : 1;
+                    _downloadAttempts[entry.Path] = attempts;
+                    if (attempts < MaxDownloadAttempts)
+                        EnqueueSorted(entry);
+                    else
+                        FulfillPath(entry.Path, null);
                 }
             }
             finally
             {
+                _downloadInFlight.Remove(entry.Path);
                 _activeDownloads = Math.Max(0, _activeDownloads - 1);
             }
         }
@@ -194,7 +212,6 @@ namespace Dread.Systems.AudioAssets
                 else if (clip != null)
                 {
                     _clipsByPath[manifestPath] = clip;
-                    _decodedCount++;
                     LoggingService.LogVerbose($"[AudioAssets] Ready {manifestPath}");
                     CheckAllReady();
                 }
@@ -237,11 +254,17 @@ namespace Dread.Systems.AudioAssets
                 return;
             }
 
+            var entry = _manifest?.FindByPath(manifestPath);
+            if (entry == null)
+            {
+                onReady(null);
+                return;
+            }
+
             RegisterPending(manifestPath, onReady);
 
             var disk = AudioCachePaths.FilePathForManifestEntry(manifestPath);
-            var entry = _manifest?.FindByPath(manifestPath);
-            if (entry != null && AudioCacheValidator.IsValidOnDisk(disk, entry))
+            if (AudioCacheValidator.IsValidOnDisk(disk, entry))
             {
                 StartCoroutine(DecodeAndFulfill(manifestPath));
                 return;
@@ -255,9 +278,17 @@ namespace Dread.Systems.AudioAssets
             if (entry == null)
                 return;
 
+            if (_downloadInFlight.Contains(entry.Path))
+                return;
+
             if (_downloadQueue.Any(f => f.Path == entry.Path))
                 return;
 
+            EnqueueSorted(entry);
+        }
+
+        private void EnqueueSorted(AudioManifestFile entry)
+        {
             _downloadQueue.Add(entry);
             _downloadQueue.Sort((a, b) => a.Priority.CompareTo(b.Priority));
         }

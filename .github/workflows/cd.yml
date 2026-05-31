@@ -378,12 +378,14 @@ jobs:
 
           $dllAssets = Get-ChildItem "${{ runner.temp }}/dll/*.dll" | ForEach-Object { $_.FullName }
           gh release create "$releaseTag" `
+            --draft `
             --title "v$newVersion" `
             --notes-file "${{ runner.temp }}/release-body/release-body.md" `
             @dllAssets `
             "$($zipFile.FullName)"
 
           pwsh -NoProfile ./.github/scripts/upload-audio-release-assets.ps1 -ReleaseTag $releaseTag
+          gh release edit "$releaseTag" --draft=false
 
       - name: Create post-release issue
         if: success()
