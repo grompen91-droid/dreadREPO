@@ -1,0 +1,78 @@
+{
+  "schema": 1,
+  "modVersion": "1.6.1",
+  "releaseTag": "v1.6.1",
+  "baseUrl": "https://github.com/grompen91-droid/dreadREPO/releases/download/v1.6.1",
+  "files": [
+    {
+      "path": "shared/footsteps.ogg",
+      "assetName": "shared__footsteps.ogg",
+      "sizeBytes": 7441,
+      "priority": 5,
+      "sha256": "0caa69575611f177857f07be877677c9a6e8da84a2a7e46aae5ebbb8e01ba3fb"
+    },
+    {
+      "path": "ambient_dread/scraping.ogg",
+      "assetName": "ambient_dread__scraping.ogg",
+      "sizeBytes": 41909,
+      "priority": 10,
+      "sha256": "242b70bc0079cf05f24937a3c6632d815e29f8d259e7d004972fedffb49b0ee4"
+    },
+    {
+      "path": "ambient_dread/whisper.ogg",
+      "assetName": "ambient_dread__whisper.ogg",
+      "sizeBytes": 21809,
+      "priority": 11,
+      "sha256": "a05ef863de7b2901a952f380eaa745dddb9a427972937cd943a521a983816d61"
+    },
+    {
+      "path": "shared/breathing.ogg",
+      "assetName": "shared__breathing.ogg",
+      "sizeBytes": 45567,
+      "priority": 12,
+      "sha256": "81952b8123ab2865a7995ab39b19759a2466e8bc8d6dc4bbe2f3936c27809952"
+    },
+    {
+      "path": "tension/breath2.ogg",
+      "assetName": "tension__breath2.ogg",
+      "sizeBytes": 45567,
+      "priority": 30,
+      "sha256": "81952b8123ab2865a7995ab39b19759a2466e8bc8d6dc4bbe2f3936c27809952"
+    },
+    {
+      "path": "tension/breath3.ogg",
+      "assetName": "tension__breath3.ogg",
+      "sizeBytes": 45567,
+      "priority": 31,
+      "sha256": "81952b8123ab2865a7995ab39b19759a2466e8bc8d6dc4bbe2f3936c27809952"
+    },
+    {
+      "path": "psychotic_break/scream_peak.ogg",
+      "assetName": "psychotic_break__scream_peak.ogg",
+      "sizeBytes": 108086,
+      "priority": 40,
+      "sha256": "aacce5847316cdc9fe4829495062a746e7675a4f24d83fb3cfde0aae458804e7"
+    },
+    {
+      "path": "psychotic_break/scream_distant.ogg",
+      "assetName": "psychotic_break__scream_distant.ogg",
+      "sizeBytes": 331315,
+      "priority": 41,
+      "sha256": "0b9a0f251c7e29622b65c3b8b532095d0d5c139ed369ca3d266ed3e6bcabe665"
+    },
+    {
+      "path": "psychotic_break/scream_threat.ogg",
+      "assetName": "psychotic_break__scream_threat.ogg",
+      "sizeBytes": 342908,
+      "priority": 42,
+      "sha256": "9b1e41ba7a0d37e237d04fff8e0f49558307e26f4177952efcde9f98f6fc868b"
+    },
+    {
+      "path": "ambient_dread/door_creak.ogg",
+      "assetName": "ambient_dread__door_creak.ogg",
+      "sizeBytes": 57891,
+      "priority": 99,
+      "sha256": "4bef7e1535959a6b34939200ce10edee42b766d99ae74b994b739137ab5b3603"
+    }
+  ]
+}

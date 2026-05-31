@@ -11,6 +11,11 @@ namespace Dread.Config
         public static ConfigEntry<float> AudioFrequency = null!;
         public static ConfigEntry<float> AudioVolume = null!;
 
+        // 1b. Audio Assets (remote download)
+        public static ConfigEntry<int> AudioAssetsMaxConcurrentDownloads = null!;
+        public static ConfigEntry<bool> AudioAssetsShowFirstRunNotice = null!;
+        public static ConfigEntry<bool> AudioAssetsKeepOtherCaches = null!;
+
         // 2. Monster Overhaul
         public static ConfigEntry<bool> MonsterAggressionEnabled = null!;
         public static ConfigEntry<bool> MonsterAudioEnabled = null!;
@@ -77,6 +82,24 @@ namespace Dread.Config
                 new ConfigDescription(
                     "Ambient sound volume (0.0 - 1.0).",
                     new AcceptableValueRange<float>(0.0f, 1.0f)));
+
+            AudioAssetsMaxConcurrentDownloads = cfg.Bind(
+                "1b. Audio Assets",
+                "MaxConcurrentDownloads",
+                0,
+                new ConfigDescription(
+                    "Parallel audio downloads. 0 = auto from network speed and CPU, 1-3 = fixed cap.",
+                    new AcceptableValueRange<int>(0, 3)));
+            AudioAssetsShowFirstRunNotice = cfg.Bind(
+                "1b. Audio Assets",
+                "ShowFirstRunNotice",
+                true,
+                "Log a one-time info message when audio downloads start on first run.");
+            AudioAssetsKeepOtherCaches = cfg.Bind(
+                "1b. Audio Assets",
+                "KeepOtherCaches",
+                false,
+                "Debug only: do not delete other version folders under audio-cache after reconcile.");
 
             MonsterAggressionEnabled = cfg.Bind("2. Monster Overhaul", "AggressionEnabled", true,
                 "Increase monster speed. HOST ONLY.");
@@ -204,6 +227,7 @@ namespace Dread.Config
             ConfigEntryBase?[] allFields =
             [
                 AudioEnabled, AudioFrequency, AudioVolume,
+                AudioAssetsMaxConcurrentDownloads, AudioAssetsShowFirstRunNotice, AudioAssetsKeepOtherCaches,
                 MonsterAggressionEnabled, MonsterAudioEnabled,
                 MonsterLureEnabled, LureSafeDistance, LureCampSeconds, LureEscalateSeconds, LureCooldownSeconds,
                 SnitchEnabled, SnitchPOIDurationSeconds,

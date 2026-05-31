@@ -88,6 +88,22 @@ namespace Dread.Systems
             }
         }
 
+        /// <summary>Decode an OGG file from disk into an AudioClip (used by AudioAssetSystem).</summary>
+        public static bool TryDecodeFromDisk(string diskPath, string clipName, out AudioClip? clip)
+        {
+            clip = null;
+            if (!File.Exists(diskPath))
+                return false;
+
+            if (TryLoadWithNvorbis(diskPath, clipName, out var nvClip))
+            {
+                clip = nvClip;
+                return true;
+            }
+
+            return false;
+        }
+
         public static void ClearCache()
         {
             Cache.Clear();

@@ -36,8 +36,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **UI:** `DreadNotificationSystem` transient corner toasts; thread-safe `Info` / `Warn` / `Bad` API; severity carried by rail color (no icons); slide in, hold, self-dismiss with a life bar
 - **UI:** `DreadWidgets` reusable monochrome widgets (determinate loading bar, indeterminate marquee, value slider); overlay "Kit" button reveals an in-game demo of the loading bar, slider, and toasts
 - **Stubs:** `GUI.HorizontalSlider` (plain and styled) and `GUIStyle.fixedWidth` / `fixedHeight` added to the IMGUIModule stub
+- **AUDIO-5:** Remote audio asset system (`AudioAssetSystem`): embedded `audio-manifest.json`, GitHub Release downloads, versioned `audio-cache/`, cross-version import, automatic prune of old caches, adaptive parallel downloads (speed + CPU), `AudioAssetApi` for features
+- Config section `1b. Audio Assets` (`MaxConcurrentDownloads`, `ShowFirstRunNotice`, `KeepOtherCaches`)
+- CD: per-file audio upload to GitHub Releases (`upload-audio-release-assets.ps1`); Thunderstore zip no longer includes OGG files
 
 ### Changed
+- Audio reorganized under `audio/{ambient_dread,tension,psychotic_break,shared}/` with release asset names `category__file.ogg`
+- `AudioDreadSystem`, `TensionSystem`, `PsychoticBreakSystem` use `AudioAssetApi` (progressive load) instead of bundled `audio/` folder
 - **Core:** `ProximityScan` in `Systems/Core/` replaces `EnemyScanCache`; tension, monster audio, debug server, psychotic break, and error reporting share one scan seam (ADR-0008 proximity pattern consolidated)
 - **Core:** `HarmonyPatchRegistry` + `PatchLifecycle` centralize patch apply/remove; `Plugin.cs` delegates patch wiring (ADR-0009 preserved)
 - **Core:** `PlayerInputLockCompat` shared by psychotic break and error-reporting prompt

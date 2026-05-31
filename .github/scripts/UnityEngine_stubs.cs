@@ -222,12 +222,20 @@ namespace UnityEngine
         public static void LogException(System.Exception exception) { }
     }
     public enum LogType { Error, Assert, Warning, Log, Exception }
+    public enum NetworkReachability
+    {
+        NotReachable,
+        ReachableViaCarrierDataNetwork,
+        ReachableViaLocalAreaNetwork,
+    }
+
     public static class Application
     {
         public static string dataPath { get; }
         public static string version { get; }
         public static string unityVersion { get; }
         public static RuntimePlatform platform { get; }
+        public static NetworkReachability internetReachability { get; }
         public delegate void LogCallback(string logString, string stackTrace, LogType type);
         public static event LogCallback logMessageReceived;
         public static event Action quitting;

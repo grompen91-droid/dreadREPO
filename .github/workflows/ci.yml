@@ -92,6 +92,7 @@ jobs:
         shell: bash
         run: |
           set -e
+          pwsh -NoProfile ./.github/scripts/validate-audio-manifest.ps1
           refsDir=".github/stubs/refs"
           dotnet build Dread.csproj -c Release --nologo \
             -p:GameDir="$refsDir" \

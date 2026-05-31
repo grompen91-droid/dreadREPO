@@ -51,6 +51,10 @@ namespace Dread.Systems
         /// <summary>Why camp lure is inactive (empty when running).</summary>
         public static string LureBlockReason { get; internal set; } = "";
 
+        public static int AudioAssetsConcurrentDownloads { get; internal set; } = 1;
+        public static float AudioAssetsMeasuredBytesPerSec { get; internal set; }
+        public static int AudioAssetsQueueRemaining { get; internal set; }
+
         public static int DreadPatchCount { get; internal set; }
     }
 }

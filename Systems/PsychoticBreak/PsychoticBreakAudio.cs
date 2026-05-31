@@ -1,4 +1,5 @@
 using System.Collections;
+using Dread.Systems.AudioAssets;
 using Dread.Systems.Core;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -7,6 +8,8 @@ namespace Dread.Systems
 {
     public partial class PsychoticBreakSystem
     {
+        private const string AudioCategory = "psychotic_break";
+
         private void CleanupFootstepSource()
         {
             if (_footstepSource != null)
@@ -37,29 +40,41 @@ namespace Dread.Systems
                 "footsteps.ogg",
             };
 
-            yield return AudioClipLoader.LoadClips(files, (name, clip) =>
+            var pending = files.Length;
+            foreach (var name in files)
             {
-                switch (name)
+                AudioAssetApi.RequestClip(AudioCategory, name, clip =>
                 {
-                    case "scream_peak.ogg":
-                        _peakScreamClip = clip;
-                        break;
-                    case "scream_distant.ogg":
-                        _distantScreamClip = clip;
-                        break;
-                    case "scream_threat.ogg":
-                        _threatScreamClip = clip;
-                        break;
-                    case "footsteps.ogg":
-                        _footstepClip = clip;
-                        break;
-                }
+                    switch (name)
+                    {
+                        case "scream_peak.ogg":
+                            _peakScreamClip = clip;
+                            break;
+                        case "scream_distant.ogg":
+                            _distantScreamClip = clip;
+                            break;
+                        case "scream_threat.ogg":
+                            _threatScreamClip = clip;
+                            break;
+                        case "footsteps.ogg":
+                            _footstepClip = clip;
+                            break;
+                    }
 
-                if (clip != null)
-                    LoggingService.LogInfo($"[PsychoticBreak] Loaded {name}");
-                else
-                    LoggingService.LogWarning($"[PsychoticBreak] Missing or failed: {name}");
-            });
+                    if (clip != null)
+                    {
+                        LoggingService.LogInfo($"[PsychoticBreak] Loaded {name}");
+                        DreadRuntimeState.PsychoticBreakClipsLoaded = true;
+                    }
+                    else
+                        LoggingService.LogWarning($"[PsychoticBreak] Missing or failed: {name}");
+
+                    pending--;
+                });
+            }
+
+            while (pending > 0)
+                yield return null;
         }
 
         private void PlayCirclingFootsteps()

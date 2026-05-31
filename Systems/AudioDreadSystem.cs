@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Dread.Config;
+using Dread.Systems.AudioAssets;
 using Dread.Systems.Core;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -9,17 +10,20 @@ namespace Dread.Systems
 {
     public class AudioDreadSystem : MonoBehaviour
     {
+        private const string Category = "ambient_dread";
+
         private readonly List<AudioClip> _clips = new();
+        private readonly HashSet<string> _pendingNames = new();
         private Camera? _mainCam;
         private bool _sceneLoaded;
         private float _nextPlayAt = -1f;
+        private bool _playLoopStarted;
 
         private static readonly string[] ClipNames =
         {
             "scraping.ogg", "footsteps.ogg", "breathing.ogg", "whisper.ogg"
         };
 
-        // Weight per clip name — lower = rarer. Unlisted clips default to 1.0.
         private static readonly Dictionary<string, float> ClipWeights = new()
         {
             { "scraping.ogg",   0.6f },
@@ -33,13 +37,15 @@ namespace Dread.Systems
             LoggingService.LogVerbose("[AudioDread] Awake starting...");
             SceneManager.sceneLoaded += OnSceneLoaded;
             OnSceneLoaded(SceneManager.GetActiveScene(), LoadSceneMode.Single);
-            StartCoroutine(LoadClips());
+            AudioAssetApi.OnCategoryFirstClipReady += OnCategoryFirstClipReady;
+            StartCoroutine(WaitAndRequestClips());
         }
 
         private void OnDestroy()
         {
             StopAllCoroutines();
             SceneManager.sceneLoaded -= OnSceneLoaded;
+            AudioAssetApi.OnCategoryFirstClipReady -= OnCategoryFirstClipReady;
         }
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -48,24 +54,38 @@ namespace Dread.Systems
             _mainCam = Camera.main;
         }
 
-        private IEnumerator LoadClips()
+        private void OnCategoryFirstClipReady(string category)
+        {
+            if (category == Category && !_playLoopStarted && _clips.Count > 0)
+                StartCoroutine(PlayLoop());
+        }
+
+        private IEnumerator WaitAndRequestClips()
         {
             while (!_sceneLoaded || GameplayContext.IsMenuLevel())
                 yield return null;
 
-            yield return AudioClipLoader.LoadClips(ClipNames, (name, clip) =>
+            foreach (var name in ClipNames)
             {
-                if (clip != null) _clips.Add(clip);
-            });
-
-            LoggingService.LogInfo($"[AudioDread] Loaded {_clips.Count}/{ClipNames.Length} clips.");
-            DreadRuntimeState.AudioClipCount = _clips.Count;
-            StartCoroutine(PlayLoop());
+                _pendingNames.Add(name);
+                AudioAssetApi.RequestClip(Category, name, clip =>
+                {
+                    _pendingNames.Remove(name);
+                    if (clip != null && !_clips.Contains(clip))
+                        _clips.Add(clip);
+                    DreadRuntimeState.AudioClipCount = _clips.Count;
+                    if (_clips.Count > 0 && !_playLoopStarted)
+                    {
+                        _playLoopStarted = true;
+                        LoggingService.LogInfo($"[AudioDread] Loaded {_clips.Count}/{ClipNames.Length} clips (progressive).");
+                        StartCoroutine(PlayLoop());
+                    }
+                });
+            }
         }
 
         private IEnumerator PlayLoop()
         {
-            // Avoid ambient sounds during initial level load / spawn
             yield return new WaitForSeconds(30f);
 
             while (true)
@@ -99,19 +119,27 @@ namespace Dread.Systems
             }
         }
 
-        private AudioClip PickWeightedClip()
+        private AudioClip? PickWeightedClip()
         {
-            if (_clips.Count == 0) return null;
+            if (_clips.Count == 0)
+                return null;
+
             float total = 0f;
             foreach (var c in _clips)
-                total += ClipWeights.TryGetValue(c.name, out var w) ? w : 1.0f;
+            {
+                var key = c.name.EndsWith(".ogg") ? c.name : c.name + ".ogg";
+                total += ClipWeights.TryGetValue(key, out var w) ? w : 1.0f;
+            }
 
             float roll = Random.Range(0f, total);
             foreach (var c in _clips)
             {
-                roll -= ClipWeights.TryGetValue(c.name, out var w) ? w : 1.0f;
-                if (roll <= 0f) return c;
+                var key = c.name.EndsWith(".ogg") ? c.name : c.name + ".ogg";
+                roll -= ClipWeights.TryGetValue(key, out var w) ? w : 1.0f;
+                if (roll <= 0f)
+                    return c;
             }
+
             return _clips[_clips.Count - 1];
         }
 

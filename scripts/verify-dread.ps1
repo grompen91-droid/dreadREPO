@@ -139,10 +139,17 @@ if (-not $SkipMcpBuild) {
 # Package layout (manifest + icon + audio)
 $manifestOk = Test-Path "manifest.json"
 $iconOk = Test-Path "icon.png"
-$audioOk = (Test-Path "audio") -and ((Get-ChildItem audio -Filter *.ogg -ErrorAction SilentlyContinue).Count -ge 4)
+$audioManifestOk = Test-Path "audio/audio-manifest.json"
+$audioOggCount = (Get-ChildItem audio -Recurse -Filter *.ogg -ErrorAction SilentlyContinue).Count
+$audioOk = $audioManifestOk -and ($audioOggCount -ge 4)
+$audioManifestValid = $false
+if ($audioManifestOk) {
+    pwsh -NoProfile ./.github/scripts/validate-audio-manifest.ps1 2>&1 | Out-Null
+    $audioManifestValid = $LASTEXITCODE -eq 0
+}
 Add-Check -Tier "tier0" -Id "manifest" -Ok $manifestOk -Message $(if ($manifestOk) { "manifest.json present" } else { "missing manifest.json" })
 Add-Check -Tier "tier0" -Id "icon" -Ok $iconOk -Message $(if ($iconOk) { "icon.png present" } else { "missing icon.png" })
-Add-Check -Tier "tier0" -Id "audio" -Ok $audioOk -Message $(if ($audioOk) { "audio/*.ogg present" } else { "missing audio clips" })
+Add-Check -Tier "tier0" -Id "audio" -Ok ($audioOk -and $audioManifestValid) -Message $(if ($audioOk -and $audioManifestValid) { "audio-manifest + OGG tree OK ($audioOggCount files)" } else { "audio-manifest or OGG layout invalid" })
 
 # Tier 1: TCP ping + verify when host provided
 if ($TargetHost) {

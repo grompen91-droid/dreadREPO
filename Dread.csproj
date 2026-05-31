@@ -91,11 +91,11 @@
     </Reference>
   </ItemGroup>
 
-  <!-- Copy audio folder to output alongside DLL -->
   <ItemGroup>
-    <None Include="audio\**\*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <EmbeddedResource Include="audio\audio-manifest.json">
+      <LogicalName>Dread.audio.audio-manifest.json</LogicalName>
+    </EmbeddedResource>
+    <None Include="audio\**\*.ogg" />
   </ItemGroup>
 
   <Target Name="GenerateStubs" BeforeTargets="CoreCompile" Condition="!Exists('$(GameDir)\UnityEngine.dll') And !Exists('$(MSBuildProjectDirectory)/.github/stubs/refs/UnityEngine.dll')">
@@ -121,10 +121,6 @@
       <PluginDeps Include="$(OutputPath)NVorbis.dll;$(OutputPath)System.Memory.dll;$(OutputPath)System.Buffers.dll;$(OutputPath)System.Numerics.Vectors.dll;$(OutputPath)System.Runtime.CompilerServices.Unsafe.dll" />
     </ItemGroup>
     <Copy SourceFiles="@(PluginDeps)" DestinationFolder="$(PluginDir)" SkipUnchangedFiles="true" Condition="Exists('%(PluginDeps.Identity)')" />
-    <ItemGroup>
-      <AudioFiles Include="audio\**\*" />
-    </ItemGroup>
-    <Copy SourceFiles="@(AudioFiles)" DestinationFolder="$(PluginDir)\audio\%(RecursiveDir)" SkipUnchangedFiles="true" />
     <Message Text="[Dread] Deployed to $(PluginDir)" Importance="high" />
   </Target>
 

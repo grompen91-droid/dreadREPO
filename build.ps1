@@ -35,9 +35,8 @@ $pluginOut = "$outDir\BepInEx\plugins\$name"
 Copy-PluginBinaries -SourceDir "bin\Release\net48" -DestDir $pluginOut
 Test-PluginBinariesPresent -Dir $pluginOut
 
-if (Test-Path "audio") {
-    Copy-Item -Recurse "audio" "$outDir\BepInEx\plugins\$name\"
-}
+pwsh -NoProfile "$PSScriptRoot/.github/scripts/validate-audio-manifest.ps1"
+if ($LASTEXITCODE -ne 0) { Write-Error "audio-manifest validation failed"; exit 1 }
 
 Copy-Item "manifest.json" $outDir
 if (Test-Path "THUNDERSTORE_README.md") {

@@ -57,7 +57,7 @@ Plugin.Start() / deferred retry
             +-- DebugServerSystem             # TCP debug server for AI agents (default off)
 ```
 
-Runtime systems are registered in `DreadSystemRegistry` and spawned with per-system fail-safe isolation (ARCH-3). Audio loads from DLL-adjacent `audio/*.ogg` via **NVorbis** (primary) with optional `UnityWebRequest` when the Unity module is usable (`UnityWebRequestCompat`, `AudioClipLoader`). A failure in one system does not prevent others from starting.
+Runtime systems are registered in `DreadSystemRegistry` and spawned with per-system fail-safe isolation (ARCH-3). **Audio** downloads version-pinned OGG files from the matching [GitHub Release](https://github.com/grompen91-droid/dreadREPO/releases) on first run (into `audio-cache/v{version}/`), then decodes via **NVorbis** (`AudioAssetSystem`, `AudioClipLoader`). The Thunderstore package is DLL-only; features start progressively as each clip arrives. A failure in one system does not prevent others from starting.
 
 ---
 
@@ -276,7 +276,9 @@ See **[docs/mod-compatibility.md](docs/mod-compatibility.md)** for the full matr
 - **Broken profiles**: set `CompatibilityMode = true` or `ErrorReportingEnabled = false` without uninstalling Dread.
 - **REPOLib**: not required (removed in v1.4.0).
 
-The `audio/` folder includes `door_creak.ogg` which is shipped but not currently loaded by any system. It is available for future ambient variants or custom sound replacement.
+The repo `audio/` tree includes `ambient_dread/door_creak.ogg` on the release manifest but not loaded by any system yet. It is available for future ambient variants.
+
+**Offline / slow network:** ambient and tension features work with whatever clips are already cached; missing files stay queued until download succeeds. Pin parallel downloads in config (`1b. Audio Assets` > `MaxConcurrentDownloads`, 0 = auto).
 
 ---
 

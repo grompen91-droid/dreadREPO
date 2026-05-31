@@ -274,7 +274,9 @@ Open conflicts only. Resolved terms live in **Language** above.
 | Psychotic break | `Systems/PsychoticBreak/` |
 | Error reporting | `Systems/ErrorReporting/` (+ `ErrorReportJson.cs` at `Systems/` root) |
 | Debug overlay | `Systems/DebugOverlay/` |
-| OGG assets | `audio/` |
+| Remote assets (audio) | `Systems/AudioAssets/`, `audio/audio-manifest.json`, cache `audio-cache/v{VERSION}/` |
+| Remote assets (images) | Future (ASSET-1): same manifest/cache pattern, not implemented |
+| Authoring OGG (git + GitHub Release) | `audio/{category}/*.ogg` |
 | Architecture decisions | `docs/adr/` |
 | Agent orchestration hub | `docs/agents/README.md` |
 | Agent implementation guides | `docs/agents/guides/README.md` (index of all systems) |

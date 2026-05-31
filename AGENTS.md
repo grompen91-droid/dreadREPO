@@ -26,8 +26,9 @@ Every build zip must contain these files at the root:
 | `icon.png` | 256x256 PNG, square |
 | `manifest.json` | name, version_number, website_url, description, dependencies |
 | `README.md` | mod description in markdown |
-| `BepInEx/plugins/elytraking-Dread/Dread.dll` | compiled mod DLL |
-| `BepInEx/plugins/elytraking-Dread/audio/` | all .ogg audio files |
+| `BepInEx/plugins/elytraking-Dread/Dread.dll` | compiled mod DLL (+ embedded `audio-manifest.json`) |
+
+Audio OGG files are **not** in the Thunderstore zip. They ship on the matching [GitHub Release](https://github.com/grompen91-droid/dreadREPO/releases) and download at first run into `audio-cache/v{version}/`. Source files live in repo `audio/` for CD upload only.
 
 manifest.json format:
 ```json
