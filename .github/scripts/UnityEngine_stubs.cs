@@ -90,6 +90,7 @@ namespace UnityEngine
         public float x, y, z;
         public Vector3 normalized => this;
         public float magnitude => 0f;
+        public float sqrMagnitude => 0f;
         public static Vector3 forward => new Vector3();
         public static Vector3 right => new Vector3();
         public static Vector3 zero => new Vector3();
