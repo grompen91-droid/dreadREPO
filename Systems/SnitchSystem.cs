@@ -28,6 +28,7 @@ namespace Dread.Systems
         private Vector3 _triggerPos;
         private float _poiRemaining;
         private float _nextReissue;
+        private SnitchItemMarker? _activeMarker;
 
         private void Start()
         {
@@ -70,11 +71,10 @@ namespace Dread.Systems
 
             if (_triggered && _poiRemaining > 0f)
             {
-                _poiRemaining -= Time.deltaTime;
-                float remaining = Mathf.Max(0f, _poiRemaining);
-                DreadRuntimeState.SnitchPoiRemaining = remaining;
+                _poiRemaining = Mathf.Max(0f, _poiRemaining - Time.deltaTime);
+                DreadRuntimeState.SnitchPoiRemaining = _poiRemaining;
 
-                if (remaining > 0f && Time.time >= _nextReissue)
+                if (_poiRemaining > 0f && Time.time >= _nextReissue)
                 {
                     _nextReissue = Time.time + PoiReissueInterval;
                     EnemyLureCompat.Pull(_triggerPos, PoiRadius);
@@ -95,6 +95,7 @@ namespace Dread.Systems
             var chosen = items[UnityEngine.Random.Range(0, items.Count)];
             var marker = chosen.AddComponent<SnitchItemMarker>();
             marker.System = this;
+            _activeMarker = marker;
 
             DreadRuntimeState.SnitchState = "armed";
             LoggingService.LogVerbose($"[Snitch] Armed on {chosen.name} (id {chosen.GetInstanceID()})");
@@ -135,6 +136,12 @@ namespace Dread.Systems
 
         private void ResetState()
         {
+            if (_activeMarker != null)
+            {
+                Destroy(_activeMarker);
+                _activeMarker = null;
+            }
+
             _armed = false;
             _armCountdown = ArmDelaySeconds;
             _triggered = false;
@@ -164,6 +171,11 @@ namespace Dread.Systems
             _spawnPos = transform.position;
             _rb = GetComponent<Rigidbody>();
             StartCoroutine(PollPickup());
+        }
+
+        private void OnDestroy()
+        {
+            StopAllCoroutines();
         }
 
         private IEnumerator PollPickup()
