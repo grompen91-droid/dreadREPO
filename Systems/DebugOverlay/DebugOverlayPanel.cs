@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Dread.Config;
+using Dread.Systems.UI;
 using HarmonyLib;
 using UnityEngine;
 
@@ -13,6 +14,11 @@ namespace Dread.Systems
 
         // Panel zoom (whole panel scales). Adjusted by the footer +/- buttons.
         private float _zoom = 1f;
+
+        // Component-kit demo (toggled by the footer "Kit" button) so the loading
+        // bar, slider, and toast widgets can be verified in-game.
+        private bool _kitDemo;
+        private float _kitSlider = 0.5f;
 
         // Cached empty content. Avoids GUIContent.none, which the build resolves
         // against a stub property getter (get_none) that does not exist in the
@@ -84,6 +90,9 @@ namespace Dread.Systems
             }
 
             DrawZoomFooter(x, panel.y + height - padBottom - btnH, innerW, btnH, z);
+
+            if (_kitDemo)
+                DrawKitDemo(marginX, panel.y + height + 8f * z, width, z);
         }
 
         private void DrawZoomFooter(float x, float y, float innerW, float btnH, float z)
@@ -103,11 +112,68 @@ namespace Dread.Systems
             cx += bw + gap;
 
             int pct = (int)(_zoom * 100f + 0.5f);
-            GUI.Label(new Rect(cx, y, 42f * z, btnH), pct + "%", _labelStyle!);
+            GUI.Label(new Rect(cx, y, 38f * z, btnH), pct + "%", _labelStyle!);
 
-            float resetW = 54f * z;
+            float resetW = 50f * z;
             if (GUI.Button(new Rect(x + innerW - resetW, y, resetW, btnH), "Reset", _buttonStyle!))
                 SetZoom(1f);
+
+            float kitW = 36f * z;
+            if (GUI.Button(new Rect(x + innerW - resetW - kitW - gap, y, kitW, btnH), "Kit", _buttonStyle!))
+                _kitDemo = !_kitDemo;
+        }
+
+        // Demo block below the panel: exercises the reusable loading bar, slider,
+        // and notification toasts so they can be verified in-game.
+        private void DrawKitDemo(float x0, float y0, float width, float z)
+        {
+            float padX = 10f * z;
+            float padY = 8f * z;
+            float lineH = 18f * z;
+            float barH = 6f * z;
+            float btnH = 20f * z;
+            float gap = 6f * z;
+            float rail = 3f * z;
+
+            float totalH = padY * 2f + lineH * 3f + btnH + gap * 3f;
+            var box = new Rect(x0, y0, width, totalH);
+            GUI.Box(box, EmptyContent, _boxStyle!);
+            GUI.Box(new Rect(box.x, box.y, rail, totalH), EmptyContent, _railStyle!);
+
+            float ix = x0 + padX + rail;
+            float innerW = width - padX * 2f - rail;
+            float labelW = 44f * z;
+            float y = y0 + padY;
+
+            GUI.Box(new Rect(ix, y + lineH * 0.5f - 0.5f, 9f * z, 1f), EmptyContent, _railStyle!);
+            GUI.Label(new Rect(ix + 15f * z, y, innerW - 15f * z, lineH), "COMPONENT KIT", _sectionStyle!);
+            y += lineH + gap;
+
+            // Loading bar (animated sawtooth so it visibly moves).
+            GUI.Label(new Rect(ix, y, labelW, lineH), "Load", _labelStyle!);
+            float t = Time.realtimeSinceStartup * 0.4f;
+            float prog = t - (int)t;
+            DreadWidgets.LoadingBar(
+                new Rect(ix + labelW, y + (lineH - barH) * 0.5f, innerW - labelW, barH), prog);
+            y += lineH + gap;
+
+            // Value slider with a live percent readout.
+            GUI.Label(new Rect(ix, y, labelW, lineH), "Vol", _labelStyle!);
+            float valW = 40f * z;
+            _kitSlider = DreadWidgets.Slider(
+                new Rect(ix + labelW, y, innerW - labelW - valW, lineH), _kitSlider, 0f, 1f);
+            int sp = (int)(_kitSlider * 100f + 0.5f);
+            GUI.Label(new Rect(ix + innerW - valW, y, valW, lineH), sp + "%", _valueStyle!);
+            y += lineH + gap;
+
+            // Toast triggers, one per severity.
+            float bw = (innerW - gap * 2f) / 3f;
+            if (GUI.Button(new Rect(ix, y, bw, btnH), "Info", _buttonStyle!))
+                DreadNotificationSystem.Info("Test toast", "Informational notification from the kit demo.");
+            if (GUI.Button(new Rect(ix + bw + gap, y, bw, btnH), "Warn", _buttonStyle!))
+                DreadNotificationSystem.Warn("Test toast", "Warning notification from the kit demo.");
+            if (GUI.Button(new Rect(ix + (bw + gap) * 2f, y, bw, btnH), "Bad", _buttonStyle!))
+                DreadNotificationSystem.Bad("Test toast", "Error notification from the kit demo.");
         }
 
         private void SetZoom(float value) => _zoom = Mathf.Clamp(value, 0.6f, 1.6f);

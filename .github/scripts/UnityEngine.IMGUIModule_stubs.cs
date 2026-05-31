@@ -26,6 +26,8 @@ namespace UnityEngine
         public GUIStyleState active { get; } = new GUIStyleState();
         public int fontSize { get; set; }
         public bool wordWrap { get; set; }
+        public float fixedWidth { get; set; }
+        public float fixedHeight { get; set; }
         public GUIStyle() { }
         public GUIStyle(GUIStyle other) { }
 
@@ -57,6 +59,8 @@ namespace UnityEngine
         public static void Label(Rect position, string text) { }
         public static void Label(Rect position, string text, GUIStyle style) { }
         public static bool Button(Rect position, string text, GUIStyle style) => false;
+        public static float HorizontalSlider(Rect position, float value, float leftValue, float rightValue) => value;
+        public static float HorizontalSlider(Rect position, float value, float leftValue, float rightValue, GUIStyle slider, GUIStyle thumb) => value;
         public static Vector2 BeginScrollView(Rect position, Vector2 scrollPosition, Rect viewRect) => scrollPosition;
         public static void EndScrollView() { }
     }
