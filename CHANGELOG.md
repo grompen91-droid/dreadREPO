@@ -28,6 +28,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **UI (Slate HUD S2):** debug overlay recolored to the monochrome R.E.P.O. palette (void black, brushed steel, soft white); solid steel left rail; section labels (Performance / Mod State / System) with tick marks; monochrome status colors
+- **UI:** F10 overlay is now interactive (pause to inspect): frees and shows the cursor and suspends player input while open; footer zoom controls (out / in / reset, 60 to 160 percent) scale the whole panel
+- **UI:** `DreadNotificationSystem` transient corner toasts; thread-safe `Info` / `Warn` / `Bad` API; severity carried by rail color (no icons); slide in, hold, self-dismiss with a life bar
+- **UI:** `DreadWidgets` reusable monochrome widgets (determinate loading bar, indeterminate marquee, value slider); overlay "Kit" button reveals an in-game demo of the loading bar, slider, and toasts
+- **Stubs:** `GUI.HorizontalSlider` (plain and styled) and `GUIStyle.fixedWidth` / `fixedHeight` added to the IMGUIModule stub
+
 ### Changed
 - **Core:** `ProximityScan` in `Systems/Core/` replaces `EnemyScanCache`; tension, monster audio, debug server, psychotic break, and error reporting share one scan seam (ADR-0008 proximity pattern consolidated)
 - **Core:** `HarmonyPatchRegistry` + `PatchLifecycle` centralize patch apply/remove; `Plugin.cs` delegates patch wiring (ADR-0009 preserved)
