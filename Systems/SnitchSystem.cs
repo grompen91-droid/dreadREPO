@@ -17,12 +17,16 @@ namespace Dread.Systems
     {
         private const float PoiReissueInterval = 30f;
         private const float PoiRadius = 60f;
-        private const float ArmDelaySeconds = 2f;
+        private const float ArmDelaySeconds = 5f;
+        private const float ArmRetrySeconds = 5f;
+        private const int MaxArmRetries = 6;
 
         private AudioClip? _bangClip;
 
         private bool _armed;
         private float _armCountdown = ArmDelaySeconds;
+        private int _armRetries;
+        private bool _gatesLogged;
 
         private bool _triggered;
         private Vector3 _triggerPos;
@@ -51,6 +55,15 @@ namespace Dread.Systems
 
         private void Update()
         {
+            if (!_gatesLogged && GameplayContext.IsRun())
+            {
+                _gatesLogged = true;
+                LoggingService.LogWarning(
+                    $"[Snitch] Gates check: enabled={DreadConfig.SnitchEnabled.Value} "
+                    + $"compat={DreadConfig.CompatibilityMode.Value} "
+                    + $"isMaster={HarmonyPatchCompat.IsMasterClient()}");
+            }
+
             if (!DreadConfig.SnitchEnabled.Value || DreadConfig.CompatibilityMode.Value)
                 return;
             if (!GameplayContext.IsRun())
@@ -58,14 +71,13 @@ namespace Dread.Systems
             if (!HarmonyPatchCompat.IsMasterClient())
                 return;
 
+            DreadRuntimeState.SnitchNextCheckIn = _armed ? -1f : _armCountdown;
+
             if (!_armed)
             {
                 _armCountdown -= Time.deltaTime;
                 if (_armCountdown <= 0f)
-                {
-                    _armed = true;
-                    ArmSnitch();
-                }
+                    TryArm();
                 return;
             }
 
@@ -93,16 +105,27 @@ namespace Dread.Systems
             }
         }
 
-        private void ArmSnitch()
+        private void TryArm()
         {
             var items = ItemRosterCompat.GetItemGameObjects();
+            if (_armRetries == 0)
+                LoggingService.LogWarning($"[Snitch] Arm attempt 1: {items.Count} item(s) found");
             if (items.Count == 0)
             {
-                LoggingService.LogVerbose("[Snitch] No items found this run; skipping");
-                DreadRuntimeState.SnitchState = "disarmed";
+                _armRetries++;
+                if (_armRetries > MaxArmRetries)
+                {
+                    _armed = true; // stop retrying
+                    LoggingService.LogWarning("[Snitch] No items found after max retries; snitch disabled this run");
+                    DreadRuntimeState.SnitchState = "disarmed";
+                    return;
+                }
+                _armCountdown = ArmRetrySeconds;
+                LoggingService.LogVerbose($"[Snitch] No items yet (attempt {_armRetries}); retrying in {ArmRetrySeconds}s");
                 return;
             }
 
+            _armed = true;
             var chosen = items[UnityEngine.Random.Range(0, items.Count)];
             var marker = chosen.AddComponent<SnitchItemMarker>();
             marker.System = this;
@@ -155,12 +178,15 @@ namespace Dread.Systems
 
             _armed = false;
             _armCountdown = ArmDelaySeconds;
+            _armRetries = 0;
+            _gatesLogged = false;
             _triggered = false;
             _poiRemaining = 0f;
             _nextReissue = 0f;
             DreadRuntimeState.SnitchState = "disarmed";
             DreadRuntimeState.SnitchPoiRemaining = 0f;
             DreadRuntimeState.SnitchItemDistance = -1f;
+            DreadRuntimeState.SnitchNextCheckIn = -1f;
         }
     }
 

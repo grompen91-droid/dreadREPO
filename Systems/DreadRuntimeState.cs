@@ -39,6 +39,8 @@ namespace Dread.Systems
         public static float SnitchPoiRemaining { get; internal set; }
         /// <summary>Distance in metres from local camera to snitch item (-1 = unknown).</summary>
         public static float SnitchItemDistance { get; internal set; } = -1f;
+        /// <summary>Seconds until next arm attempt (-1 = armed/triggered).</summary>
+        public static float SnitchNextCheckIn { get; internal set; } = -1f;
 
         public static int DreadPatchCount { get; internal set; }
     }

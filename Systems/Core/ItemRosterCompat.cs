@@ -13,7 +13,7 @@ namespace Dread.Systems.Core
     /// </summary>
     internal static class ItemRosterCompat
     {
-        private static readonly string[] ItemTypeNames = { "PhysGrabObject", "ValuableObject", "ItemPickup" };
+        private static readonly string[] ItemTypeNames = { "ValuableObject", "PhysGrabObject", "ItemPickup", "Valuable" };
 
         private static Type? _itemType;
         private static bool _resolved;
@@ -57,7 +57,7 @@ namespace Dread.Systems.Core
                 }
             }
 
-            LoggingService.LogWarning("[Dread] ItemRosterCompat: no item type found (tried PhysGrabObject, ValuableObject, ItemPickup); snitch will be disabled");
+            LoggingService.LogWarning("[Dread] ItemRosterCompat: no item type found (tried ValuableObject, PhysGrabObject, ItemPickup, Valuable); snitch will be disabled");
         }
 
         private static void LogErrorOnce(string context, Exception ex)
