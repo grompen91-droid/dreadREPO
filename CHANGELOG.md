@@ -29,6 +29,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Camp Lure (anti-camping):** host-side `CampLureSystem` draws enemies toward a player who stays far from danger too long, escalating with camp time until danger arrives. Works in solo. Config under `2. Monster Overhaul` (`LureEnabled`, `LureSafeDistance`, `LureCampSeconds` for how soon it triggers, `LureEscalateSeconds` for how fast it ramps); disabled under Compatibility mode. Silent in normal play; debug overlay shows a `Lure` row and toasts. New `PlayerRosterCompat` / `EnemyLureCompat` reflection seams; `Object.FindObjectsOfType(Type)`, `Object.name`, `Object.GetInstanceID` added to the stub.
 - **UI (Slate HUD S2):** debug overlay recolored to the monochrome R.E.P.O. palette (void black, brushed steel, soft white); solid steel left rail; section labels (Performance / Mod State / System) with tick marks; monochrome status colors
 - **UI:** F10 overlay is now interactive (pause to inspect): frees and shows the cursor and suspends player input while open; footer zoom controls (out / in / reset, 60 to 160 percent) scale the whole panel
 - **UI:** `DreadNotificationSystem` transient corner toasts; thread-safe `Info` / `Warn` / `Bad` API; severity carried by rail color (no icons); slide in, hold, self-dismiss with a life bar
