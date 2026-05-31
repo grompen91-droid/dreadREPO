@@ -54,8 +54,12 @@ namespace UnityEngine
     }
     public class Object
     {
+        public string name { get; set; } = string.Empty;
+        public int GetInstanceID() => 0;
         public static T FindObjectOfType<T>() where T : Object => null;
         public static T[] FindObjectsOfType<T>() where T : Object => null;
+        public static Object? FindObjectOfType(System.Type type) => null;
+        public static Object[] FindObjectsOfType(System.Type type) => System.Array.Empty<Object>();
         public static void Destroy(Object obj, float t = 0f) { }
         public static void DontDestroyOnLoad(Object obj) { }
         public static implicit operator bool(Object exists) { return exists != null; }
@@ -119,7 +123,6 @@ namespace UnityEngine
         public delegate void PCMSetPositionCallback(int position);
 
         public float length { get; }
-        public string name { get; set; }
         public static AudioClip Create(string name, int lengthSamples, int channels, int frequency, bool stream) => null!;
         public static AudioClip Create(string name, int lengthSamples, int channels, int frequency, bool stream, PCMReaderCallback pcmreadercallback) => null!;
         public static AudioClip Create(string name, int lengthSamples, int channels, int frequency, bool stream, PCMReaderCallback pcmreadercallback, PCMSetPositionCallback pcmsetpositioncallback) => null!;

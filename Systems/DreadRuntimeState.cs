@@ -27,6 +27,13 @@ namespace Dread.Systems
         public static int AudioClipCount { get; internal set; }
         public static float AudioNextPlayIn { get; internal set; } = -1f;
 
+        /// <summary>Label of the player currently being lured (empty = none).</summary>
+        public static string LureTarget { get; internal set; } = "";
+        /// <summary>Seconds the lure target has been camping.</summary>
+        public static float LureCampTimer { get; internal set; }
+        /// <summary>Escalation step of the active lure (0 = inactive).</summary>
+        public static int LurePullStep { get; internal set; }
+
         public static int DreadPatchCount { get; internal set; }
     }
 }

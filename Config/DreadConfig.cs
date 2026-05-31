@@ -14,6 +14,10 @@ namespace Dread.Config
         // 2. Monster Overhaul
         public static ConfigEntry<bool> MonsterAggressionEnabled = null!;
         public static ConfigEntry<bool> MonsterAudioEnabled = null!;
+        public static ConfigEntry<bool> MonsterLureEnabled = null!;
+        public static ConfigEntry<float> LureSafeDistance = null!;
+        public static ConfigEntry<float> LureCampSeconds = null!;
+        public static ConfigEntry<float> LureEscalateSeconds = null!;
 
         // 3. Tension
         public static ConfigEntry<bool> FakeFootstepsEnabled = null!;
@@ -75,6 +79,22 @@ namespace Dread.Config
                 "Increase monster speed. HOST ONLY.");
             MonsterAudioEnabled = cfg.Bind("2. Monster Overhaul", "AudioEnabled", true,
                 "Lower monster pitch for deeper, scarier sounds.");
+            MonsterLureEnabled = cfg.Bind("2. Monster Overhaul", "LureEnabled", true,
+                "Anti-camping: draw enemies toward a player who stays far from danger too long. HOST ONLY.");
+            LureSafeDistance = cfg.Bind("2. Monster Overhaul", "LureSafeDistance", 20f,
+                new ConfigDescription(
+                    "Distance in meters beyond which a player counts as isolated (safe).",
+                    new AcceptableValueRange<float>(5f, 60f)));
+            LureCampSeconds = cfg.Bind("2. Monster Overhaul", "LureCampSeconds", 90f,
+                new ConfigDescription(
+                    "Seconds a player must stay isolated before enemies start being drawn to them. "
+                    + "Lower = triggers faster.",
+                    new AcceptableValueRange<float>(10f, 300f)));
+            LureEscalateSeconds = cfg.Bind("2. Monster Overhaul", "LureEscalateSeconds", 30f,
+                new ConfigDescription(
+                    "Seconds of continued camping per escalation step (the pull reaches farther each "
+                    + "step). Lower = the lure ramps up faster.",
+                    new AcceptableValueRange<float>(5f, 120f)));
 
             FakeFootstepsEnabled = cfg.Bind("3. Tension", "FakeFootstepsEnabled", true,
                 "Occasionally plays footstep sounds behind you with no source.");
