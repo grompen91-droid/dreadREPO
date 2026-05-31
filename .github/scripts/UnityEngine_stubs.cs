@@ -301,6 +301,10 @@ namespace UnityEngine
     public static class Input
     {
         public static bool GetKeyDown(KeyCode key) => false;
+        public static bool GetMouseButton(int button) => false;
+        public static bool GetMouseButtonDown(int button) => false;
+        public static bool GetMouseButtonUp(int button) => false;
+        public static Vector3 mousePosition => new Vector3();
     }
 
     // Values must match real UnityEngine.KeyCode exactly: enum constants are inlined

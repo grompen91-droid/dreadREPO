@@ -15,6 +15,13 @@ namespace Dread.Systems
         // Panel zoom (whole panel scales). Adjusted by the footer +/- buttons.
         private float _zoom = 1f;
 
+        // Panel position (top-left). Draggable by the header in interactive mode.
+        private float _panelX = 12f;
+        private float _panelY = 140f;
+        private bool _dragging;
+        private float _dragOffsetX;
+        private float _dragOffsetY;
+
         // Component-kit demo (toggled by the footer "Kit" button) so the loading
         // bar, slider, and toast widgets can be verified in-game.
         private bool _kitDemo;
@@ -46,13 +53,11 @@ namespace Dread.Systems
             // or glyph descenders get clipped at the bottom of each row.
             float lineH = 22f * z;
             float labelW = 82f * z;
-            const float marginX = 12f;
-            const float marginY = 140f; // moved down from the top so it clears the game's top HUD
             float btnH = 20f * z;
             float footerH = btnH + 8f * z;
             float height = padTop + padBottom + _rows.Count * lineH + footerH;
 
-            var panel = new Rect(marginX, marginY, width, height);
+            var panel = new Rect(_panelX, _panelY, width, height);
             GUI.Box(panel, EmptyContent, _boxStyle!);
 
             // Solid steel accent rail down the left edge (S2 "Slate HUD" look).
@@ -94,7 +99,7 @@ namespace Dread.Systems
             DrawZoomFooter(x, panel.y + height - padBottom - btnH, innerW, btnH, z);
 
             if (_kitDemo)
-                DrawKitDemo(marginX, panel.y + height + 8f * z, width, z);
+                DrawKitDemo(_panelX, panel.y + height + 8f * z, width, z);
         }
 
         private void DrawZoomFooter(float x, float y, float innerW, float btnH, float z)
@@ -179,6 +184,56 @@ namespace Dread.Systems
         }
 
         private void SetZoom(float value) => _zoom = Mathf.Clamp(value, 0.6f, 1.6f);
+
+        // Drag the panel by its header strip. Runs only in interactive (F9) mode.
+        // Input.mousePosition has a bottom-left origin; GUI coordinates are
+        // top-left, so the Y axis is flipped.
+        private void HandleDrag()
+        {
+            float z = _zoom;
+            float width = 320f * z;
+            float headerH = (6f + 22f) * z; // padTop + header row = the grab strip
+
+            float mx = Input.mousePosition.x;
+            float my = Screen.height - Input.mousePosition.y;
+
+            if (!_dragging
+                && Input.GetMouseButtonDown(0)
+                && mx >= _panelX && mx <= _panelX + width
+                && my >= _panelY && my <= _panelY + headerH)
+            {
+                _dragging = true;
+                _dragOffsetX = mx - _panelX;
+                _dragOffsetY = my - _panelY;
+            }
+
+            if (!_dragging)
+                return;
+
+            if (Input.GetMouseButton(0))
+            {
+                _panelX = mx - _dragOffsetX;
+                _panelY = my - _dragOffsetY;
+                ClampPanel(width);
+            }
+            else
+            {
+                _dragging = false;
+            }
+        }
+
+        // Keep enough of the panel on screen that the header stays grabbable.
+        private void ClampPanel(float width)
+        {
+            float minX = -(width - 60f);
+            float maxX = Screen.width - 60f;
+            float maxY = Screen.height - 30f;
+
+            if (_panelX < minX) _panelX = minX;
+            if (_panelX > maxX) _panelX = maxX;
+            if (_panelY < 0f) _panelY = 0f;
+            if (_panelY > maxY) _panelY = maxY;
+        }
 
         private void ApplyZoom()
         {

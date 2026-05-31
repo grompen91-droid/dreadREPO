@@ -67,9 +67,14 @@ namespace Dread.Systems
             }
 
             if (_interactive)
+            {
                 MaintainOverlayCursor();
+                HandleDrag();
+            }
             else if (_cursorCaptured)
+            {
                 ReleaseOverlayCapture();
+            }
 
             if (Time.realtimeSinceStartup >= _nextStatRefresh)
             {
