@@ -7,6 +7,11 @@ namespace Dread.Systems
 {
     public partial class PsychoticBreakSystem
     {
+        private bool _sawEnemyWhileThreatActive;
+        private float _losLostEligibleAt;
+        private bool _wasEnemyVisibleLastRefresh;
+        private float _hidingSince = -1f;
+
         private string? GetTriggerBlockReason()
         {
             if (!_enabled)
@@ -27,12 +32,81 @@ namespace Dread.Systems
                 return "not solo";
             if (!HasRecentThreat())
                 return "no recent threat";
-            if (IsAnyEnemyVisibleCached())
-                return "visible enemy";
+            if (!HasLostLineOfSight())
+                return GetLosBlockReason();
             if (!IsHidingVulnerable(pc))
                 return "not hiding";
+            if (!HasHidingMinDuration())
+                return "hiding too short";
 
             return null;
+        }
+
+        private string GetLosBlockReason()
+        {
+            if (IsAnyEnemyVisibleCached())
+                return "visible enemy";
+            if (!_sawEnemyWhileThreatActive)
+                return "los not lost";
+            if (Time.time < _losLostEligibleAt)
+                return "los lost too recent";
+            return "los not lost";
+        }
+
+        private bool HasLostLineOfSight()
+        {
+            if (IsAnyEnemyVisibleCached())
+                return false;
+            if (!_sawEnemyWhileThreatActive)
+                return false;
+            return Time.time >= _losLostEligibleAt;
+        }
+
+        private bool HasHidingMinDuration()
+        {
+            if (_hidingSince < 0f)
+                return false;
+            return Time.time - _hidingSince >= PsychoticBreakTriggerTuning.HidingMinSeconds;
+        }
+
+        private void UpdateLosLostTracking()
+        {
+            if (!HasRecentThreat())
+            {
+                _sawEnemyWhileThreatActive = false;
+                _losLostEligibleAt = 0f;
+                _wasEnemyVisibleLastRefresh = false;
+                return;
+            }
+
+            bool visible = IsAnyEnemyVisibleCached();
+            if (visible)
+                _sawEnemyWhileThreatActive = true;
+
+            if (_wasEnemyVisibleLastRefresh && !visible && _sawEnemyWhileThreatActive)
+                _losLostEligibleAt = Time.time + _losLostDelaySeconds;
+
+            _wasEnemyVisibleLastRefresh = visible;
+        }
+
+        private void UpdateHidingTimestamp()
+        {
+            var pc = PlayerController.instance;
+            if ((object)pc == null)
+            {
+                _hidingSince = -1f;
+                return;
+            }
+
+            if (IsHidingVulnerable(pc))
+            {
+                if (_hidingSince < 0f)
+                    _hidingSince = Time.time;
+            }
+            else
+            {
+                _hidingSince = -1f;
+            }
         }
 
         private void UpdateThreatTimestamps()
@@ -48,6 +122,8 @@ namespace Dread.Systems
             foreach (var e in _cachedEnemies)
             {
                 if (!EnemyHealthCompat.IsValid(e))
+                    continue;
+                if (DreadHallucinationMob.IsHallucination(e))
                     continue;
 
                 float d = Vector3.Distance(origin.Value, ProximityScan.GetFocusPosition(e));
@@ -66,6 +142,15 @@ namespace Dread.Systems
             if (!HasRecentThreat())
                 return 0;
             return (int)Math.Ceiling(_threatMemoryUntil - Time.time);
+        }
+
+        private int GetLosLostEligibleInSeconds()
+        {
+            if (!_sawEnemyWhileThreatActive || IsAnyEnemyVisibleCached())
+                return 0;
+            if (Time.time >= _losLostEligibleAt)
+                return 0;
+            return (int)Math.Ceiling(_losLostEligibleAt - Time.time);
         }
 
         private Vector3? GetThreatScanOrigin()
@@ -88,16 +173,7 @@ namespace Dread.Systems
         private bool CanTrigger()
         {
             LoggingService.LogVerbose("[PsychoticBreak] Checking trigger condition...");
-            var pc = PlayerController.instance;
-            if ((object)pc == null) return false;
-
-            if (!IsSolo(pc)) return false;
-            if (!HasRecentThreat()) return false;
-            if (IsAnyEnemyVisibleCached()) return false;
-            if (!IsHidingVulnerable(pc)) return false;
-            if (!AreClipsLoaded()) return false;
-
-            return true;
+            return GetTriggerBlockReason() == null;
         }
 
         private static PlayerController[]? _cachedPlayers;
@@ -134,6 +210,7 @@ namespace Dread.Systems
                 return _cachedAnyEnemyVisible;
 
             _nextVisibilityRefresh = Time.time + VisibilityRefreshInterval;
+            _cachedEnemies = ProximityScan.GetEnemies();
             _cachedAnyEnemyVisible = IsAnyEnemyVisible(_cachedEnemies);
             return _cachedAnyEnemyVisible;
         }
@@ -157,6 +234,8 @@ namespace Dread.Systems
             {
                 var e = enemies[i];
                 if (!EnemyHealthCompat.IsValid(e))
+                    continue;
+                if (DreadHallucinationMob.IsHallucination(e))
                     continue;
 
                 try

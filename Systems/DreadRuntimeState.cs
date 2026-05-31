@@ -23,6 +23,10 @@ namespace Dread.Systems
         public static int PsychoticBreakThreatCount { get; internal set; }
         public static int PsychoticBreakEnemyCount { get; internal set; }
         public static bool PsychoticBreakClipsLoaded { get; internal set; }
+        public static int PsychoticBreakLosLostIn { get; internal set; }
+        public static float PsychoticBreakCheckInterval { get; internal set; }
+        public static float PsychoticBreakPerRollChance { get; internal set; }
+        public static float PsychoticBreakEstimatedWindowChance { get; internal set; }
 
         public static int AudioClipCount { get; internal set; }
         public static float AudioNextPlayIn { get; internal set; } = -1f;

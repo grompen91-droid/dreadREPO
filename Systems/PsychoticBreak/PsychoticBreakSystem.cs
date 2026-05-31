@@ -11,9 +11,13 @@ namespace Dread.Systems
     public partial class PsychoticBreakSystem : MonoBehaviour
     {
         private bool _enabled;
-        private float _triggerChance;
         private float _episodeDuration;
         private bool _oncePerMatch;
+
+        private float _checkIntervalSeconds = 8f;
+        private float _perRollProbability = 0.003f;
+        private float _losLostDelaySeconds = 3f;
+        private PsychoticBreakTriggerTuning _tuning;
 
         private bool _episodeActive;
         private bool _hasTriggeredThisMatch;
@@ -30,9 +34,6 @@ namespace Dread.Systems
         private AudioClip? _distantScreamClip;
         private AudioClip? _threatScreamClip;
         private AudioClip? _footstepClip;
-        private AudioSource? _footstepSource;
-        private AudioSource? _distantScreamSource;
-        private bool _hasPlayedPeakScream;
 
         private GameObject? _overlayRoot;
         private Component? _darknessImage;
@@ -40,7 +41,6 @@ namespace Dread.Systems
         private Texture2D? _vignetteTexture;
 
         private EnemyHealth[]? _cachedEnemies;
-        private float _phantomSoundAccumulator;
         private float _tumbleMaintainTimer;
         private bool _sceneLoaded;
         private bool _typeInitFailed;
@@ -48,7 +48,6 @@ namespace Dread.Systems
         private bool _cachedAnyEnemyVisible;
         private float _nextVisibilityRefresh;
 
-        // -1 = all layers; avoids stub-only Physics.DefaultRaycastLayers at type init
         internal const int VisionBlockMask = -1;
         private const float VisibilityRefreshInterval = 0.25f;
 
@@ -63,9 +62,10 @@ namespace Dread.Systems
 
             DreadConfig.PsychoticBreakEnabled.SettingChanged += OnConfigChanged;
             DreadConfig.CompatibilityMode.SettingChanged += OnConfigChanged;
-            DreadConfig.PsychoticBreakTriggerChance.SettingChanged += OnConfigChanged;
+            DreadConfig.PsychoticBreakChancePercent.SettingChanged += OnConfigChanged;
             DreadConfig.PsychoticBreakDuration.SettingChanged += OnConfigChanged;
             DreadConfig.PsychoticBreakOncePerMatch.SettingChanged += OnConfigChanged;
+            DreadConfig.PsychoticBreakAccentEnabled.SettingChanged += OnConfigChanged;
 
             StartCoroutine(LoadAudioClips());
         }
@@ -73,9 +73,12 @@ namespace Dread.Systems
         private void RefreshConfig()
         {
             _enabled = DreadConfig.PsychoticBreakEnabled.Value;
-            _triggerChance = DreadConfig.PsychoticBreakTriggerChance.Value;
             _episodeDuration = DreadConfig.PsychoticBreakDuration.Value;
             _oncePerMatch = DreadConfig.PsychoticBreakOncePerMatch.Value;
+            _tuning = PsychoticBreakTriggerTuning.Compute(DreadConfig.PsychoticBreakChancePercent.Value);
+            _checkIntervalSeconds = _tuning.CheckIntervalSeconds;
+            _perRollProbability = _tuning.PerRollProbability;
+            _losLostDelaySeconds = _tuning.LosLostDelaySeconds;
         }
 
         private void OnConfigChanged(object? sender, EventArgs e)
@@ -89,9 +92,10 @@ namespace Dread.Systems
             SceneManager.sceneLoaded -= OnSceneLoaded;
 
             DreadConfig.PsychoticBreakEnabled.SettingChanged -= OnConfigChanged;
-            DreadConfig.PsychoticBreakTriggerChance.SettingChanged -= OnConfigChanged;
+            DreadConfig.PsychoticBreakChancePercent.SettingChanged -= OnConfigChanged;
             DreadConfig.PsychoticBreakDuration.SettingChanged -= OnConfigChanged;
             DreadConfig.PsychoticBreakOncePerMatch.SettingChanged -= OnConfigChanged;
+            DreadConfig.PsychoticBreakAccentEnabled.SettingChanged -= OnConfigChanged;
             DreadConfig.CompatibilityMode.SettingChanged -= OnConfigChanged;
 
             _peakScreamClip = null;
@@ -99,8 +103,10 @@ namespace Dread.Systems
             _threatScreamClip = null;
             _footstepClip = null;
 
+            DestroyActiveHallucination();
             CleanupOverlay();
             CleanupFootstepSource();
+            CleanupDistantScreamSource();
         }
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -111,8 +117,14 @@ namespace Dread.Systems
 
             _episodeActive = false;
             _threatMemoryUntil = 0f;
+            _sawEnemyWhileThreatActive = false;
+            _losLostEligibleAt = 0f;
+            _wasEnemyVisibleLastRefresh = false;
+            _hidingSince = -1f;
             _cachedEnemies = null;
             _mainCam = Camera.main;
+            ProximityScan.Invalidate();
+            DestroyActiveHallucination();
             CleanupOverlay();
             CleanupFootstepSource();
             CleanupDistantScreamSource();
@@ -164,13 +176,15 @@ namespace Dread.Systems
             }
 
             UpdateThreatTimestamps();
+            UpdateLosLostTracking();
+            UpdateHidingTimestamp();
 
             if (Time.time < _nextTriggerCheck)
             {
                 PublishRuntimeState();
                 return;
             }
-            _nextTriggerCheck = Time.time + 2f;
+            _nextTriggerCheck = Time.time + _checkIntervalSeconds;
 
             if (!CanTrigger())
             {
@@ -178,7 +192,7 @@ namespace Dread.Systems
                 return;
             }
 
-            if (Random.value < _triggerChance)
+            if (Random.value < _perRollProbability)
                 StartEpisode();
 
             PublishRuntimeState();
@@ -195,6 +209,10 @@ namespace Dread.Systems
             DreadRuntimeState.PsychoticBreakThreatCount = GetThreatMemorySecondsRemaining();
             DreadRuntimeState.PsychoticBreakEnemyCount = ProximityScan.Count;
             DreadRuntimeState.PsychoticBreakClipsLoaded = AreClipsLoaded();
+            DreadRuntimeState.PsychoticBreakLosLostIn = GetLosLostEligibleInSeconds();
+            DreadRuntimeState.PsychoticBreakCheckInterval = _checkIntervalSeconds;
+            DreadRuntimeState.PsychoticBreakPerRollChance = _perRollProbability;
+            DreadRuntimeState.PsychoticBreakEstimatedWindowChance = _tuning.EstimatedWindowChance;
 
             if (_episodeActive)
             {
@@ -222,10 +240,6 @@ namespace Dread.Systems
                 && _threatScreamClip != null && _footstepClip != null;
         }
 
-        /// <summary>
-        /// Debug server / MCP only (loopback, <c>DebugServerEnabled</c>).
-        /// Skips trigger guards; does not consume once-per-match.
-        /// </summary>
         public void ForceEpisodeForDebug()
         {
             if (_episodeActive)

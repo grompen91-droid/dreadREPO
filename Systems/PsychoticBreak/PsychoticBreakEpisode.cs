@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -5,24 +6,48 @@ namespace Dread.Systems
 {
     public partial class PsychoticBreakSystem
     {
+        private System.Random _episodeRng = new();
+        private float _phase1End;
+        private float _phase2Start;
+        private float _phase3Start;
+
         private void StartEpisode(bool countAsMatchTrigger = true)
         {
             _episodeActive = true;
             if (countAsMatchTrigger)
                 _hasTriggeredThisMatch = true;
             _episodeTimer = 0f;
-            _phantomSoundAccumulator = 0f;
             _tumbleMaintainTimer = 0f;
-            _nextTriggerCheck = Time.time + 10f;
-            _hasPlayedPeakScream = false;
+            _nextTriggerCheck = Time.time + _checkIntervalSeconds;
+
+            _episodeRng = new System.Random(unchecked((int)Time.time));
+            ComputePhaseBoundaries();
+            PickEpisodeAccents(_episodeRng);
+            PlanHallucinations(_episodeRng);
 
             LockPlayerForEpisode(PlayerController.instance);
 
             CreateOverlay();
-            PlayCirclingFootsteps();
-            PlayDistantScream();
+            StartEpisodeAudio();
+            StartFootstepScheduler();
 
             LoggingService.LogInfo("[Dread] Psychotic Break triggered!");
+        }
+
+        private void ComputePhaseBoundaries()
+        {
+            float jitter1 = 0.92f + (float)_episodeRng.NextDouble() * 0.16f;
+            float jitter2 = 0.92f + (float)_episodeRng.NextDouble() * 0.16f;
+            float jitter3 = 0.92f + (float)_episodeRng.NextDouble() * 0.16f;
+
+            _phase1End = _episodeDuration * 0.15f * jitter1;
+            _phase2Start = _episodeDuration * 0.50f * jitter2;
+            _phase3Start = _episodeDuration * 0.80f * jitter3;
+
+            if (_phase2Start <= _phase1End + 0.5f)
+                _phase2Start = _phase1End + 0.5f;
+            if (_phase3Start <= _phase2Start + 1f)
+                _phase3Start = _phase2Start + 1f;
         }
 
         private void UpdateEpisode()
@@ -39,89 +64,71 @@ namespace Dread.Systems
             _tumbleMaintainTimer -= Time.deltaTime;
             if (_tumbleMaintainTimer <= 0f)
             {
-                _tumbleMaintainTimer = 0.4f;
-                MaintainPlayerFallenState(PlayerController.instance);
+                _tumbleMaintainTimer = 2f;
+                EnsurePlayerFallenHeld(PlayerController.instance);
             }
 
-            float p1 = _episodeDuration * 0.15f;
-            float p2 = _episodeDuration * 0.50f;
-            float p3 = _episodeDuration * 0.80f;
+            if (raw >= _phase2Start && raw < _phase2Start + 0.05f)
+                TransitionAccentToSecondary();
 
-            if (raw < p1)
+            UpdateScheduledScreams(raw);
+            UpdateHallucinationSchedule(raw);
+
+            float flickerFreqMul = 0.85f + (float)_episodeRng.NextDouble() * 0.3f;
+
+            if (raw < _phase1End)
             {
-                float alpha = Mathf.Lerp(0f, 0.85f, raw / p1);
+                float alpha = Mathf.Lerp(0f, 0.85f, raw / _phase1End);
                 SetDarknessAlpha(alpha);
                 SetVignetteAlpha(0f);
+                SetAccentAlpha(Mathf.Lerp(0f, 0.15f, raw / _phase1End));
             }
-            else if (raw < p2)
+            else if (raw < _phase2Start)
             {
-                float progress = (raw - p1) / (p2 - p1);
-                float flicker = Mathf.Sin(Time.time * Mathf.Lerp(10f, 30f, progress)) * 0.5f + 0.5f;
+                float progress = (raw - _phase1End) / (_phase2Start - _phase1End);
+                float flicker = Mathf.Sin(Time.time * Mathf.Lerp(10f, 30f, progress) * flickerFreqMul) * 0.5f + 0.5f;
                 float vignetteBase = Mathf.Lerp(0.1f, 0.6f, progress);
                 SetVignetteAlpha(vignetteBase * flicker);
                 SetDarknessAlpha(0.85f);
-
-                if (_footstepSource != null)
-                    _footstepSource.panStereo = Mathf.Lerp(-1f, 1f, progress);
+                SetAccentAlpha(Mathf.Lerp(0.15f, 0.35f, progress) * flicker);
             }
-            else if (raw < p3)
+            else if (raw < _phase3Start)
             {
-                if (!_hasPlayedPeakScream)
-                {
-                    _hasPlayedPeakScream = true;
-                    PlayPeakScream();
-                }
-
-                float progress = (raw - p2) / (p3 - p2);
+                float progress = (raw - _phase2Start) / (_phase3Start - _phase2Start);
                 float vignetteIntensity = Mathf.Lerp(0.5f, 0.9f, progress);
-                float flicker = Mathf.Sin(Time.time * 35f) * 0.3f + 0.7f;
+                float flicker = Mathf.Sin(Time.time * 35f * flickerFreqMul) * 0.3f + 0.7f;
                 SetVignetteAlpha(vignetteIntensity * flicker);
                 SetDarknessAlpha(0.85f);
-
-                if (_footstepSource != null)
-                {
-                    _footstepSource.panStereo = Mathf.Sin(Time.time * 4f) * 0.8f;
-                    _footstepSource.volume = Mathf.Lerp(0.5f, 1f, progress);
-                }
-
-                _phantomSoundAccumulator += Time.deltaTime * 0.3f;
-                if (_phantomSoundAccumulator >= 1f)
-                {
-                    _phantomSoundAccumulator = 0f;
-                    SpawnPhantomSound();
-                }
+                SetAccentAlpha(Mathf.Lerp(0.35f, 0.45f, progress) * flicker);
             }
             else
             {
-                float progress = (raw - p3) / (_episodeDuration - p3);
+                float progress = (raw - _phase3Start) / (_episodeDuration - _phase3Start);
                 if (progress < 0.5f)
                 {
                     float peak = Mathf.Lerp(0.9f, 1f, progress * 2f);
-                    SetVignetteAlpha(0.95f * peak);
+                    float flicker = Mathf.Sin(Time.time * 40f * flickerFreqMul) * 0.25f + 0.75f;
+                    SetVignetteAlpha(0.95f * peak * flicker);
                     SetDarknessAlpha(0.9f * peak);
+                    SetAccentAlpha(0.4f * peak * flicker);
                 }
                 else
                 {
-                    SetDarknessAlpha(0f);
-                    SetVignetteAlpha(0f);
-                }
-
-                if (_footstepSource != null)
-                {
-                    if (progress < 0.5f)
-                    {
-                        _footstepSource.volume = Mathf.Lerp(1f, 0f, progress * 2f);
-                        _footstepSource.panStereo = Mathf.Sin(Time.time * 8f) * 0.9f;
-                    }
-                    else
-                    {
-                        _footstepSource.Stop();
-                    }
+                    float fade = (progress - 0.5f) * 2f;
+                    SetDarknessAlpha(Mathf.Lerp(0.9f, 0f, fade));
+                    SetVignetteAlpha(Mathf.Lerp(0.95f, 0f, fade));
+                    SetAccentAlpha(Mathf.Lerp(0.35f, 0f, fade));
                 }
 
                 if (raw >= _episodeDuration - 0.5f)
                     EndEpisode();
             }
+        }
+
+        private void TransitionAccentToSecondary()
+        {
+            _accentPrimary = _accentSecondary;
+            ApplyAccentRgb();
         }
 
         private void EndEpisode()
@@ -130,14 +137,17 @@ namespace Dread.Systems
             _episodeActive = false;
             SetDarknessAlpha(0f);
             SetVignetteAlpha(0f);
+            SetAccentAlpha(0f);
+
+            DestroyActiveHallucination();
+            StopFootstepScheduler();
+            CleanupDistantScreamSource();
 
             var pc = PlayerController.instance;
             RestorePlayerControl(pc);
             if ((object)pc != null)
                 StartCoroutine(DoStumble());
 
-            CleanupFootstepSource();
-            CleanupDistantScreamSource();
             CleanupOverlay();
             LoggingService.LogInfo("[Dread] Psychotic Break ended.");
         }

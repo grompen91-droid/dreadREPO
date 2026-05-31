@@ -29,6 +29,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Changed
+- **Psychotic Break:** Single `PsychoticBreakChancePercent` slider derives check interval, LoS-lost delay, and per-roll chance; true LoS-lost gate (saw enemy, then hidden); silent tumble hold (no repeated fall SFX)
+- **Psychotic Break:** Staggered walk/run footsteps (`footsteps_run.ogg`), scheduled distant/peak screams, client-local hallucination mob attack with damage block, horror-only side accent colors on blackout overlay
+
 - **Core:** `ProximityScan` in `Systems/Core/` replaces `EnemyScanCache`; tension, monster audio, debug server, psychotic break, and error reporting share one scan seam (ADR-0008 proximity pattern consolidated)
 - **Core:** `HarmonyPatchRegistry` + `PatchLifecycle` centralize patch apply/remove; `Plugin.cs` delegates patch wiring (ADR-0009 preserved)
 - **Core:** `PlayerInputLockCompat` shared by psychotic break and error-reporting prompt

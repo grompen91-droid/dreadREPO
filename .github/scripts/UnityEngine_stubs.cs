@@ -7,6 +7,7 @@ namespace UnityEngine
     public abstract class MonoBehaviour : Behaviour
     {
         public Coroutine StartCoroutine(IEnumerator routine) => null;
+        public void StopCoroutine(Coroutine routine) { }
         public void StopAllCoroutines() { }
     }
     public class Behaviour : Component
@@ -18,6 +19,7 @@ namespace UnityEngine
         public T GetComponent<T>() where T : class => null;
         public Component GetComponent(Type type) => null;
         public T GetComponentInChildren<T>() where T : class => null;
+        public T GetComponentInParent<T>() where T : class => null;
         public GameObject gameObject { get; }
         public Transform transform { get; }
     }
@@ -25,9 +27,13 @@ namespace UnityEngine
     {
         public GameObject() { }
         public GameObject(string name) { }
+        public string name { get; set; } = "";
         public T AddComponent<T>() where T : Component => null;
+        public T GetComponent<T>() where T : class => null;
         public Component AddComponent(Type componentType) => null;
         public T[] GetComponentsInChildren<T>() where T : class => null;
+        public T[] GetComponentsInChildren<T>(bool includeInactive) where T : class => null;
+        public T GetComponentInChildren<T>() where T : class => null;
         public Transform transform { get; }
         public bool activeInHierarchy { get; }
     }
@@ -38,6 +44,7 @@ namespace UnityEngine
         public Vector3 right { get; }
         public Vector3 localPosition { get; set; }
         public Vector3 localEulerAngles { get; set; }
+        public Quaternion rotation { get; set; }
         public Transform parent { get; set; }
         public void SetParent(Transform parent) { }
         public void SetParent(Transform parent, bool worldPositionStays) { }
@@ -58,7 +65,12 @@ namespace UnityEngine
         public static T[] FindObjectsOfType<T>() where T : Object => null;
         public static void Destroy(Object obj, float t = 0f) { }
         public static void DontDestroyOnLoad(Object obj) { }
+        public static Object Instantiate(Object original, Vector3 position, Quaternion rotation) => original;
         public static implicit operator bool(Object exists) { return exists != null; }
+    }
+    public struct Quaternion
+    {
+        public static Quaternion LookRotation(Vector3 forward) => new Quaternion();
     }
     public struct Vector2
     {
@@ -81,6 +93,7 @@ namespace UnityEngine
         public float x, y, z;
         public Vector3 normalized => this;
         public float magnitude => 0f;
+        public float sqrMagnitude => 0f;
         public static Vector3 forward => new Vector3();
         public static Vector3 right => new Vector3();
         public static Vector3 zero => new Vector3();
@@ -158,6 +171,12 @@ namespace UnityEngine
         public static float Sin(float f) => 0f;
         public static float Sqrt(float f) => 0f;
         public static float Clamp01(float value) => value;
+        public static float Pow(float x, float y) => (float)Math.Pow(x, y);
+    }
+
+    public class Animator : Behaviour
+    {
+        public void SetTrigger(string name) { }
     }
 
     public static class Physics
@@ -182,7 +201,10 @@ namespace UnityEngine
         public Vector3 point { get; }
     }
 
-    public class Collider : Component { }
+    public class Collider : Behaviour
+    {
+        public bool isTrigger { get; set; }
+    }
 
     public enum QueryTriggerInteraction
     {

@@ -77,7 +77,18 @@ namespace Dread.Systems.Core
 
         public static void MaintainForcedTumble(PlayerController pc)
         {
+            EnsureForcedTumbleHeld(pc);
+        }
+
+        /// <summary>
+        /// Re-applies forced tumble only if the fallen state was lost (avoids replaying tumble SFX).
+        /// </summary>
+        public static void EnsureForcedTumbleHeld(PlayerController? pc)
+        {
             if (!_forcedActive || pc == null)
+                return;
+
+            if (IsInTumble(pc))
                 return;
 
             var tumble = ResolveTumble(pc);

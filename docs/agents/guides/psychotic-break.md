@@ -22,7 +22,7 @@ While enabled in a level:
 1. **`UpdateThreatTimestamps()`** runs every frame: if any enemy is within 15m of the player, extend threat memory by 30s.
 2. Every **2 seconds**, when not blocked by menu/compat/once-per-match:
    - `CanTrigger()` requires: solo, recent threat, no visible living enemy, hiding, clips loaded
-   - Roll `Random.value < PsychoticBreakTriggerChance` (default 1%)
+   - Roll `Random.value < perRollProbability` (derived from `PsychoticBreakChancePercent`, default 1% target per hide window)
 
 Block reasons on `DreadRuntimeState.PsychoticBreakBlockReason` (overlay + `dread_get_runtime_state`). `PsychoticBreakThreatCount` is **seconds left** on threat memory (0 = none).
 
@@ -35,7 +35,7 @@ Uses shared **`ProximityScan`** in `Systems/Core/` (0.5s refresh, same pattern a
 Loaded from `audio/` via **`AudioClipLoader`** (shared cache with tension/ambient):
 
 - `scream_peak.ogg`, `scream_distant.ogg`, `scream_threat.ogg`
-- `footsteps.ogg` (circling steps during episode)
+- `footsteps.ogg`, `footsteps_run.ogg` (staggered walk then run during episode)
 
 `AreClipsLoaded()` must pass before a natural trigger. Menu-level load is deferred like other systems.
 
@@ -48,7 +48,8 @@ Runtime `Canvas` + `RawImage` (reflection for stub/Proton builds). `OverlayTextu
 | Key | Default | Notes |
 |-----|---------|-------|
 | `PsychoticBreakEnabled` | true | Master toggle |
-| `PsychoticBreakTriggerChance` | 0.01 | Per 2s check |
+| `PsychoticBreakChancePercent` | 1.0 | Target % per full eligible hide window (internals derived) |
+| `PsychoticBreakAccentEnabled` | true | Horror edge accents on blackout overlay |
 | `PsychoticBreakDuration` | 20s | Episode length |
 | `PsychoticBreakOncePerMatch` | true | Uses **Match** scope (glossary) |
 

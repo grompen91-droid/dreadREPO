@@ -16,12 +16,12 @@ namespace Dread.Systems
                 LoggingService.LogVerbose("[PsychoticBreak] Tumble lock unavailable; input lock only");
         }
 
-        private static void MaintainPlayerFallenState(PlayerController? pc)
+        private static void EnsurePlayerFallenHeld(PlayerController? pc)
         {
             if ((object)pc == null)
                 return;
 
-            PlayerTumbleCompat.MaintainForcedTumble(pc);
+            PlayerTumbleCompat.EnsureForcedTumbleHeld(pc);
             PlayerInputLockCompat.SetLocked(pc, locked: true);
         }
 

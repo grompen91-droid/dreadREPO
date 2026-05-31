@@ -464,7 +464,7 @@ namespace Dread.Systems
                 compatibilitySkipConflictingPatches = DreadConfig.CompatibilitySkipConflictingPatches.Value,
                 debugConsoleGuard = DreadConfig.DebugConsoleGuardEnabled.Value,
                 psychoticBreak = DreadConfig.PsychoticBreakEnabled.Value,
-                psychoticBreakTriggerChance = DreadConfig.PsychoticBreakTriggerChance.Value,
+                psychoticBreakChancePercent = DreadConfig.PsychoticBreakChancePercent.Value,
                 psychoticBreakDuration = DreadConfig.PsychoticBreakDuration.Value,
                 psychoticBreakOncePerMatch = DreadConfig.PsychoticBreakOncePerMatch.Value,
                 debugServerEnabled = DreadConfig.DebugServerEnabled.Value,
@@ -495,9 +495,13 @@ namespace Dread.Systems
                 Section("4. Psychotic Break",
                     Entry("PsychoticBreakEnabled", "psychoticBreak.enabled", DreadConfig.PsychoticBreakEnabled),
                     Entry(
-                        "PsychoticBreakTriggerChance",
-                        "psychoticBreak.triggerChance",
-                        DreadConfig.PsychoticBreakTriggerChance),
+                        "PsychoticBreakChancePercent",
+                        "psychoticBreak.chancePercent",
+                        DreadConfig.PsychoticBreakChancePercent),
+                    Entry(
+                        "PsychoticBreakAccentEnabled",
+                        "psychoticBreak.accentEnabled",
+                        DreadConfig.PsychoticBreakAccentEnabled),
                     Entry("PsychoticBreakDuration", "psychoticBreak.duration", DreadConfig.PsychoticBreakDuration),
                     Entry(
                         "PsychoticBreakOncePerMatch",
@@ -592,7 +596,8 @@ namespace Dread.Systems
                 ["compatibility.skipConflictingPatches"] = (DreadConfig.CompatibilitySkipConflictingPatches, false),
                 ["compatibility.debugConsoleGuard"] = (DreadConfig.DebugConsoleGuardEnabled, false),
                 ["psychoticBreak.enabled"] = (DreadConfig.PsychoticBreakEnabled, false),
-                ["psychoticBreak.triggerChance"] = (DreadConfig.PsychoticBreakTriggerChance, false),
+                ["psychoticBreak.chancePercent"] = (DreadConfig.PsychoticBreakChancePercent, false),
+                ["psychoticBreak.accentEnabled"] = (DreadConfig.PsychoticBreakAccentEnabled, false),
                 ["psychoticBreak.duration"] = (DreadConfig.PsychoticBreakDuration, false),
                 ["psychoticBreak.oncePerMatch"] = (DreadConfig.PsychoticBreakOncePerMatch, false),
                 ["testing.crash"] = (DreadConfig.TestCrashButton, false),
@@ -887,7 +892,7 @@ namespace Dread.Systems
             public bool compatibilitySkipConflictingPatches;
             public bool debugConsoleGuard;
             public bool psychoticBreak;
-            public float psychoticBreakTriggerChance;
+            public float psychoticBreakChancePercent;
             public float psychoticBreakDuration;
             public bool psychoticBreakOncePerMatch;
             public bool debugServerEnabled;
