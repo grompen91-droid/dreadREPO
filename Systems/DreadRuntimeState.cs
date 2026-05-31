@@ -37,6 +37,8 @@ namespace Dread.Systems
         public static string SnitchState { get; internal set; } = "disarmed";
         /// <summary>Seconds remaining on the snitch POI loop (0 = inactive).</summary>
         public static float SnitchPoiRemaining { get; internal set; }
+        /// <summary>Distance in metres from local camera to snitch item (-1 = unknown).</summary>
+        public static float SnitchItemDistance { get; internal set; } = -1f;
 
         public static int DreadPatchCount { get; internal set; }
     }

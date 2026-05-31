@@ -375,6 +375,8 @@ namespace Dread.Systems
             var state = DreadRuntimeState.SnitchState;
             if (state == "triggered")
                 return $"triggered  POI {DreadRuntimeState.SnitchPoiRemaining:F0}s";
+            if (state == "armed" && DreadRuntimeState.SnitchItemDistance >= 0f)
+                return $"armed  {DreadRuntimeState.SnitchItemDistance:F1}m";
             return state;
         }
 

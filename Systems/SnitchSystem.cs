@@ -69,6 +69,17 @@ namespace Dread.Systems
                 return;
             }
 
+            if (_armed && !_triggered && _activeMarker != null)
+            {
+                try
+                {
+                    var cam = Camera.main;
+                    if ((object)cam != null)
+                        DreadRuntimeState.SnitchItemDistance = Vector3.Distance(cam.transform.position, _activeMarker.transform.position);
+                }
+                catch { }
+            }
+
             if (_triggered && _poiRemaining > 0f)
             {
                 _poiRemaining = Mathf.Max(0f, _poiRemaining - Time.deltaTime);
@@ -149,6 +160,7 @@ namespace Dread.Systems
             _nextReissue = 0f;
             DreadRuntimeState.SnitchState = "disarmed";
             DreadRuntimeState.SnitchPoiRemaining = 0f;
+            DreadRuntimeState.SnitchItemDistance = -1f;
         }
     }
 
