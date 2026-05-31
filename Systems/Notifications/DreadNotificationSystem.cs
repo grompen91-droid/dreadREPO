@@ -33,7 +33,7 @@ namespace Dread.Systems
         private const float MarginX = 26f;
         private const float MarginBottom = 26f;
         private const float Gap = 12f;
-        private const float TitleLineH = 16f;
+        private const float TitleLineH = 20f;
         private const float LifeSeconds = 5f;
         private const float SlideSeconds = 0.28f;
 
@@ -153,10 +153,14 @@ namespace Dread.Systems
                 GUI.Label(new Rect(tx, ty, innerW, TitleLineH), t.Title.ToUpperInvariant(), _titleStyle!);
                 GUI.Label(new Rect(tx, ty + TitleLineH + 5f, innerW, msgH), t.Message, _messageStyle);
 
-                // Shrinking life bar across the bottom edge (steel).
+                // Shrinking life bar across the bottom edge (steel). It starts
+                // just right of the rail so the rail can run full height to the
+                // bottom corner without the two bars overlapping.
                 float life = Mathf.Clamp01(1f - age / LifeSeconds);
                 _railStyle.normal.background = _railInfoTex;
-                GUI.Box(new Rect(box.x, box.y + height - 2f, box.width * life, 2f), EmptyContent, _railStyle);
+                GUI.Box(
+                    new Rect(box.x + RailWidth, box.y + height - 2f, (box.width - RailWidth) * life, 2f),
+                    EmptyContent, _railStyle);
 
                 y -= Gap;
             }
