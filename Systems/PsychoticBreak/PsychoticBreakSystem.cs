@@ -115,6 +115,7 @@ namespace Dread.Systems
             if (_episodeActive)
                 RestorePlayerControl(PlayerController.instance);
 
+            PsychoticBreakEpisodeProtection.SetActive(false);
             _episodeActive = false;
             _threatMemoryUntil = 0f;
             _sawEnemyWhileThreatActive = false;
@@ -210,6 +211,10 @@ namespace Dread.Systems
             DreadRuntimeState.PsychoticBreakEnemyCount = ProximityScan.Count;
             DreadRuntimeState.PsychoticBreakClipsLoaded = AreClipsLoaded();
             DreadRuntimeState.PsychoticBreakLosLostIn = GetLosLostEligibleInSeconds();
+            DreadRuntimeState.PsychoticBreakThreatEngaged = _sawEnemyWhileThreatActive;
+            DreadRuntimeState.PsychoticBreakEnemyVisible = IsAnyEnemyVisibleCached();
+            DreadRuntimeState.PsychoticBreakHallucinationStatus = GetHallucinationStatusForDebug();
+            DreadRuntimeState.PsychoticBreakEpisodeProtected = PsychoticBreakEpisodeProtection.IsActive;
             DreadRuntimeState.PsychoticBreakCheckInterval = _checkIntervalSeconds;
             DreadRuntimeState.PsychoticBreakPerRollChance = _perRollProbability;
             DreadRuntimeState.PsychoticBreakEstimatedWindowChance = _tuning.EstimatedWindowChance;
@@ -250,7 +255,7 @@ namespace Dread.Systems
                 return;
             }
 
-            StartEpisode(countAsMatchTrigger: false);
+            StartEpisode(countAsMatchTrigger: false, debugDamageProtection: true);
         }
     }
 }

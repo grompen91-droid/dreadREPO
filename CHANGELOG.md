@@ -41,6 +41,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **Verify:** Tier 0 registry manifest includes `ErrorReportingPromptSystem`
 
 ### Fixed
+- **Psychotic Break:** Hallucination mob is a client-local baked mesh snapshot from a live enemy (no prefab instantiate, no Photon/Enemy scripts); fallback silhouette + lunge if no mesh. Debug-forced episodes block real mob damage; natural triggers stay vulnerable
+- **Psychotic Break:** Hallucination picks ranked nearby enemies (skips player avatars only, max 28m, relaxed 65m if none close), walks parent hierarchy for `SkinnedMeshRenderer`/`MeshFilter`, retries until mesh snapshot succeeds; snapshot parts placed at spawn via world offset (not template-local); hard mob + overlay strobe (near-black flashes, full reveal on lunge attack)
+- **Psychotic Break:** LoS gate no longer stuck on `los not lost` when threat was active but visibility raycasts never hit (engagement now arms on enemy within 15m or visible; settle timer starts reliably; multi-height visibility samples)
+- **Psychotic Break:** Engagement latch now arms when threat memory refreshes (same `EnemyHealth` rules as threat scan); threat distance uses camera origin like tension; overlay shows `eng` / `vis`
 - **Error reporting:** Game-state capture for crash reports no longer calls compile-time `EnemyHealth.CurrentHealth` (fixes `get_CurrentHealth` MissingMethodException when third-party mods log errors, e.g. DeathMinimap after death); uses `Systems/Core/EnemyHealthCompat` and `EnemyScanCache`
 
 ## [1.6.1] - 2026-05-30

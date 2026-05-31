@@ -1,13 +1,12 @@
 using System.Reflection;
 using Dread.Systems.Core;
 using HarmonyLib;
-using Dread.Systems;
 using UnityEngine;
 
 namespace Dread.Systems.Patches
 {
     /// <summary>
-    /// Blocks player damage originating from psychotic-break hallucination clones.
+    /// Blocks player damage during psychotic-break episodes and from hallucination clones.
     /// </summary>
     internal static class PsychoticBreakHallucinationDamagePatch
     {
@@ -32,7 +31,7 @@ namespace Dread.Systems.Patches
                 _original = method;
                 harmony.Patch(method, prefix: new HarmonyMethod(typeof(PsychoticBreakHallucinationDamagePatch), nameof(HurtPrefix)));
                 _applied = true;
-                LoggingService.LogVerbose($"[PsychoticBreak] Patched PlayerHealth.{name} for hallucination damage block");
+                LoggingService.LogVerbose($"[PsychoticBreak] Patched PlayerHealth.{name} for episode damage block");
                 return;
             }
         }
@@ -49,6 +48,9 @@ namespace Dread.Systems.Patches
 
         private static bool HurtPrefix(object[] __args)
         {
+            if (PsychoticBreakEpisodeProtection.IsActive)
+                return false;
+
             for (int i = 0; i < __args.Length; i++)
             {
                 if (__args[i] is GameObject go && DreadHallucinationMob.IsHallucination(go))
@@ -59,15 +61,7 @@ namespace Dread.Systems.Patches
                     return false;
             }
 
-            if (PsychoticBreakHallucinationInvuln.Active)
-                return false;
-
             return true;
         }
-    }
-
-    internal static class PsychoticBreakHallucinationInvuln
-    {
-        public static bool Active { get; set; }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Dread.Systems.Core;
 using UnityEngine;
 
 namespace Dread.Systems
@@ -11,9 +12,10 @@ namespace Dread.Systems
         private float _phase2Start;
         private float _phase3Start;
 
-        private void StartEpisode(bool countAsMatchTrigger = true)
+        private void StartEpisode(bool countAsMatchTrigger = true, bool debugDamageProtection = false)
         {
             _episodeActive = true;
+            PsychoticBreakEpisodeProtection.SetActive(debugDamageProtection);
             if (countAsMatchTrigger)
                 _hasTriggeredThisMatch = true;
             _episodeTimer = 0f;
@@ -73,6 +75,12 @@ namespace Dread.Systems
 
             UpdateScheduledScreams(raw);
             UpdateHallucinationSchedule(raw);
+
+            if (_hallucinationFlashActive)
+            {
+                ApplyHallucinationFlashOverlay(_hallucinationFlashMobVisible);
+                return;
+            }
 
             float flickerFreqMul = 0.85f + (float)_episodeRng.NextDouble() * 0.3f;
 
@@ -134,6 +142,7 @@ namespace Dread.Systems
         private void EndEpisode()
         {
             LoggingService.LogVerbose("[PsychoticBreak] Episode ending...");
+            PsychoticBreakEpisodeProtection.SetActive(false);
             _episodeActive = false;
             SetDarknessAlpha(0f);
             SetVignetteAlpha(0f);

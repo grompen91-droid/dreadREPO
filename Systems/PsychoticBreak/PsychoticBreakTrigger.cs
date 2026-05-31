@@ -47,10 +47,12 @@ namespace Dread.Systems
             if (IsAnyEnemyVisibleCached())
                 return "visible enemy";
             if (!_sawEnemyWhileThreatActive)
-                return "los not lost";
+                return "no threat engagement";
+            if (_losLostEligibleAt <= 0f)
+                return "los pending";
             if (Time.time < _losLostEligibleAt)
-                return "los lost too recent";
-            return "los not lost";
+                return "los settle";
+            return "los pending";
         }
 
         private bool HasLostLineOfSight()
@@ -58,6 +60,8 @@ namespace Dread.Systems
             if (IsAnyEnemyVisibleCached())
                 return false;
             if (!_sawEnemyWhileThreatActive)
+                return false;
+            if (_losLostEligibleAt <= 0f)
                 return false;
             return Time.time >= _losLostEligibleAt;
         }
@@ -79,12 +83,20 @@ namespace Dread.Systems
                 return;
             }
 
-            bool visible = IsAnyEnemyVisibleCached();
-            if (visible)
+            if (!_sawEnemyWhileThreatActive)
                 _sawEnemyWhileThreatActive = true;
 
-            if (_wasEnemyVisibleLastRefresh && !visible && _sawEnemyWhileThreatActive)
-                _losLostEligibleAt = Time.time + _losLostDelaySeconds;
+            bool visible = RefreshEnemyVisibilityNow();
+
+            if (visible)
+            {
+                _losLostEligibleAt = 0f;
+            }
+            else if (_sawEnemyWhileThreatActive)
+            {
+                if (_wasEnemyVisibleLastRefresh || _losLostEligibleAt <= 0f)
+                    _losLostEligibleAt = Time.time + _losLostDelaySeconds;
+            }
 
             _wasEnemyVisibleLastRefresh = visible;
         }
@@ -130,6 +142,7 @@ namespace Dread.Systems
                 if (d < ThreatRange)
                 {
                     _threatMemoryUntil = Time.time + ThreatMemoryDuration;
+                    _sawEnemyWhileThreatActive = true;
                     return;
                 }
             }
@@ -148,13 +161,33 @@ namespace Dread.Systems
         {
             if (!_sawEnemyWhileThreatActive || IsAnyEnemyVisibleCached())
                 return 0;
-            if (Time.time >= _losLostEligibleAt)
+            if (_losLostEligibleAt <= 0f || Time.time >= _losLostEligibleAt)
                 return 0;
             return (int)Math.Ceiling(_losLostEligibleAt - Time.time);
         }
 
+        private bool RefreshEnemyVisibilityNow()
+        {
+            _mainCam = Camera.main;
+            _nextVisibilityRefresh = Time.time + VisibilityRefreshInterval;
+            _cachedEnemies = ProximityScan.GetEnemies();
+            _cachedAnyEnemyVisible = IsAnyEnemyVisible(_cachedEnemies);
+            return _cachedAnyEnemyVisible;
+        }
+
         private Vector3? GetThreatScanOrigin()
         {
+            if (_mainCam == null)
+                _mainCam = Camera.main;
+            if (_mainCam != null)
+            {
+                try
+                {
+                    return _mainCam.transform.position;
+                }
+                catch { }
+            }
+
             var pc = PlayerController.instance;
             if ((object)pc != null)
             {
@@ -165,9 +198,7 @@ namespace Dread.Systems
                 catch { }
             }
 
-            if (_mainCam == null)
-                _mainCam = Camera.main;
-            return _mainCam != null ? _mainCam.transform.position : null;
+            return null;
         }
 
         private bool CanTrigger()
@@ -215,10 +246,19 @@ namespace Dread.Systems
             return _cachedAnyEnemyVisible;
         }
 
+        private static readonly Vector3[] VisibilitySampleOffsets =
+        {
+            new Vector3(0f, 0.5f, 0f),
+            new Vector3(0f, 1.2f, 0f),
+            new Vector3(0f, 1.8f, 0f),
+        };
+
         private bool IsAnyEnemyVisible(EnemyHealth[]? enemies)
         {
+            _mainCam = Camera.main;
             var cam = _mainCam;
-            if (cam == null || enemies == null) return false;
+            if (cam == null || enemies == null)
+                return false;
 
             Vector3 origin;
             try
@@ -243,24 +283,34 @@ namespace Dread.Systems
                     if (!EnemyHealthCompat.IsAliveForVisibility(e))
                         continue;
 
-                    var target = ProximityScan.GetFocusPosition(e);
-
-                    if (Vector3.Distance(origin, target) < 0.75f)
+                    if (IsEnemyVisibleFrom(origin, e))
                         return true;
-
-                    if (Physics.Linecast(origin, target, out var hit, VisionBlockMask, QueryTriggerInteraction.Ignore))
-                    {
-                        if (hit.collider != null && hit.collider.transform.IsChildOf(e.transform))
-                            return true;
-                        continue;
-                    }
-
-                    return true;
                 }
                 catch
                 {
                     continue;
                 }
+            }
+
+            return false;
+        }
+
+        private static bool IsEnemyVisibleFrom(Vector3 origin, EnemyHealth enemy)
+        {
+            var baseTarget = ProximityScan.GetFocusPosition(enemy);
+
+            for (int s = 0; s < VisibilitySampleOffsets.Length; s++)
+            {
+                var target = baseTarget + VisibilitySampleOffsets[s];
+                float dist = Vector3.Distance(origin, target);
+                if (dist < 0.75f)
+                    return true;
+
+                if (!Physics.Linecast(origin, target, out var hit, VisionBlockMask, QueryTriggerInteraction.Ignore))
+                    return true;
+
+                if (hit.collider != null && hit.collider.transform.IsChildOf(enemy.transform))
+                    return true;
             }
 
             return false;
