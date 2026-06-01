@@ -99,6 +99,15 @@ jobs:
           $pluginContent = $pluginContent -replace 'public const string VERSION = "[\d.]+"', "public const string VERSION = `"$newVersion`""
           Set-Content Plugin.cs $pluginContent
 
+          $audioManifestPath = "audio/audio-manifest.json"
+          if (Test-Path $audioManifestPath) {
+            $audioContent = Get-Content $audioManifestPath -Raw
+            $audioContent = $audioContent -replace '"modVersion": "[\d.]+"', "`"modVersion`": `"$newVersion`""
+            $audioContent = $audioContent -replace '"releaseTag": "v[\d.]+"', "`"releaseTag`": `"$releaseTag`""
+            $audioContent = $audioContent -replace '"baseUrl": "https://github.com/grompen91-droid/dreadREPO/releases/download/v[\d.]+"', "`"baseUrl`": `"https://github.com/grompen91-droid/dreadREPO/releases/download/$releaseTag`""
+            Set-Content $audioManifestPath $audioContent
+          }
+
           $readme = Get-Content README.md -Raw
           $readme = $readme -replace 'version-[\d.]+-crimson', "version-$newVersion-crimson"
           $readme = $readme -replace 'status-(active|release)-brightgreen', "status-release-brightgreen"
@@ -141,6 +150,7 @@ jobs:
             CHANGELOG.md
             README.md
             THUNDERSTORE_README.md
+            audio/audio-manifest.json
           retention-days: 1
 
       - name: Upload release body
@@ -193,16 +203,21 @@ jobs:
           name: modified-files
           path: ${{ runner.temp }}/modified
 
-      - name: Apply bumped Plugin.cs
+      - name: Apply bumped release files
         shell: bash
         run: |
           cp "${{ runner.temp }}/modified/Plugin.cs" Plugin.cs
+          cp "${{ runner.temp }}/modified/audio/audio-manifest.json" audio/audio-manifest.json
 
       - name: Verify Plugin.cs version
         shell: bash
         run: |
           grep -q "VERSION = \"${{ needs.version.outputs.new_version }}\"" Plugin.cs \
             || { echo "::error::Plugin.cs version mismatch (expected ${{ needs.version.outputs.new_version }})"; exit 1; }
+
+      - name: Validate audio manifest
+        shell: pwsh
+        run: pwsh -NoProfile ./.github/scripts/validate-audio-manifest.ps1
 
       - name: Build
         shell: bash
@@ -367,6 +382,7 @@ jobs:
           Copy-Item "${{ runner.temp }}/modified/Plugin.cs" "Plugin.cs"
           Copy-Item "${{ runner.temp }}/modified/CHANGELOG.md" "CHANGELOG.md"
           Copy-Item "${{ runner.temp }}/modified/README.md" "README.md"
+          Copy-Item "${{ runner.temp }}/modified/audio/audio-manifest.json" "audio/audio-manifest.json"
 
           if (Test-Path "${{ runner.temp }}/modified/THUNDERSTORE_README.md") {
             Copy-Item "${{ runner.temp }}/modified/THUNDERSTORE_README.md" "THUNDERSTORE_README.md"
@@ -374,7 +390,7 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add manifest.json Plugin.cs CHANGELOG.md README.md
+          git add manifest.json Plugin.cs CHANGELOG.md README.md audio/audio-manifest.json
           if (Test-Path "THUNDERSTORE_README.md") { git add THUNDERSTORE_README.md }
           git commit -m "release: v${newVersion} bump"
 
