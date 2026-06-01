@@ -11,7 +11,7 @@
 | `debug-server` | `DebugServerSystem` | Debug |
 | `debug-overlay` | `DebugOverlaySystem` | Debug |
 
-**Always registered** (production + development):
+**Development only** (`#if DREAD_DEBUG`):
 
 | Id | Type | Group | Config |
 |----|------|-------|--------|
@@ -23,7 +23,7 @@ Core rows (always present): unchanged (see [extension-registry.md](../../002-arc
 
 When `DREAD_DEBUG` is defined: Core group runs before Debug group (unchanged ADR-0016).
 
-When `DREAD_DEBUG` is undefined: agent debug hosts are not compiled; `test-crash` still registers.
+When `DREAD_DEBUG` is undefined: agent debug hosts and `test-crash` are not compiled.
 
 ## Static analysis (Tier 0)
 
