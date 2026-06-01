@@ -44,7 +44,9 @@ namespace Dread.Systems
 
         private static void Postfix()
         {
-            if (!DreadConfig.SnitchEnabled.Value || DreadConfig.CompatibilityMode.Value)
+            GameplayPhaseCompat.NotifyExtractionLevelStarted();
+
+            if (!DreadFeaturePolicy.SnitchEnabled)
                 return;
             if (!HarmonyPatchCompat.IsMasterClient())
                 return;

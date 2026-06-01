@@ -12,6 +12,10 @@ namespace Dread.Systems.Core
     /// adapts to signature differences across game versions (and never breaks the
     /// stub build). A larger radius reaches more distant enemies.
     /// </summary>
+    /// <remarks>
+    /// When <c>MonsterAggressionEnabled</c> is on, <see cref="EnemyDirectorSetInvestigatePatch"/>
+    /// multiplies the radius by 1.5 for every SetInvestigate call, including compat invokes.
+    /// </remarks>
     internal static class EnemyLureCompat
     {
         private static MethodInfo? _setInvestigate;

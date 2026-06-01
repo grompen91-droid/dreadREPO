@@ -40,6 +40,9 @@ Canonical list of reflection, Harmony `AccessTools` resolution, and Harmony `Tra
 | `psychotic-break-find-players` | `Systems/PsychoticBreak/PsychoticBreakTrigger.cs` | `FindObjectsOfType<PlayerController>` | 0.25s / 2s | none | optional | required | **keep** | Compile-time generic; gameplay scan interval |
 | `snitch-level-gen-done` | `Systems/Patches/SnitchLevelGenDonePatch.cs` | `Apply` / `Postfix` | event (`OnLevelGenDone`) | snitch enabled + !compat | required | required | **keep** | `SemiFunc.OnLevelGenDone` stubbed; notifies `SnitchSystem` |
 | `item-roster-compat` | `Systems/Core/ItemRosterCompat.cs` | `ResolveTypeByName` / `GetItemGameObjects` | on arm | none | required | required | **keep** | `TypeByName` + `Assembly-CSharp` scan; inactive `FindObjectsOfType` |
+| `gameplay-phase-compat` | `Systems/Core/GameplayPhaseCompat.cs` | `ResolvePhase` / `SemiFunc` bool probes | per Update (monster features) | none | required | required | **keep** | `TruckLevel`, `RunLevel`, etc. probed by name; latch fallback from `OnLevelGenDone` |
+| `player-roster-compat` | `Systems/Core/PlayerRosterCompat.cs` | `GetPlayers` | camp lure tick | none | required | required | **keep** | `PlayerAvatar` / `PlayerController` by name |
+| `enemy-lure-compat` | `Systems/Core/EnemyLureCompat.cs` | `Pull` / `SetInvestigate` invoke | lure + snitch POI | host monster | required | required | **keep** | Reflection arg fill; radius also scaled by aggression patch |
 
 ## Hot-path summary
 

@@ -110,7 +110,7 @@ Remote: `https://github.com/grompen91-droid/dreadREPO.git`, branch `master`.
 Backlog: `docs/ROADMAP.md`. Pick issues labeled `ready-for-agent` unless the task says otherwise.
 
 <!-- SPECKIT START -->
-**Active implementation plan (ERR-2):** [specs/004-err-2-default-on-prompt/plan.md](specs/004-err-2-default-on-prompt/plan.md) (branch `004-err-2-default-on-prompt`, issue [#172](https://github.com/grompen91-droid/dreadREPO/issues/172)).
+**Active implementation plan (006):** [specs/006-lure-snitch-hardening/plan.md](specs/006-lure-snitch-hardening/plan.md) (branch `006-lure-snitch-hardening`, Camp Lure + Snitch hardening).
 <!-- SPECKIT END -->
 
 ## Cursor Cloud specific instructions

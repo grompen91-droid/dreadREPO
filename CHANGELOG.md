@@ -45,11 +45,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **Core:** `GameplayContext` unifies menu/in-level/run gates; `DreadFeaturePolicy` centralizes Compatibility mode (low stamina + fake footsteps now disabled in compat)
 - **Core:** `PlayerControllerCompat` stamina/sprint multiplier seams for tension and debug server reads
 - **Verify:** Tier 0 registry manifest includes `ErrorReportingPromptSystem`
+- **Camp Lure / Snitch hardening:** `GameplayContext.AllowsHostMonsterFeatures` gates host monster features to active run only; new `GameplayPhaseCompat` with level-gen latch and native REPO phase probes; overlay phase label `run` (not `extraction`)
+- **Snitch:** pickup detection no longer treats spawn-time parent as a pickup (fixes instant bang on level load)
+- **Camp Lure:** new `LureCooldownSeconds` config (default 60s) prevents instant re-lure after contact; no lure when zero enemies in scan
+- **Snitch:** explicit `failed` arm state; 2s pickup grace period; arm logs at Verbose only; removed temporary agent debug instrumentation
 
 ### Fixed
 - **Error reporting:** Game-state capture for crash reports no longer calls compile-time `EnemyHealth.CurrentHealth` (fixes `get_CurrentHealth` MissingMethodException when third-party mods log errors, e.g. DeathMinimap after death); uses `Systems/Core/EnemyHealthCompat` and `EnemyScanCache`
 - **Snitch:** arm timer no longer resets on additive scene loads during level generation; arm attempt also runs after `SemiFunc.OnLevelGenDone` ([#222](https://github.com/grompen91-droid/dreadREPO/issues/222))
 - **Snitch:** `ItemRosterCompat` validates resolved types as `Component`, scans `Assembly-CSharp` when `TypeByName` fails, and includes inactive valuables in `FindObjectsOfType`
+- **Snitch / Camp Lure:** `GameplayContext.IsRun()` now matches tension and psychotic break (`SemiFunc.MenuLevel()` only); fixes systems staying disarmed while the active Unity scene is still named Main
+- **Snitch:** debug overlay shows off/blocked/arming/armed like psychotic break; publishes `SnitchBlockReason` each frame
 
 ## [1.6.1] - 2026-05-30
 

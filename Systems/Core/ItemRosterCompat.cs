@@ -20,6 +20,13 @@ namespace Dread.Systems.Core
         private static bool _resolved;
         private static bool _loggedError;
 
+        internal static void ResetForNewRun()
+        {
+            _resolved = false;
+            _itemType = null;
+            _loggedError = false;
+        }
+
         public static List<GameObject> GetItemGameObjects()
         {
             var result = new List<GameObject>();

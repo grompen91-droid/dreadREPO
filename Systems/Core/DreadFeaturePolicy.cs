@@ -28,5 +28,11 @@ namespace Dread.Systems.Core
 
         public static bool PsychoticBreakEnabled =>
             DreadConfig.PsychoticBreakEnabled.Value && !CompatibilityMode;
+
+        public static bool MonsterLureEnabled =>
+            DreadConfig.MonsterLureEnabled.Value && !CompatibilityMode;
+
+        public static bool SnitchEnabled =>
+            DreadConfig.SnitchEnabled.Value && !CompatibilityMode;
     }
 }

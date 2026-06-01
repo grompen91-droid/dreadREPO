@@ -72,8 +72,7 @@ namespace Dread.Systems.Core
                     "snitch-level-gen-done",
                     PatchGroup.Monster,
                     SnitchLevelGenDonePatch.Apply,
-                    SnitchLevelGenDonePatch.Remove,
-                    () => DreadConfig.SnitchEnabled.Value && !DreadConfig.CompatibilityMode.Value),
+                    SnitchLevelGenDonePatch.Remove),
             };
 
         private static bool MonsterHarmonyPatchesEnabled() =>
