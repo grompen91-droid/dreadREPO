@@ -211,6 +211,7 @@ jobs:
           output=$(dotnet build Dread.csproj -c Release --nologo \
             -p:GameDir="$refsDir" \
             -p:BepInExDir="$refsDir" \
+            -p:EnableDebugFeatures=false \
             -p:DeployToProfile=false \
             -p:DeployToDist=false 2>&1)
           exitCode=$?
@@ -219,6 +220,10 @@ jobs:
             echo "::error::Build failed (exit code $exitCode)"
             exit $exitCode
           fi
+
+      - name: Verify production DLL profile
+        shell: bash
+        run: bash .github/scripts/verify-production-dll.sh bin/Release/net48/Dread.dll
 
       - name: Upload plugin binaries
         uses: actions/upload-artifact@v7
@@ -290,6 +295,26 @@ jobs:
 
           Compress-Archive -Path "$outDir/*" -DestinationPath $zipPath -Force
           Write-Host "Package created: $zipPath"
+
+      - name: Verify production Thunderstore zip
+        shell: bash
+        run: |
+          zipFile=$(ls "${{ runner.temp }}"/elytraking-Dread-*.zip | head -1)
+          checkDir="${{ runner.temp }}/zip-check"
+          rm -rf "$checkDir"
+          mkdir -p "$checkDir"
+          unzip -q "$zipFile" -d "$checkDir"
+          dll=$(find "$checkDir" -path '*/BepInEx/plugins/*/Dread.dll' | head -1)
+          if [ -z "$dll" ]; then
+            echo "::error::Dread.dll not found in Thunderstore zip"
+            exit 1
+          fi
+          bash .github/scripts/verify-production-dll.sh "$dll"
+          if find "$checkDir" -path '*dread-mcp-server*' | grep -q .; then
+            echo "::error::dread-mcp-server must not appear in Thunderstore zip"
+            exit 1
+          fi
+          echo "Thunderstore zip verified: production Dread.dll profile, no MCP bundle"
 
       - name: Upload Thunderstore zip
         uses: actions/upload-artifact@v7

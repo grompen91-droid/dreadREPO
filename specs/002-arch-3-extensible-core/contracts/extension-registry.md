@@ -31,11 +31,14 @@ Implementations MUST register at least these (host names from [mod-architecture.
 | `tension` | `TensionSystem` | `DreadTensionHost` | Core |
 | `error-reporter` | `ErrorReporterSystem` | `DreadErrorHost` | Core |
 | `psychotic-break` | `PsychoticBreakSystem` | `DreadPsychoticBreakHost` | Core |
-| `test-crash` | `TestCrashSystem` | `DreadTestCrashHost` | Debug |
-| `debug-server` | `DebugServerSystem` | `DreadDebugHost` | Debug |
-| `debug-overlay` | `DebugOverlaySystem` | `DreadDebugOverlayHost` | Debug |
+| `notifications` | `DreadNotificationSystem` | `DreadNotificationHost` | Core |
+| `camp-lure` | `CampLureSystem` | `DreadCampLureHost` | Core |
+| `snitch` | `SnitchSystem` | `DreadSnitchHost` | Core |
+| `test-crash` | `TestCrashSystem` | `DreadTestCrashHost` | Debug *(012: `#if DREAD_DEBUG` only)* |
+| `debug-server` | `DebugServerSystem` | `DreadDebugHost` | Debug *(012: `#if DREAD_DEBUG` only)* |
+| `debug-overlay` | `DebugOverlaySystem` | `DreadDebugOverlayHost` | Debug *(012: `#if DREAD_DEBUG` only)* |
 
-Debug rows **may omit** `IsEnabled` when ADR-0016 applies: debug hosts always register so `SettingChanged` and F10 overlay wiring keep working (PERF-2). Use `IsEnabled` only when a debug host must not spawn at all.
+Debug rows **may omit** `IsEnabled` when ADR-0016 applies. **012 amendment:** in production builds (`DREAD_DEBUG` undefined), debug rows are not compiled; hosts do not spawn. In development builds, prior behavior retained (config gates behavior inside systems).
 
 ## Predicate examples
 

@@ -96,9 +96,14 @@ jobs:
           dotnet build Dread.csproj -c Release --nologo \
             -p:GameDir="$refsDir" \
             -p:BepInExDir="$refsDir" \
+            -p:EnableDebugFeatures=false \
             -p:DeployToProfile=false \
             -p:DeployToDist=false \
             -fileLoggerParameters:LogFile=${{ runner.temp }}/msbuild.log
+
+      - name: Verify production DLL profile
+        shell: bash
+        run: bash .github/scripts/verify-production-dll.sh bin/Release/net48/Dread.dll
 
       - name: Test ErrorReportJson
         shell: bash

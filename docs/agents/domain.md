@@ -67,9 +67,15 @@ If your output contradicts an existing ADR, surface it explicitly rather than si
 
 > _Contradicts ADR-0007 (event-sourced orders) -- but worth reopening because..._
 
+## Production vs development builds
+
+Thunderstore/CD ship a **production** `Dread.dll` (`EnableDebugFeatures=false`): no debug overlay, TCP server, or TestCrash; **Logging** is section **8** (`DreadConfigSections`).
+
+Agents adding MCP/overlay/server features must follow [guides/development-only-features.md](guides/development-only-features.md). CI enforces [.github/scripts/verify-production-dll.sh](../../.github/scripts/verify-production-dll.sh).
+
 ## In-game debug overlay
 
-`DebugOverlaySystem` (config `11. Debug Overlay` / `DebugOverlayEnabled`) draws an IMGUI HUD during runs. Live values come from `DreadRuntimeState`, populated by `TensionSystem`, `PsychoticBreakSystem`, and `AudioDreadSystem` on their existing 0.5s cadence. F10 toggles visibility when the config entry is on. For remote tooling, prefer `DebugServerSystem` (ADR-0013).
+`DebugOverlaySystem` (config `8. Debug Overlay` / `DebugOverlayEnabled`, **development builds only**) draws an IMGUI HUD during runs. Live values come from `DreadRuntimeState`, populated by `TensionSystem`, `PsychoticBreakSystem`, and `AudioDreadSystem` on their existing 0.5s cadence. F10 toggles visibility when the config entry is on. For remote tooling, prefer `DebugServerSystem` (ADR-0013).
 
 ## REPOConfig slider label compat (temporary)
 

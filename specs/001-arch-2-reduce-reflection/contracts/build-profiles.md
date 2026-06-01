@@ -1,11 +1,15 @@
 # Contract: Dread build profiles (ARCH-2)
 
+**Amended by:** [012 production profile](../../012-production-build-strip-debug/contracts/build-profile.md) (2026-06-01)
+
 ## Stub profile (CI / agents without game)
 
 **Inputs**
 
 | Property | Value |
 |----------|--------|
+| `Configuration` | `Release` (production) or `Debug` (development) |
+| `EnableDebugFeatures` | `false` (production, explicit in CI/CD) or `true` via `-c Debug` |
 | `GameDir` | `{repo}/.github/stubs/refs` |
 | `BepInExDir` | Profile or stub BepInEx core path |
 | `DeployToProfile` | `false` (typical) |
@@ -15,7 +19,15 @@
 
 ```bash
 pwsh -NoProfile .github/scripts/gen-stubs.ps1
+# Production (Thunderstore/CD default)
 dotnet build Dread.csproj -c Release \
+  -p:GameDir=.github/stubs/refs \
+  -p:BepInExDir=.github/stubs/refs \
+  -p:EnableDebugFeatures=false \
+  -p:DeployToProfile=false \
+  -p:DeployToDist=false
+# Development (MCP/Tier 1)
+dotnet build Dread.csproj -c Debug \
   -p:GameDir=.github/stubs/refs \
   -p:BepInExDir=.github/stubs/refs \
   -p:DeployToProfile=false \
@@ -27,6 +39,8 @@ pwsh -NoProfile ./scripts/verify-dread.ps1
 
 - Build completes with 0 errors.
 - `Dread.dll` is produced.
+- Production Release build excludes debug overlay and TCP server (`DREAD_DEBUG` undefined). `TestCrashSystem` ships in production.
+- CI runs `.github/scripts/verify-production-dll.sh` on Release `Dread.dll`.
 - Runtime may still use reflection for optional mods and Unity UI; stub build does not execute game code.
 
 **Non-guarantees**

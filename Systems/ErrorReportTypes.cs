@@ -27,6 +27,8 @@ namespace Dread.Systems
         public SystemInfoData SystemInfo = new SystemInfoData();
         public DisplayInfoData Display = new DisplayInfoData();
         public ConfigData Config = new ConfigData();
+        /// <summary>Recent Unity console + BepInEx LogOutput tail (length-capped).</summary>
+        public string ConsoleLog = string.Empty;
     }
 
     [Serializable]

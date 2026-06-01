@@ -37,7 +37,9 @@ Entry: `Plugin.cs` (Harmony + config only). Registry: `Systems/DreadSystemRegist
 | `TensionSystem` | `DreadTensionHost` | Proximity scan + adrenaline, panic sprint, breath, fake footsteps |
 | `PsychoticBreakSystem` | `DreadPsychoticBreakHost` | Client-local episodes |
 | `ErrorReporterSystem` | `DreadErrorHost` | Opt-in crash reports to Worker |
-| `TestCrashSystem` | `DreadTestCrashHost` | Debug TestCrash |
+| `TestCrashSystem` | `DreadTestCrashHost` | Debug; development builds only |
+| `DebugServerSystem` | `DreadDebugHost` | Development builds only (`#if DREAD_DEBUG`) |
+| `DebugOverlaySystem` | `DreadDebugOverlayHost` | Development builds only |
 | `DebugServerSystem` | `DreadDebugHost` | TCP JSON API (default off) |
 | `DebugOverlaySystem` | `DreadDebugOverlayHost` | IMGUI HUD (default off) |
 

@@ -32,6 +32,7 @@ Example: `cursor/improve-agent-orchestration-3dd3`
 - [ ] Glossary terms from CONTEXT.md in description
 - [ ] No manual version edits in `manifest.json`, `Plugin.cs`, README version badges
 - [ ] Tier 0 verify passed (or failure documented with reason)
+- [ ] If agent-only surface added: `development-only-features.md` checklist completed; production build verified
 - [ ] `[Unreleased]` updated in CHANGELOG.md for notable changes
 
 ## Workflow B: Multi-subagent (Claude Code)
@@ -50,6 +51,7 @@ Issue + guide (optional: docs/agents/guides/*.md)
 
 - Read CONTEXT.md and domain.md before coding
 - Follow AGENTS.md build rules (stubs on Linux)
+- Agent-only code: [guides/development-only-features.md](guides/development-only-features.md) (`DREAD_DEBUG`, `Compile Remove`, config sections 8-9)
 - Return `DONE` or `DONE_WITH_CONCERNS` with git SHA
 
 **Reviewers** must:

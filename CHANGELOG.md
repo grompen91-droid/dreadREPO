@@ -38,6 +38,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **Stubs:** `GUI.HorizontalSlider` (plain and styled) and `GUIStyle.fixedWidth` / `fixedHeight` added to the IMGUIModule stub
 
 ### Changed
+- **Build:** CD and Thunderstore releases compile a production `Dread.dll` that excludes debug overlay, TCP debug server, and test-crash tooling (`DREAD_DEBUG` profile). Production config renumbers **Logging** to section **8** (sections 8-9 and 11 exist only in development builds). Use `dotnet build -c Debug` or `build.ps1 -DebugBuild` for MCP/agent workflows. CI/CD runs `.github/scripts/verify-production-dll.sh` on Release artifacts.
+- **Docs:** [development-only-features.md](docs/agents/guides/development-only-features.md) agent checklist for `#if DREAD_DEBUG`, `Compile Remove`, config, and registry when adding MCP/overlay tooling.
 - **Core:** `ProximityScan` in `Systems/Core/` replaces `EnemyScanCache`; tension, monster audio, debug server, psychotic break, and error reporting share one scan seam (ADR-0008 proximity pattern consolidated)
 - **Core:** `HarmonyPatchRegistry` + `PatchLifecycle` centralize patch apply/remove; `Plugin.cs` delegates patch wiring (ADR-0009 preserved)
 - **Core:** `PlayerInputLockCompat` shared by psychotic break and error-reporting prompt
@@ -50,7 +52,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **Camp Lure:** new `LureCooldownSeconds` config (default 60s) prevents instant re-lure after contact; no lure when zero enemies in scan
 - **Snitch:** explicit `failed` arm state; 2s pickup grace period; arm logs at Verbose only; removed temporary agent debug instrumentation
 
+### Added
+- **Error reporting:** Auto-reported issues now include a length-capped **Console Log** section (recent Unity console output from the session plus a tail of `BepInEx/LogOutput.log`) so triage has full context around the failure
+
 ### Fixed
+- **Error reporter Worker:** GitHub dedupe no longer requires `label:auto-reported` on existing issues (labels were not always applied, so duplicate issues like #230/#231 with the same hash could be created). Search uses `repo` + `hash` only; labels are applied via a follow-up API call; optional KV namespace `DEDUP_KV` caches hash to issue number for reliable dedupe before Search indexing catches up
+- **Error reporting:** Production exceptions and errors flush on the next frame via synchronous HTTP POST instead of waiting up to 5 minutes; pending logs and buffered reports drain with a sync POST on application quit or disable (so real errors are not lost when exiting soon after a crash)
+- **Error reporting:** Game-state capture uses `PlayerControllerCompat` for player HP/stamina (avoids direct `Health` access when dead); per-field try/catch around snapshot sections so one failed capture does not block the batch
 - **Error reporting:** Game-state capture for crash reports no longer calls compile-time `EnemyHealth.CurrentHealth` (fixes `get_CurrentHealth` MissingMethodException when third-party mods log errors, e.g. DeathMinimap after death); uses `Systems/Core/EnemyHealthCompat` and `EnemyScanCache`
 - **Snitch:** arm timer no longer resets on additive scene loads during level generation; arm attempt also runs after `SemiFunc.OnLevelGenDone` ([#222](https://github.com/grompen91-droid/dreadREPO/issues/222))
 - **Snitch:** `ItemRosterCompat` validates resolved types as `Component`, scans `Assembly-CSharp` when `TypeByName` fails, and includes inactive valuables in `FindObjectsOfType`

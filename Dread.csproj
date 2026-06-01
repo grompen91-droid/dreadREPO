@@ -1,4 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug' Or '$(EnableDebugFeatures)' == 'true'">
+    <DreadDebug>true</DreadDebug>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(DreadDebug)' == 'true'">
+    <DefineConstants>$(DefineConstants);DREAD_DEBUG</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(DreadDebug)' != 'true'">
+    <Compile Remove="Systems/DebugOverlay/**/*.cs" />
+    <Compile Remove="Systems/DebugServerSystem.cs" />
+    <Compile Remove="Systems/TestCrashSystem.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <Compile Remove="tests/**" />
     <None Remove="tests/**" />
@@ -13,6 +26,7 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Configurations>Debug;Release</Configurations>
+    <EnableDebugFeatures Condition="'$(EnableDebugFeatures)' == ''">false</EnableDebugFeatures>
     <GameDir>C:\Program Files (x86)\Steam\steamapps\common\REPO\REPO_Data\Managed</GameDir>
     <BepInExDir>$(AppData)\r2modmanPlus-local\REPO\profiles\REALMULTIPLAYER\BepInEx</BepInExDir>
     <PluginDir>$(BepInExDir)\plugins\elytraking-Dread\elytraking-Dread</PluginDir>
