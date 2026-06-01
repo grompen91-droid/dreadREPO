@@ -27,7 +27,7 @@ namespace Dread.Systems
     {
         private const int GuiDepth = 9000;
         private const float ToastWidth = 312f;
-        private const float RailWidth = 3f;
+        private const float RailWidth = 2f;
         private const float PadX = 14f;
         private const float PadY = 12f;
         private const float MarginX = 26f;
@@ -159,7 +159,7 @@ namespace Dread.Systems
                 float life = Mathf.Clamp01(1f - age / LifeSeconds);
                 _railStyle.normal.background = _railInfoTex;
                 GUI.Box(
-                    new Rect(box.x + RailWidth, box.y + height - 2f, (box.width - RailWidth) * life, 2f),
+                    new Rect(box.x + RailWidth, box.y + height - 1f, (box.width - RailWidth) * life, 1f),
                     EmptyContent, _railStyle);
 
                 y -= Gap;

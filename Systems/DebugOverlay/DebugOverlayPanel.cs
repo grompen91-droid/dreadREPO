@@ -12,6 +12,10 @@ namespace Dread.Systems
     {
         private readonly List<RowData> _rows = new(16);
 
+        // Sections folded by the user (keyed by uppercase section label).
+        // Persisted so the chosen layout survives a relaunch.
+        private readonly HashSet<string> _collapsed = new();
+
         // Panel zoom (whole panel scales). Adjusted by the footer +/- buttons.
         private float _zoom = 1f;
 
@@ -45,7 +49,7 @@ namespace Dread.Systems
             BuildRows();
 
             float z = _zoom;
-            float width = 320f * z;
+            float width = 280f * z;
             float padX = 10f * z;
             float padTop = 6f * z;
             float padBottom = 10f * z;
@@ -55,38 +59,48 @@ namespace Dread.Systems
             float labelW = 82f * z;
             float btnH = 20f * z;
             float footerH = btnH + 8f * z;
-            float height = padTop + padBottom + _rows.Count * lineH + footerH;
+            float height = padTop + padBottom + VisibleRowCount() * lineH + footerH;
 
             var panel = new Rect(_panelX, _panelY, width, height);
             GUI.Box(panel, EmptyContent, _boxStyle!);
 
-            // Solid steel accent rail down the left edge (S2 "Slate HUD" look).
-            GUI.Box(new Rect(panel.x, panel.y, 3f * z, height), EmptyContent, _railStyle!);
+            // Thin steel accent rail down the left edge (S2 "Slate HUD" look).
+            GUI.Box(new Rect(panel.x, panel.y, 2f * z, height), EmptyContent, _railStyle!);
 
             float x = panel.x + padX;
             float y = panel.y + padTop;
             float innerW = width - padX * 2f;
 
+            bool hideRows = false;
             for (int i = 0; i < _rows.Count; i++)
             {
                 var row = _rows[i];
                 if (row.Kind == RowSep)
                 {
-                    GUI.Box(new Rect(x, y + lineH * 0.5f - 1f, innerW, 1f), EmptyContent, _sepStyle!);
+                    // Span nearly the full panel width (rail to right edge) so the
+                    // divider reads as a full rule, not a short inset stub.
+                    GUI.Box(new Rect(panel.x + 2f * z, y + lineH * 0.5f - 1f, width - 4f * z, 1f),
+                        EmptyContent, _sepStyle!);
                 }
                 else if (row.Kind == RowSection)
                 {
-                    // Short steel tick, then the uppercase section label.
+                    // Short steel tick, then a clickable label that folds the section.
+                    hideRows = _collapsed.Contains(row.Left);
                     GUI.Box(new Rect(x, y + lineH * 0.5f - 0.5f, 9f * z, 1f), EmptyContent, _railStyle!);
-                    GUI.Label(new Rect(x + 15f * z, y, innerW - 15f * z, lineH), row.Left, _sectionStyle!);
+                    if (GUI.Button(new Rect(x + 15f * z, y, innerW - 15f * z, lineH), row.Left, _sectionBtnStyle!))
+                        ToggleSection(row.Left);
+                    // Caret marks fold state ('>' collapsed, 'v' open), right-aligned.
+                    GUI.Label(new Rect(x, y, innerW, lineH), hideRows ? ">" : "v", _caretStyle!);
                 }
                 else if (row.Kind == RowHeader)
                 {
                     GUI.Label(new Rect(x, y, innerW, lineH), row.Left, _headerStyle!);
-                    GUI.Label(new Rect(x + innerW - 70f * z, y + 3f * z, 70f * z, lineH), row.Right, _hintStyle!);
+                    GUI.Label(new Rect(x + innerW - 70f * z, y, 70f * z, lineH), row.Right, _hintStyle!);
                 }
                 else
                 {
+                    if (hideRows)
+                        continue;
                     GUI.Label(new Rect(x, y, labelW, lineH), row.Left, _labelStyle!);
                     GUIStyle valueStyle = _valueStyle!;
                     valueStyle.normal.textColor = row.Color;
@@ -119,7 +133,7 @@ namespace Dread.Systems
             cx += bw + gap;
 
             int pct = (int)(_zoom * 100f + 0.5f);
-            GUI.Label(new Rect(cx, y, 38f * z, btnH), pct + "%", _labelStyle!);
+            GUI.Label(new Rect(cx, y, 38f * z, btnH), pct + "%", _midStyle!);
 
             float resetW = 50f * z;
             if (GUI.Button(new Rect(x + innerW - resetW, y, resetW, btnH), "Reset", _buttonStyle!))
@@ -140,7 +154,7 @@ namespace Dread.Systems
             float barH = 6f * z;
             float btnH = 20f * z;
             float gap = 6f * z;
-            float rail = 3f * z;
+            float rail = 2f * z;
 
             float totalH = padY * 2f + lineH * 3f + btnH + gap * 3f;
             var box = new Rect(x0, y0, width, totalH);
@@ -170,7 +184,7 @@ namespace Dread.Systems
             _kitSlider = DreadWidgets.Slider(
                 new Rect(ix + labelW, y, innerW - labelW - valW, lineH), _kitSlider, 0f, 1f);
             int sp = (int)(_kitSlider * 100f + 0.5f);
-            GUI.Label(new Rect(ix + innerW - valW, y, valW, lineH), sp + "%", _valueStyle!);
+            GUI.Label(new Rect(ix + innerW - valW, y, valW, lineH), sp + "%", _midStyle!);
             y += lineH + gap;
 
             // Toast triggers, one per severity.
@@ -183,7 +197,78 @@ namespace Dread.Systems
                 DreadNotificationSystem.Bad("Test toast", "Error notification from the kit demo.");
         }
 
-        private void SetZoom(float value) => _zoom = Mathf.Clamp(value, 0.6f, 1.6f);
+        private void SetZoom(float value)
+        {
+            _zoom = Mathf.Clamp(value, 0.6f, 1.6f);
+            SaveLayout();
+        }
+
+        // Fold or unfold a section, then persist the new layout.
+        private void ToggleSection(string label)
+        {
+            if (!_collapsed.Remove(label))
+                _collapsed.Add(label);
+            SaveLayout();
+        }
+
+        // Rows actually drawn given the current fold state: section/header/sep
+        // rows always show; normal rows hide under a collapsed section. Drives
+        // panel height so it shrinks to fit when sections are folded.
+        private int VisibleRowCount()
+        {
+            int n = 0;
+            bool hide = false;
+            for (int i = 0; i < _rows.Count; i++)
+            {
+                var kind = _rows[i].Kind;
+                if (kind == RowSection)
+                {
+                    hide = _collapsed.Contains(_rows[i].Left);
+                    n++;
+                }
+                else if (kind == RowNormal)
+                {
+                    if (!hide) n++;
+                }
+                else
+                {
+                    n++;
+                }
+            }
+            return n;
+        }
+
+        // Restore the panel's saved zoom and position so they survive a relaunch.
+        // Called from Awake, after DreadConfig is initialized.
+        private void LoadLayout()
+        {
+            _zoom = Mathf.Clamp(DreadConfig.DebugOverlayZoom.Value, 0.6f, 1.6f);
+            _panelX = DreadConfig.DebugOverlayPanelX.Value;
+            _panelY = DreadConfig.DebugOverlayPanelY.Value;
+
+            _collapsed.Clear();
+            string saved = DreadConfig.DebugOverlayCollapsedSections.Value;
+            if (!string.IsNullOrEmpty(saved))
+            {
+                foreach (var part in saved.Split(','))
+                {
+                    string s = part.Trim();
+                    if (s.Length > 0)
+                        _collapsed.Add(s);
+                }
+            }
+        }
+
+        // Persist the current zoom and position. Called when the user changes zoom
+        // (footer buttons) or finishes a drag, not every frame, to avoid disk churn.
+        private void SaveLayout()
+        {
+            DreadConfig.DebugOverlayZoom.Value = _zoom;
+            DreadConfig.DebugOverlayPanelX.Value = _panelX;
+            DreadConfig.DebugOverlayPanelY.Value = _panelY;
+            DreadConfig.DebugOverlayCollapsedSections.Value = string.Join(",", _collapsed);
+            DreadConfig.SaveToDisk();
+        }
 
         // Drag the panel by its header strip. Runs only in interactive (F9) mode.
         // Input.mousePosition has a bottom-left origin; GUI coordinates are
@@ -191,7 +276,7 @@ namespace Dread.Systems
         private void HandleDrag()
         {
             float z = _zoom;
-            float width = 320f * z;
+            float width = 280f * z;
             float headerH = (6f + 22f) * z; // padTop + header row = the grab strip
 
             float mx = Input.mousePosition.x;
@@ -219,6 +304,7 @@ namespace Dread.Systems
             else
             {
                 _dragging = false;
+                SaveLayout();
             }
         }
 
@@ -242,6 +328,9 @@ namespace Dread.Systems
             _labelStyle!.fontSize = Scaled(13);
             _valueStyle!.fontSize = Scaled(13);
             _sectionStyle!.fontSize = Scaled(11);
+            _sectionBtnStyle!.fontSize = Scaled(11);
+            _caretStyle!.fontSize = Scaled(11);
+            _midStyle!.fontSize = Scaled(11);
             _buttonStyle!.fontSize = Scaled(11);
         }
 

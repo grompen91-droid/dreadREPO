@@ -48,6 +48,10 @@ namespace Dread.Config
 
 #if DREAD_DEBUG
         public static ConfigEntry<bool> DebugOverlayEnabled = null!;
+        public static ConfigEntry<float> DebugOverlayZoom = null!;
+        public static ConfigEntry<float> DebugOverlayPanelX = null!;
+        public static ConfigEntry<float> DebugOverlayPanelY = null!;
+        public static ConfigEntry<string> DebugOverlayCollapsedSections = null!;
         public static ConfigEntry<bool> DebugServerEnabled = null!;
         public static ConfigEntry<int> DebugServerPort = null!;
         public static ConfigEntry<bool> TestCrashButton = null!;
@@ -170,6 +174,33 @@ namespace Dread.Config
                 "Show an in-game IMGUI debug HUD during runs. Press F10 to toggle visibility at runtime. "
                     + "Hidden on menu levels.");
 
+            DebugOverlayZoom = cfg.Bind(
+                DreadConfigSections.DebugOverlay,
+                "Zoom",
+                1.0f,
+                new ConfigDescription(
+                    "Saved zoom level of the debug HUD panel. Set in-game by the +/- footer buttons; "
+                        + "persists across launches.",
+                    new AcceptableValueRange<float>(0.6f, 1.6f)));
+            DebugOverlayPanelX = cfg.Bind(
+                DreadConfigSections.DebugOverlay,
+                "PanelX",
+                12f,
+                "Saved top-left X of the debug HUD panel in pixels. Set in-game by dragging the panel "
+                    + "header (F9 mouse mode); persists across launches.");
+            DebugOverlayPanelY = cfg.Bind(
+                DreadConfigSections.DebugOverlay,
+                "PanelY",
+                140f,
+                "Saved top-left Y of the debug HUD panel in pixels. Set in-game by dragging the panel "
+                    + "header (F9 mouse mode); persists across launches.");
+            DebugOverlayCollapsedSections = cfg.Bind(
+                DreadConfigSections.DebugOverlay,
+                "CollapsedSections",
+                string.Empty,
+                "Internal: comma-separated list of debug HUD sections folded shut. Set in-game by "
+                    + "clicking a section header (F9 mouse mode); persists across launches.");
+
             DebugServerEnabled = cfg.Bind(
                 DreadConfigSections.DebugServer,
                 "DebugServerEnabled",
@@ -220,7 +251,9 @@ namespace Dread.Config
                 CompatibilityMode, CompatibilitySkipConflictingPatches, DebugConsoleGuardEnabled,
                 ErrorReportingEnabled, ErrorReportingPromptShown,
 #if DREAD_DEBUG
-                DebugOverlayEnabled, DebugServerEnabled, DebugServerPort,
+                DebugOverlayEnabled, DebugOverlayZoom, DebugOverlayPanelX, DebugOverlayPanelY,
+                DebugOverlayCollapsedSections,
+                DebugServerEnabled, DebugServerPort,
 #endif
                 LogLevelEntry,
 #if DREAD_DEBUG

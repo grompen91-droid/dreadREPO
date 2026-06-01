@@ -11,3 +11,7 @@ Directory.Build.targets
 .antigravitycli/
 .agents/
 workers/error-reporter/node_modules/
+
+# local UI preview source (not shipped)
+hud-preview.html
+hud-preview.png

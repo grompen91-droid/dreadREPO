@@ -26,6 +26,7 @@ namespace UnityEngine
         public GUIStyleState active { get; } = new GUIStyleState();
         public int fontSize { get; set; }
         public bool wordWrap { get; set; }
+        public TextAnchor alignment { get; set; }
         public float fixedWidth { get; set; }
         public float fixedHeight { get; set; }
         public GUIStyle() { }

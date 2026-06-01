@@ -29,6 +29,7 @@ namespace Dread.Systems
             _visible = DreadConfig.DebugOverlayEnabled.Value;
             DreadConfig.DebugOverlayEnabled.SettingChanged += OnOverlayConfigChanged;
             enabled = DreadConfig.DebugOverlayEnabled.Value;
+            LoadLayout();
         }
 
         private void OnDestroy()
