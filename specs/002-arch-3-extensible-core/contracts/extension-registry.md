@@ -30,6 +30,7 @@ Implementations MUST register at least these (host names from [mod-architecture.
 | `monster-overhaul` | `MonsterOverhaulSystem` | `DreadMonsterHost` | Core |
 | `tension` | `TensionSystem` | `DreadTensionHost` | Core |
 | `error-reporter` | `ErrorReporterSystem` | `DreadErrorHost` | Core |
+| `error-reporting-prompt` | `ErrorReportingPromptSystem` | `DreadErrorReportingPromptHost` | Core |
 | `psychotic-break` | `PsychoticBreakSystem` | `DreadPsychoticBreakHost` | Core |
 | `notifications` | `DreadNotificationSystem` | `DreadNotificationHost` | Core |
 | `camp-lure` | `CampLureSystem` | `DreadCampLureHost` | Core |
@@ -57,7 +58,7 @@ Compatibility mode: gameplay systems remain registered; internal logic and Harmo
 Tier 0 verify MUST fail if:
 
 - `TryAddSystem<` appears outside `DreadSystemInitializer.cs` and the registry module, OR
-- `arch3_registry_manifest`: any of the eight baseline `SystemType` names missing from `DreadSystemRegistry.cs`.
+- `arch3_registry_manifest`: any of the nine baseline core `SystemType` names missing from `DreadSystemRegistry.cs` (plus debug types when `#if DREAD_DEBUG` is present in the registry file).
 
 ## Versioning
 

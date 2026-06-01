@@ -1,7 +1,9 @@
 # Dread
 
+> **Agents:** start at [`docs/agents/README.md`](docs/agents/README.md) (orchestration, verify, implementation guides). This README is player- and contributor-oriented.
+
 > **Atmospheric horror overhaul for R.E.P.O.**  
-> Seven runtime systems that layer ambient dread, scarier monsters, a tension system that reads your proximity to danger in real time, a psychotic break episode when you are alone and scared, and automatic error reporting.
+> Nine core runtime systems layer ambient dread, scarier monsters, proximity tension, psychotic break episodes, error reporting (with a first-run privacy prompt), in-game notifications, camp lure, and snitch. Debug tooling (overlay, MCP TCP server, test crash) is development-only and excluded from Thunderstore releases.
 
 ![Version](https://img.shields.io/badge/version-1.6.1-crimson?style=flat-square)
 ![Status](https://img.shields.io/badge/status-release-brightgreen?style=flat-square)
@@ -29,7 +31,7 @@
 
 ## Overview
 
-Dread is a BepInEx plugin that transforms R.E.P.O. into a genuinely unsettling experience at the IL level. It uses **Harmony 2 runtime patching** to intercept enemy spawn, movement, and detection methods, while seven independent MonoBehaviour systems run on persistent game objects that survive scene transitions.
+Dread is a BepInEx plugin that transforms R.E.P.O. into a genuinely unsettling experience at the IL level. It uses **Harmony 2 runtime patching** to intercept enemy spawn, movement, and detection methods, while registered MonoBehaviour systems (see `Systems/DreadSystemRegistry.cs`) run on persistent hosts that survive scene transitions.
 
 Every feature is independently toggleable via `BepInEx/config/elytraking.dread.cfg`. Players without Dread can join modded lobbies: monster changes are host-authoritative, while audio and tension effects are client-local.
 

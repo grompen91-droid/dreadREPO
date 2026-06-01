@@ -25,7 +25,7 @@ Entry point for coding agents (Cursor, Claude Code, Cloud Agents, and similar). 
 | [error-reporting-test-checklist.md](error-reporting-test-checklist.md) | Manual ERR-1 matrix (in-game + MCP) |
 | [../../AGENTS.md](../../AGENTS.md) | Build stubs, CI lint, version bump policy |
 | [../../.cursor/mcp.json](../../.cursor/mcp.json) | MCP stdio config for `dread` debug tools |
-| [../../dread-mcp-server/](../../dread-mcp-server/) | TypeScript MCP bridge (build before Tier 1) |
+| [../../dread-mcp-server/README.md](../../dread-mcp-server/README.md) | MCP bridge build, env, tools (build before Tier 1) |
 | [../../.claude/](../../.claude/) | Subagent prompt templates (implementer + reviewers) |
 | [guides/](guides/README.md) | Full implementation guide set (all runtime systems + tooling) |
 | [guides/development-only-features.md](guides/development-only-features.md) | How to gate agent/MCP features out of production builds |

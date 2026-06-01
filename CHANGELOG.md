@@ -5,27 +5,6 @@ All notable changes to **Dread** are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/).
 
-## [1.5.2] - 2026-05-22
-
-![Status](https://img.shields.io/badge/status-development-yellow?style=flat-square)
-
-### Changed
-- CI pipeline: 4-job architecture (relevance, build, analyze, summary) per spec v1.2
-- CI pipeline: relevance hard gate skips build/analyze on non-project PRs
-- CI pipeline: summary table prints all job results and exits 1 on failure
-- CI pipeline: MSBuild log uploaded as artifact on build failure
-- CI pipeline: anti-pattern and format checks fail the build (hard gates)
-- CD pipeline: version-specific release tags (`vX.Y.Z` instead of reusing `vmajor`/`vminor`/`vpatch`)
-- CD pipeline: idempotency check prevents duplicate releases
-- CD pipeline: divergence guard prevents master branch desync on concurrent pushes
-- CD pipeline: release step runs before post-release issue creation
-- CD pipeline: migrated build to `ubuntu-latest` with NuGet and stubs caching
-- CD pipeline: added Thunderstore auto-publish via `tcli`
-- CD pipeline: `THUNDERSTORE_README.md` support in package zip
-
----
-
-
 ## [Unreleased]
 
 ### Added
@@ -38,6 +17,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **Stubs:** `GUI.HorizontalSlider` (plain and styled) and `GUIStyle.fixedWidth` / `fixedHeight` added to the IMGUIModule stub
 
 ### Changed
+- **Docs:** agent documentation sync: nine core registry systems in CONTEXT, mod-architecture, extension-registry, and ADR-0016; removed stale ErrorReporter build note from AGENTS.md; CONTRIBUTING verify command; CHANGELOG section order; superpowers archive banners; `dread-mcp-server/README.md`; [ui-notifications.md](docs/agents/guides/ui-notifications.md)
 - **Build:** CD and Thunderstore releases compile a production `Dread.dll` that excludes debug overlay, TCP debug server, and test-crash tooling (`DREAD_DEBUG` profile). Production config renumbers **Logging** to section **8** (sections 8-9 and 11 exist only in development builds). Use `dotnet build -c Debug` or `build.ps1 -DebugBuild` for MCP/agent workflows. CI/CD runs `.github/scripts/verify-production-dll.sh` on Release artifacts.
 - **Docs:** [development-only-features.md](docs/agents/guides/development-only-features.md) agent checklist for `#if DREAD_DEBUG`, `Compile Remove`, config, and registry when adding MCP/overlay tooling.
 - **Core:** `ProximityScan` in `Systems/Core/` replaces `EnemyScanCache`; tension, monster audio, debug server, psychotic break, and error reporting share one scan seam (ADR-0008 proximity pattern consolidated)
@@ -59,7 +39,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **Error reporter Worker:** GitHub dedupe no longer requires `label:auto-reported` on existing issues (labels were not always applied, so duplicate issues like #230/#231 with the same hash could be created). Search uses `repo` + `hash` only; labels are applied via a follow-up API call; optional KV namespace `DEDUP_KV` caches hash to issue number for reliable dedupe before Search indexing catches up
 - **Error reporting:** Production exceptions and errors flush on the next frame via synchronous HTTP POST instead of waiting up to 5 minutes; pending logs and buffered reports drain with a sync POST on application quit or disable (so real errors are not lost when exiting soon after a crash)
 - **Error reporting:** Game-state capture uses `PlayerControllerCompat` for player HP/stamina (avoids direct `Health` access when dead); per-field try/catch around snapshot sections so one failed capture does not block the batch
-- **Error reporting:** Game-state capture for crash reports no longer calls compile-time `EnemyHealth.CurrentHealth` (fixes `get_CurrentHealth` MissingMethodException when third-party mods log errors, e.g. DeathMinimap after death); uses `Systems/Core/EnemyHealthCompat` and `EnemyScanCache`
+- **Error reporting:** Game-state capture for crash reports no longer calls compile-time `EnemyHealth.CurrentHealth` (fixes `get_CurrentHealth` MissingMethodException when third-party mods log errors, e.g. DeathMinimap after death); uses `Systems/Core/EnemyHealthCompat` and `ProximityScan`
 - **Snitch:** arm timer no longer resets on additive scene loads during level generation; arm attempt also runs after `SemiFunc.OnLevelGenDone` ([#222](https://github.com/grompen91-droid/dreadREPO/issues/222))
 - **Snitch:** `ItemRosterCompat` validates resolved types as `Component`, scans `Assembly-CSharp` when `TypeByName` fails, and includes inactive valuables in `FindObjectsOfType`
 - **Snitch / Camp Lure:** `GameplayContext.IsRun()` now matches tension and psychotic break (`SemiFunc.MenuLevel()` only); fixes systems staying disarmed while the active Unity scene is still named Main
@@ -127,6 +107,26 @@ GitHub backlog: issues #163-#166, #169, and new rows in [docs/ROADMAP.md](docs/R
 ![Status](https://img.shields.io/badge/status-development-yellow?style=flat-square)
 
 > **Note:** Accidental patch publish on Thunderstore during a mis-tagged release. Use **v1.6.0** (minor) for the canonical package and release notes.
+
+---
+
+## [1.5.2] - 2026-05-22
+
+![Status](https://img.shields.io/badge/status-development-yellow?style=flat-square)
+
+### Changed
+- CI pipeline: 4-job architecture (relevance, build, analyze, summary) per spec v1.2
+- CI pipeline: relevance hard gate skips build/analyze on non-project PRs
+- CI pipeline: summary table prints all job results and exits 1 on failure
+- CI pipeline: MSBuild log uploaded as artifact on build failure
+- CI pipeline: anti-pattern and format checks fail the build (hard gates)
+- CD pipeline: version-specific release tags (`vX.Y.Z` instead of reusing `vmajor`/`vminor`/`vpatch`)
+- CD pipeline: idempotency check prevents duplicate releases
+- CD pipeline: divergence guard prevents master branch desync on concurrent pushes
+- CD pipeline: release step runs before post-release issue creation
+- CD pipeline: migrated build to `ubuntu-latest` with NuGet and stubs caching
+- CD pipeline: added Thunderstore auto-publish via `tcli`
+- CD pipeline: `THUNDERSTORE_README.md` support in package zip
 
 ---
 

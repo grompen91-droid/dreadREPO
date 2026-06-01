@@ -1,6 +1,6 @@
 # Snitch Arm Fix Implementation Plan
 
-> **Superseded for ongoing work:** use [specs/006-lure-snitch-hardening/plan.md](../../specs/006-lure-snitch-hardening/plan.md) and [docs/agents/guides/camp-lure-and-snitch.md](../../docs/agents/guides/camp-lure-and-snitch.md). Do not add new docs under `docs/superpowers/`.
+> **ARCHIVED — DO NOT EXECUTE.** Superseded by [specs/006-lure-snitch-hardening/plan.md](../../specs/006-lure-snitch-hardening/plan.md) and [docs/agents/guides/camp-lure-and-snitch.md](../../agents/guides/camp-lure-and-snitch.md). Do not add new docs under `docs/superpowers/`.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

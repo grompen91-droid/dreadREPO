@@ -44,6 +44,8 @@ Log line to confirm: `[Dread DebugServer] LISTENING 127.0.0.1:PORT`
 
 ## MCP bridge (`dread-mcp-server/`)
 
+Package README: [dread-mcp-server/README.md](../../../dread-mcp-server/README.md).
+
 | Item | Detail |
 |------|--------|
 | Transport | stdio (`@modelcontextprotocol/sdk`) |

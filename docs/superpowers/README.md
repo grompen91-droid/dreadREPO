@@ -1,5 +1,7 @@
 # Moved: superpowers docs
 
+> **ARCHIVED — DO NOT EXECUTE.** Files under `docs/superpowers/plans/` and `specs/` are historical. Implement from [`docs/agents/guides/`](../agents/guides/README.md) and live specs under `specs/00*/` instead.
+
 The `docs/superpowers/` plans and specs were migrated for AI agents.
 
 | Use this | Location |

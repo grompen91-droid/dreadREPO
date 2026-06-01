@@ -63,7 +63,7 @@ Contract: [specs/004-err-2-default-on-prompt/contracts/core-enemy-health.md](../
 
 ### Verification
 
-`scripts/verify-dread.ps1` Tier 0: `arch3_try_add_system` (no stray `TryAddSystem<` outside initializer/registry) and `arch3_registry_manifest` (eight baseline system types present in `DreadSystemRegistry.cs`).
+`scripts/verify-dread.ps1` Tier 0: `arch3_try_add_system` (no stray `TryAddSystem<` outside initializer/registry) and `arch3_registry_manifest` (nine core system types present in `DreadSystemRegistry.cs`, plus three debug types when compiled with `DREAD_DEBUG`).
 
 ### ARCH-4 boundary
 

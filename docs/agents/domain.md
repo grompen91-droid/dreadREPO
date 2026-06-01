@@ -9,7 +9,7 @@ How agents and skills should consume this repo's domain documentation when explo
 - **`CONTEXT.md`** at the repo root, or
 - **`CONTEXT-MAP.md`** at the repo root if it exists -- it points at one `CONTEXT.md` per context. Read each one relevant to the topic.
 - **`docs/adr/`** -- read ADRs that touch the area you're about to work in. In multi-context repos, also check `src/<context>/docs/adr/` for context-scoped decisions.
-- **`docs/ROADMAP.md`** -- planned work (debug overlay, refactor, performance, error reporting). Not shipped yet.
+- **`docs/ROADMAP.md`** -- backlog and execution order; rows marked **done** are shipped on `master`. Use issue labels and specs for in-flight work.
 
 If any of these files don't exist, **proceed silently**. Don't flag their absence; don't suggest creating them upfront. The producer skill (`/grill-with-docs`) creates them lazily when terms or decisions actually get resolved.
 
@@ -75,7 +75,7 @@ Agents adding MCP/overlay/server features must follow [guides/development-only-f
 
 ## In-game debug overlay
 
-`DebugOverlaySystem` (config `8. Debug Overlay` / `DebugOverlayEnabled`, **development builds only**) draws an IMGUI HUD during runs. Live values come from `DreadRuntimeState`, populated by `TensionSystem`, `PsychoticBreakSystem`, and `AudioDreadSystem` on their existing 0.5s cadence. F10 toggles visibility when the config entry is on. For remote tooling, prefer `DebugServerSystem` (ADR-0013).
+`DebugOverlaySystem` (**development builds only**) draws an IMGUI HUD during runs. Config section header comes from `DreadConfigSections.DebugOverlay` (`8. Debug Overlay` when `DREAD_DEBUG` is defined; absent in production). Live values come from `DreadRuntimeState`, populated by `TensionSystem`, `PsychoticBreakSystem`, and `AudioDreadSystem` on their existing 0.5s cadence. F10 toggles visibility when the config entry is on. For remote tooling, prefer `DebugServerSystem` (ADR-0013). Section numbers: [debug-tooling.md](guides/debug-tooling.md), [DreadConfigSections.cs](../../Config/DreadConfigSections.cs).
 
 ## REPOConfig slider label compat (temporary)
 

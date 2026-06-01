@@ -1,5 +1,7 @@
 # Camp Lure (anti-camping attraction) - Design
 
+> **ARCHIVED — DO NOT EXECUTE.** See [docs/agents/guides/camp-lure-and-snitch.md](../../agents/guides/camp-lure-and-snitch.md) and `specs/006-lure-snitch-hardening/`.
+
 **Date:** 2026-05-31
 **Feature branch:** `011-camp-lure`
 **Status:** implemented (pending in-game verification)
