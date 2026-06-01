@@ -32,4 +32,5 @@ public static class SemiFunc
 {
     public static bool MenuLevel() => false;
     public static bool IsMasterClient() => false;
+    public static void OnLevelGenDone() { }
 }
