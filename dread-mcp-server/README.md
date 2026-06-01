@@ -26,7 +26,7 @@ Output: `dist/index.js`. Cursor loads this via `.cursor/mcp.json`.
 |----------|---------|---------|
 | `DREAD_HOST` | `127.0.0.1` | Game machine (use host IP if MCP runs outside the game VM) |
 | `DREAD_PORT` | `15432` | TCP port from `DebugServerPort` |
-| `DREAD_TIMEOUT` | (see source) | Command timeout ms |
+| `DREAD_TIMEOUT` | `15000` | Command timeout ms (minimum 100) |
 
 ## Tools
 

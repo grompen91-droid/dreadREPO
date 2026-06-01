@@ -51,15 +51,19 @@ Plugin.Start() / deferred retry
             +-- AudioDreadSystem              # coroutine: weighted ambient sounds
             +-- MonsterOverhaulSystem         # scan loop + Harmony patches (Systems/Patches/)
             +-- TensionSystem                 # 0.5s proximity scan drives 4 features
-            +-- PsychoticBreakSystem          # Systems/PsychoticBreak/* episode state machine
             +-- ErrorReporterSystem           # Systems/ErrorReporting/* telemetry + consent
             +-- ErrorReportingPromptSystem    # first-run disclosure (ERR-2)
-            +-- TestCrashSystem               # config button to trigger intentional crash
-            +-- DebugOverlaySystem            # F10 HUD (Systems/DebugOverlay/)
-            +-- DebugServerSystem             # TCP debug server for AI agents (default off)
+            +-- PsychoticBreakSystem          # Systems/PsychoticBreak/* episode state machine
+            +-- DreadNotificationSystem       # corner toasts (Systems/Notifications/)
+            +-- CampLureSystem                # host anti-camping lure
+            +-- SnitchSystem                  # host snitch item POI
+            +-- (development builds only)
+                 +-- TestCrashSystem          # intentional crash for error-reporting QA
+                 +-- DebugOverlaySystem       # F10 HUD (Systems/DebugOverlay/)
+                 +-- DebugServerSystem        # TCP debug server for MCP/agents
 ```
 
-Runtime systems are registered in `DreadSystemRegistry` and spawned with per-system fail-safe isolation (ARCH-3). Audio loads from DLL-adjacent `audio/*.ogg` via **NVorbis** (primary) with optional `UnityWebRequest` when the Unity module is usable (`UnityWebRequestCompat`, `AudioClipLoader`). A failure in one system does not prevent others from starting.
+Runtime systems are registered in `DreadSystemRegistry` and spawned with per-system fail-safe isolation (ARCH-3). Thunderstore releases include the nine core rows only; debug hosts are compiled out of production `Dread.dll`. Audio loads from DLL-adjacent `audio/*.ogg` via **NVorbis** (primary) with optional `UnityWebRequest` when the Unity module is usable (`UnityWebRequestCompat`, `AudioClipLoader`). A failure in one system does not prevent others from starting.
 
 ---
 
@@ -396,7 +400,7 @@ Requires .NET SDK 4.8 targeting pack and a local R.E.P.O. installation (for `Ass
 
 ### Testing
 
-This mod has no test suite. All testing is done manually in-game. The seven-system architecture (independent MonoBehaviours on `DontDestroyOnLoad` hosts) makes each system testable in isolation by disabling the others via config.
+This mod has no test suite. All testing is done manually in-game. The nine core systems (independent MonoBehaviours on `DontDestroyOnLoad` hosts) are testable in isolation by disabling the others via config.
 
 ### MCP Server
 
