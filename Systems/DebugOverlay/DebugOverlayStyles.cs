@@ -43,7 +43,7 @@ namespace Dread.Systems
                 return;
 
             _bgTex = MakeTexture(new Color(0.055f, 0.058f, 0.070f, 0.90f));
-            _sepTex = MakeTexture(new Color(0.85f, 0.86f, 0.88f, 0.13f));
+            _sepTex = MakeTexture(new Color(0.85f, 0.86f, 0.88f, 0.18f));
             _railTex = MakeTexture(ColRail);
 
             _boxStyle = new GUIStyle(GUI.skin.box);
@@ -52,19 +52,26 @@ namespace Dread.Systems
             _railStyle = new GUIStyle(GUI.skin.box);
             _railStyle.normal.background = _railTex;
 
-            _headerStyle = new GUIStyle(GUI.skin.label) { fontSize = 15, wordWrap = false };
+            // MiddleLeft vertically centers each label in its row box so glyphs
+            // line up with the steel ticks and separators drawn at mid-line.
+            _headerStyle = new GUIStyle(GUI.skin.label)
+                { fontSize = 15, wordWrap = false, alignment = TextAnchor.MiddleLeft };
             _headerStyle.normal.textColor = ColAccent;
 
-            _hintStyle = new GUIStyle(GUI.skin.label) { fontSize = 11, wordWrap = false };
+            _hintStyle = new GUIStyle(GUI.skin.label)
+                { fontSize = 11, wordWrap = false, alignment = TextAnchor.MiddleRight };
             _hintStyle.normal.textColor = ColDim;
 
-            _labelStyle = new GUIStyle(GUI.skin.label) { fontSize = 13, wordWrap = false };
+            _labelStyle = new GUIStyle(GUI.skin.label)
+                { fontSize = 13, wordWrap = false, alignment = TextAnchor.MiddleLeft };
             _labelStyle.normal.textColor = ColDim;
 
-            _valueStyle = new GUIStyle(GUI.skin.label) { fontSize = 13, wordWrap = false };
+            _valueStyle = new GUIStyle(GUI.skin.label)
+                { fontSize = 13, wordWrap = false, alignment = TextAnchor.MiddleLeft };
             _valueStyle.normal.textColor = ColValue;
 
-            _sectionStyle = new GUIStyle(GUI.skin.label) { fontSize = 11, wordWrap = false };
+            _sectionStyle = new GUIStyle(GUI.skin.label)
+                { fontSize = 11, wordWrap = false, alignment = TextAnchor.MiddleLeft };
             _sectionStyle.normal.textColor = ColSection;
 
             _sepStyle = new GUIStyle(GUI.skin.box);

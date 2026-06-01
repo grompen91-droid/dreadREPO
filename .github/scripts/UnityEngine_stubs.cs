@@ -211,6 +211,13 @@ namespace UnityEngine
     }
     public enum TextureFormat { RGBA32 }
     public enum RenderMode { ScreenSpaceOverlay }
+    // Order must match real UnityEngine.TextAnchor: GUIStyle.alignment binds by value.
+    public enum TextAnchor
+    {
+        UpperLeft, UpperCenter, UpperRight,
+        MiddleLeft, MiddleCenter, MiddleRight,
+        LowerLeft, LowerCenter, LowerRight,
+    }
     public struct LayerMask
     {
         public static int GetMask(params string[] layerNames) => 0;

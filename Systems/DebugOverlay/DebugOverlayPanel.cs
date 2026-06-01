@@ -86,7 +86,7 @@ namespace Dread.Systems
                 else if (row.Kind == RowHeader)
                 {
                     GUI.Label(new Rect(x, y, innerW, lineH), row.Left, _headerStyle!);
-                    GUI.Label(new Rect(x + innerW - 70f * z, y + 3f * z, 70f * z, lineH), row.Right, _hintStyle!);
+                    GUI.Label(new Rect(x + innerW - 70f * z, y, 70f * z, lineH), row.Right, _hintStyle!);
                 }
                 else
                 {
@@ -143,7 +143,7 @@ namespace Dread.Systems
             float barH = 6f * z;
             float btnH = 20f * z;
             float gap = 6f * z;
-            float rail = 3f * z;
+            float rail = 2f * z;
 
             float totalH = padY * 2f + lineH * 3f + btnH + gap * 3f;
             var box = new Rect(x0, y0, width, totalH);
