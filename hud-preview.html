@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dread HUD preview — Slate HUD S2</title>
+<style>
+  /* Colors lifted 1:1 from DebugOverlayStyles.cs / DreadNotificationSystem.cs */
+  :root{
+    --bg:        rgba(14,15,18,0.90);   /* 0.055,0.058,0.070 */
+    --rail:      rgb(189,191,196);       /* ColRail 0.74,0.75,0.77 */
+    --accent:    rgb(204,207,212);       /* ColAccent */
+    --section:   rgb(153,156,163);       /* ColSection */
+    --dim:       rgb(112,115,125);       /* ColDim */
+    --value:     rgb(232,235,237);       /* ColValue */
+    --good:      rgb(201,207,201);
+    --warn:      rgb(217,201,166);
+    --bad:       rgb(214,179,173);
+    --sep:       rgba(217,219,224,0.18);
+    --btn:       rgba(28,31,36,0.92);
+    --toast:     rgba(16,17,20,0.96);
+    --msg:       rgb(133,135,145);
+  }
+  html,body{margin:0;height:100%;}
+  body{
+    background:
+      radial-gradient(circle at 30% 20%, #15171c 0%, #0b0c0f 60%, #060708 100%);
+    font-family: Consolas, "DejaVu Sans Mono", monospace;
+    -webkit-font-smoothing: none;
+    display:flex; gap:60px; align-items:flex-start; justify-content:center;
+    padding:60px 40px; box-sizing:border-box; min-height:100%;
+  }
+  .stage{display:flex; flex-direction:column; gap:14px; align-items:center;}
+  .cap{color:#5a5d66; font-size:12px; letter-spacing:.12em; text-transform:uppercase;}
+
+  /* ---- Debug panel: 280px base, padX 10, lineH 22 ---- */
+  .panel{
+    position:relative; width:280px; background:var(--bg);
+    padding:6px 10px 10px 10px; box-sizing:border-box;
+  }
+  .panel .rail{position:absolute; left:0; top:0; width:2px; height:100%; background:var(--rail);}
+  .row{height:22px; display:flex; align-items:center; font-size:13px; white-space:nowrap;}
+  .row.header{font-size:15px; color:var(--accent); justify-content:space-between;}
+  .row.header .hint{font-size:11px; color:var(--dim);}
+  .sep{height:1px; background:var(--sep); margin:10px 0 10px -7px; width:calc(100% + 14px - 6px);}
+  .section{height:22px; display:flex; align-items:center; gap:6px; font-size:11px;
+           color:var(--section); letter-spacing:.06em;}
+  .section .tick{width:9px; height:1px; background:var(--rail);}
+  .k{color:var(--dim); width:82px; flex:0 0 82px;}
+  .v{color:var(--value);}
+  .v.good{color:var(--good);} .v.warn{color:var(--warn);} .v.bad{color:var(--bad);} .v.dim{color:var(--dim);}
+  .footer{height:20px; display:flex; align-items:center; gap:4px; margin-top:8px; font-size:11px;}
+  .footer .zlabel{color:var(--section); width:36px;}
+  .btn{background:var(--btn); color:var(--value); border:0; height:20px; min-width:22px;
+       font:inherit; font-size:11px; display:inline-flex; align-items:center; justify-content:center;}
+  .pct{color:var(--dim); width:38px; text-align:left;}
+  .spacer{flex:1;}
+
+  /* ---- Toast: 280-ish slab, 2px rail, 1px life bar ---- */
+  .toast{position:relative; width:300px; background:var(--toast); padding:12px 14px 14px 16px;
+         box-sizing:border-box; margin-bottom:0;}
+  .toast .rail{position:absolute; left:0; top:0; width:2px; height:100%;}
+  .toast .rail.info{background:var(--rail);}
+  .toast .rail.warn{background:var(--warn);}
+  .toast .rail.bad{background:var(--bad);}
+  .toast .title{color:var(--value); font-size:12px; letter-spacing:.04em; text-transform:uppercase;}
+  .toast .body{color:var(--msg); font-size:12px; margin-top:5px; line-height:1.35;}
+  .toast .life{position:absolute; left:2px; bottom:0; height:1px; background:var(--rail);}
+  .toaststack{display:flex; flex-direction:column; gap:12px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="cap">debug panel · F10</div>
+    <div class="panel">
+      <div class="rail"></div>
+      <div class="row header"><span>DREAD 1.6.1</span><span class="hint">F9 mouse</span></div>
+      <div class="sep"></div>
+      <div class="section"><span class="tick"></span>PERFORMANCE</div>
+      <div class="row"><span class="k">FPS</span><span class="v good">95</span></div>
+      <div class="row"><span class="k">Frame</span><span class="v">10.6 ms&nbsp;&nbsp;&nbsp;min 89 fps</span></div>
+      <div class="row"><span class="k">Memory</span><span class="v">88 MB</span></div>
+      <div class="row"><span class="k">GC</span><span class="v dim">g0 167&nbsp;&nbsp;g1 167&nbsp;&nbsp;g2 167</span></div>
+      <div class="row"><span class="k">Screen</span><span class="v dim">1920x1080</span></div>
+      <div class="row"><span class="k">Frames</span><span class="v dim">10081</span></div>
+      <div class="section"><span class="tick"></span>MOD STATE</div>
+      <div class="row"><span class="k">Phase</span><span class="v good">run</span></div>
+      <div class="row"><span class="k">Enemy</span><span class="v">30.6 m&nbsp;&nbsp;(range 15m)</span></div>
+      <div class="row"><span class="k">Tension</span><span class="v">adrenaline off</span></div>
+      <div class="row"><span class="k">Sprint</span><span class="v">panic off&nbsp;&nbsp;&nbsp;cd 0s</span></div>
+      <div class="row"><span class="k">Break</span><span class="v warn">blocked: no recent threat</span></div>
+      <div class="row"><span class="k">Break+</span><span class="v dim">clips off&nbsp;&nbsp;enemies 2&nbsp;&nbsp;threat 0s&nbsp;&nbsp;next 102s</span></div>
+      <div class="row"><span class="k">Audio</span><span class="v">4/4&nbsp;&nbsp;next 102s</span></div>
+      <div class="row"><span class="k">Lure</span><span class="v dim">idle</span></div>
+      <div class="row"><span class="k">Snitch</span><span class="v warn">armed&nbsp;&nbsp;7.1m</span></div>
+      <div class="section"><span class="tick"></span>SYSTEM</div>
+      <div class="row"><span class="k">Config</span><span class="v dim">compat- aggr+ maud+ aud+ srv+</span></div>
+      <div class="row"><span class="k">Patches</span><span class="v">5</span></div>
+      <div class="footer">
+        <span class="zlabel">ZOOM</span>
+        <button class="btn">-</button>
+        <button class="btn">+</button>
+        <span class="pct">90%</span>
+        <span class="spacer"></span>
+        <button class="btn" style="min-width:36px">Kit</button>
+        <button class="btn" style="min-width:50px">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="cap">notification toasts</div>
+    <div class="toaststack">
+      <div class="toast">
+        <div class="rail info"></div>
+        <div class="title">Snitch armed</div>
+        <div class="body">One item is the snitch this run. Pick it up first and every enemy comes running.</div>
+        <div class="life" style="width:60%"></div>
+      </div>
+      <div class="toast">
+        <div class="rail warn"></div>
+        <div class="title">Lure escalating</div>
+        <div class="body">You have camped too long. The pull is reaching farther each step.</div>
+        <div class="life" style="width:38%"></div>
+      </div>
+      <div class="toast">
+        <div class="rail bad"></div>
+        <div class="title">Psychotic break</div>
+        <div class="body">Reality is slipping. Hold position until it passes.</div>
+        <div class="life" style="width:80%"></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
