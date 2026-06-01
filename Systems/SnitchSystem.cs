@@ -15,6 +15,8 @@ namespace Dread.Systems
     /// </summary>
     public class SnitchSystem : MonoBehaviour
     {
+        private static SnitchSystem? _instance;
+
         private const float PoiReissueInterval = 30f;
         private const float PoiRadius = 60f;
         private const float ArmDelaySeconds = 5f;
@@ -34,6 +36,16 @@ namespace Dread.Systems
         private float _nextReissue;
         private SnitchItemMarker? _activeMarker;
 
+        private void OnEnable() => _instance = this;
+
+        private void OnDisable()
+        {
+            if (_instance == this)
+                _instance = null;
+        }
+
+        internal static void NotifyLevelGenDone() => _instance?.OnLevelGenComplete();
+
         private void Start()
         {
             SceneManager.sceneLoaded += OnSceneLoaded;
@@ -51,7 +63,23 @@ namespace Dread.Systems
             SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 
-        private void OnSceneLoaded(Scene scene, LoadSceneMode mode) => ResetState();
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            // Additive loads during level generation must not reset the arm timer.
+            if (mode != LoadSceneMode.Single)
+                return;
+
+            ResetState();
+        }
+
+        private void OnLevelGenComplete()
+        {
+            if (_armed || _triggered)
+                return;
+
+            _armCountdown = 0f;
+            LoggingService.LogVerbose("[Snitch] Level gen done; arm attempt scheduled");
+        }
 
         private void Update()
         {
@@ -108,8 +136,8 @@ namespace Dread.Systems
         private void TryArm()
         {
             var items = ItemRosterCompat.GetItemGameObjects();
-            if (_armRetries == 0)
-                LoggingService.LogWarning($"[Snitch] Arm attempt 1: {items.Count} item(s) found");
+            LoggingService.LogWarning(
+                $"[Snitch] Arm attempt {_armRetries + 1}: {items.Count} item(s) found");
             if (items.Count == 0)
             {
                 _armRetries++;
