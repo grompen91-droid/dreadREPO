@@ -153,6 +153,12 @@ Output lands in `dread-mcp-server/dist/index.js`.
 - **Code analysis:** CI runs grep-based checks for null-forgiving operators, hardcoded Windows paths, trailing whitespace, tabs, lines >120 chars, and BOM markers. See `.github/workflows/ci.yml` `analyze` job.
 - **Format check:** `dotnet format --verify-no-changes --no-restore`
 
-### Known issue on master
+### Stub maintenance
 
-`ErrorReporterSystem.cs` uses `String.Contains(string, StringComparison)` which is not available in .NET Framework 4.8. This causes 5 CS1501 build errors. The CI also fails on this. This is a code issue, not an environment issue.
+| Script | When to run |
+|--------|-------------|
+| `pwsh -NoProfile .github/scripts/gen-stubs.ps1` | After changing `.github/scripts/UnityEngine_stubs.cs` or game API surface used by stubs |
+| `pwsh -NoProfile .github/scripts/clean-stubs.ps1` | Before regenerating stubs from scratch (removes cached `.github/stubs/refs/` output) |
+| `.github/scripts/verify-stubs/` | CI stub verification; agents rarely need this locally unless editing stub generation |
+
+Regenerate stubs only when stub sources change; cached output lives under `.github/stubs/refs/`.

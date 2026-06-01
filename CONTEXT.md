@@ -56,7 +56,7 @@ _Avoid_: treating **In-level** and **Run** as synonyms; prefer **In-level** for 
 
 ### Runtime systems
 
-Seven systems start from the plugin entry on typical builds (see **File map**). Each lives on its own **System host**.
+**Nine core systems** register in `DreadSystemRegistry` on every production build; **three debug systems** register only in development builds (`#if DREAD_DEBUG`). See `Systems/DreadSystemRegistry.cs` and [mod-architecture.md](docs/agents/guides/mod-architecture.md). Each lives on its own **System host**.
 
 **Audio Dread**:
 During a **Run**, plays rare weighted 3D ambient horror sounds around the player; frequency and volume follow config.
@@ -92,6 +92,16 @@ _Avoid_: "hallucination event", "cutscene"
 Captures serious game errors and can file deduplicated reports for the developer; subject to player opt-in and config. Payload JSON via `ErrorReportJson` (ADR-0010, ADR-0015).
 _Implements:_ `ErrorReporterSystem`, `ErrorReportJson`
 _Avoid_: "telemetry" without noting opt-in/config
+
+**Error reporting prompt**:
+First-run IMGUI privacy disclosure before any error payload is sent; blocks enqueue until acknowledged. Existing installs that disabled reporting in cfg are unchanged.
+_Implements:_ `ErrorReportingPromptSystem`
+_Avoid_: conflating with **Error reporting** upload logic alone
+
+**Dread notifications**:
+Thread-safe transient corner toasts (`Info` / `Warn` / `Bad`) used by overlay, camp lure, snitch, and other systems for agent-visible status without chat spam.
+_Implements:_ `DreadNotificationSystem`
+_Avoid_: in-game chat messages for debug-only state
 
 **Test crash**:
 Intentional crash path used to verify **Error reporting** end-to-end (config-driven, not a gameplay feature).
@@ -269,7 +279,8 @@ Open conflicts only. Resolved terms live in **Language** above.
 |------|------|
 | Plugin entry, Harmony apply | `Plugin.cs` |
 | Config bindings | `Config/DreadConfig.cs` |
-| Runtime systems (flat) | `Systems/*.cs` (initializer, tension, audio, debug server, compat, etc.) |
+| Runtime systems (flat) | `Systems/*.cs` (initializer, tension, audio, notifications, lure, snitch, etc.) |
+| Notifications | `Systems/Notifications/` |
 | Harmony patches | `Systems/Patches/` |
 | Psychotic break | `Systems/PsychoticBreak/` |
 | Error reporting | `Systems/ErrorReporting/` (+ `ErrorReportJson.cs` at `Systems/` root) |

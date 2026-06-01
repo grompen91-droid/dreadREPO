@@ -13,7 +13,7 @@ Agent guide for **Camp Lure** (`CampLureSystem`) and **Snitch** (`SnitchSystem`)
 | Phase gate contract | [specs/006-lure-snitch-hardening/contracts/gameplay-phase-gate.md](../../../specs/006-lure-snitch-hardening/contracts/gameplay-phase-gate.md) |
 | Lure config contract | [specs/006-lure-snitch-hardening/contracts/camp-lure-config.md](../../../specs/006-lure-snitch-hardening/contracts/camp-lure-config.md) |
 
-Pinned in [`.specify/feature.json`](../../../.specify/feature.json).
+[`.specify/feature.json`](../../../.specify/feature.json) points at the **active Spec Kit feature** for this repo (not necessarily feature 006). Check `feature_directory` before assuming which spec is pinned; camp lure/snitch contracts remain under `specs/006-lure-snitch-hardening/`.
 
 ## Phase gating
 

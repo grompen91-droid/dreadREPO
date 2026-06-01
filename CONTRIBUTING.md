@@ -18,8 +18,10 @@
 **Verify locally (optional):**
 
 ```shell
-pwsh ./scripts/verify-dread.ps1 -Tier 0
+pwsh ./scripts/verify-dread.ps1
 ```
+
+Tier 0/1 are internal groupings inside the script; there is no `-Tier` parameter. See output lines prefixed with check ids (`arch3_*`, `mcp_build`, etc.).
 
 See [docs/agents/verify-dread.md](docs/agents/verify-dread.md). Tier 1+ needs a running game with the debug server enabled.
 

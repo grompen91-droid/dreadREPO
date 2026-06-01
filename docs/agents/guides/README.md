@@ -15,6 +15,7 @@ Current-state reference for working in the Dread codebase. These replace the old
 | [audio-dread-and-loading.md](audio-dread-and-loading.md) | Ambient audio, OGG loading, NVorbis, weights |
 | [monster-overhaul.md](monster-overhaul.md) | Monster audio loop, aggression patches |
 | [camp-lure-and-snitch.md](camp-lure-and-snitch.md) | Camp lure, snitch, gameplay phase gate (links `specs/006`) |
+| [ui-notifications.md](ui-notifications.md) | `DreadNotificationSystem`, `DreadWidgets` |
 | [tension-and-proximity.md](tension-and-proximity.md) | Proximity scan, adrenaline, panic sprint |
 | [psychotic-break.md](psychotic-break.md) | Episode triggers, solo/LoS/crouch, debug force |
 | [harmony-and-patches.md](harmony-and-patches.md) | Apply/Remove, compat skip, host-only |
@@ -34,6 +35,7 @@ Current-state reference for working in the Dread codebase. These replace the old
 | Add a runtime system | [mod-architecture.md](mod-architecture.md) + [system-lifecycle contract](../../../specs/002-arch-3-extensible-core/contracts/system-lifecycle.md) |
 | Change gameplay near enemies | [tension-and-proximity.md](tension-and-proximity.md) or [monster-overhaul.md](monster-overhaul.md) |
 | Camp lure / snitch / run phase gate | [camp-lure-and-snitch.md](camp-lure-and-snitch.md) |
+| Corner toasts / HUD widgets | [ui-notifications.md](ui-notifications.md) |
 | Patch game methods | [harmony-and-patches.md](harmony-and-patches.md) |
 | Add sounds | [audio-dread-and-loading.md](audio-dread-and-loading.md) |
 | Psychotic break behavior | [psychotic-break.md](psychotic-break.md) |

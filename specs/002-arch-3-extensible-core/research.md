@@ -56,7 +56,7 @@
 
 ## Decision: Tier 0 verify guard
 
-**Decision**: Tier 0 checks: (1) `arch3_try_add_system`: no `TryAddSystem<` outside `DreadSystemInitializer.cs` / `DreadSystemRegistry.cs` (spawn uses registry + `AddComponent(Type)`); (2) `arch3_registry_manifest`: grep `DreadSystemRegistry.cs` for the eight baseline system type names from [extension-registry.md](./contracts/extension-registry.md).
+**Decision**: Tier 0 checks: (1) `arch3_try_add_system`: no `TryAddSystem<` outside `DreadSystemInitializer.cs` / `DreadSystemRegistry.cs` (spawn uses registry + `AddComponent(Type)`); (2) `arch3_registry_manifest`: grep `DreadSystemRegistry.cs` for the nine baseline core system type names from [extension-registry.md](./contracts/extension-registry.md).
 
 **Rationale**: FR-006; cheap static enforcement for agents.
 

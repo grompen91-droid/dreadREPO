@@ -38,6 +38,8 @@ Config: `DebugConsoleGuardEnabled` (default **true**).
 
 Temporary Harmony compat when the `REPOConfig` assembly is loaded. Entry point: `RepoConfigCompat.TryApply` from `Plugin.Start` and `DreadSystemInitializer`. Do not hard-reference REPOConfig types; use reflection like existing compat.
 
+**Slider label workaround:** full investigation timeline and rejected approaches in [docs/repo-config-slider-labels-investigation.md](../../repo-config-slider-labels-investigation.md). Agents changing REPOConfig UI should read that file before editing `RepoConfigSliderLabelCompat`.
+
 ### Hidden from REPOConfig (`HideFromREPOConfig` tag)
 
 None for Dread currently. All sections including `11. Testing` (`Crash Game` toggle) appear in REPOConfig.
