@@ -223,10 +223,24 @@ async function ensureIssueLabels(env, issueNumber) {
   }
 }
 
+async function resolveKvIssue(env, issueNumber) {
+  try {
+    const issue = await gh(
+      `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/issues/${issueNumber}`,
+      env.TOKEN
+    );
+    if (!issue?.number) return null;
+    return { number: issue.number, state: issue.state || 'open', source: 'kv' };
+  } catch {
+    return null;
+  }
+}
+
 async function findExistingIssue(env, hash) {
   const kvIssue = await readDedupeKv(env, hash);
   if (kvIssue != null) {
-    return { number: kvIssue, state: 'open', source: 'kv' };
+    const resolved = await resolveKvIssue(env, kvIssue);
+    if (resolved) return resolved;
   }
 
   const q = encodeURIComponent(

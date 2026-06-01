@@ -180,6 +180,14 @@ function mockGitHub() {
 				headers: { "Content-Type": "application/json" },
 			});
 		}
+		const getIssueMatch = urlStr.match(/\/issues\/(\d+)$/);
+		if (getIssueMatch && (!opts.method || opts.method === "GET")) {
+			const number = Number.parseInt(getIssueMatch[1], 10);
+			return new Response(
+				JSON.stringify({ number, state: "open" }),
+				{ status: 200, headers: { "Content-Type": "application/json" } },
+			);
+		}
 		if (urlStr.includes("/issues") && opts.method === "POST") {
 			return new Response(JSON.stringify(createResponse), {
 				status: 201,
@@ -379,6 +387,11 @@ describe("Deduplication", () => {
 
 			const searchCall = gh.calls.find((c) => c.url.includes("search/issues"));
 			expect(searchCall).toBeUndefined();
+
+			const getIssueCall = gh.calls.find(
+				(c) => c.method === "GET" && /\/issues\/50$/.test(c.url),
+			);
+			expect(getIssueCall).toBeDefined();
 		} finally {
 			gh.restore();
 		}
