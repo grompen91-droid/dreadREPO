@@ -20,7 +20,7 @@ Unity Application.logMessageReceived (Exception/Error)
   -> Worker creates/updates GitHub issue (label auto-reported)
 ```
 
-Test path: `TestCrashSystem` or MCP `trigger_test_crash` (see [debug-tooling.md](debug-tooling.md)).
+Test path: `TestCrashSystem` (section 11, development builds) or MCP `trigger_test_crash` (see [debug-tooling.md](debug-tooling.md)).
 
 ## Config
 

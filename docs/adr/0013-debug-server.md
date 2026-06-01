@@ -220,3 +220,9 @@ The DebugServerSystem (C#, TCP) is paired with a TypeScript MCP server that brid
 - **Config-driven debugging only:** One-way communication (AI writes config, mod acts, AI reads log). No structured responses, no command correlation.
 - **File-based queue (state.json):** Polling overhead, no real-time command/response, race conditions on file write.
 - **Embedded REPL (Mono.CSharp):** High risk, requires shipping a C# compiler, massive security surface.
+
+---
+
+## Amendment (012, 2026-06-01)
+
+**Release builds** exclude `DebugServerSystem`, the debug overlay, and `TestCrashSystem` at compile time (`DREAD_DEBUG` / production MSBuild profile). Thunderstore config uses section **8. Logging** only after gameplay sections 1-7. Development builds (`Configuration=Debug` or `EnableDebugFeatures=true`) retain full agent tooling per this ADR.

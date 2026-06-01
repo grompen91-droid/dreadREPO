@@ -38,6 +38,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **Stubs:** `GUI.HorizontalSlider` (plain and styled) and `GUIStyle.fixedWidth` / `fixedHeight` added to the IMGUIModule stub
 
 ### Changed
+- **Build:** CD and Thunderstore releases compile a production `Dread.dll` that excludes debug overlay, TCP debug server, and test-crash tooling (`DREAD_DEBUG` profile). Production config renumbers **Logging** to section **8** (sections 8-9 and 11 exist only in development builds). Use `dotnet build -c Debug` or `build.ps1 -DebugBuild` for MCP/agent workflows. CI/CD runs `.github/scripts/verify-production-dll.sh` on Release artifacts.
+- **Docs:** [development-only-features.md](docs/agents/guides/development-only-features.md) agent checklist for `#if DREAD_DEBUG`, `Compile Remove`, config, and registry when adding MCP/overlay tooling.
 - **Core:** `ProximityScan` in `Systems/Core/` replaces `EnemyScanCache`; tension, monster audio, debug server, psychotic break, and error reporting share one scan seam (ADR-0008 proximity pattern consolidated)
 - **Core:** `HarmonyPatchRegistry` + `PatchLifecycle` centralize patch apply/remove; `Plugin.cs` delegates patch wiring (ADR-0009 preserved)
 - **Core:** `PlayerInputLockCompat` shared by psychotic break and error-reporting prompt

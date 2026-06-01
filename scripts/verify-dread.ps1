@@ -5,7 +5,8 @@ param(
     [int]$Port = 15432,
     [string]$LogPath = "",
     [switch]$SkipBuild,
-    [switch]$SkipMcpBuild
+    [switch]$SkipMcpBuild,
+    [switch]$RequireDebugRegistry
 )
 
 $ErrorActionPreference = "Stop"
@@ -48,9 +49,25 @@ Add-Check -Tier "tier0" -Id "stubs" -Ok ((Test-Path $stubDll) -and (Test-Path $s
 if (-not $SkipBuild) {
     dotnet build Dread.csproj -c Release --nologo -v quiet `
         -p:GameDir=.github/stubs/refs -p:BepInExDir=.github/stubs/refs `
+        -p:EnableDebugFeatures=false `
         -p:DeployToProfile=false -p:DeployToDist=false 2>&1 | Out-Null
     Add-Check -Tier "tier0" -Id "dotnet_build" -Ok ($LASTEXITCODE -eq 0) `
-        -Message $(if ($LASTEXITCODE -eq 0) { "Release build ok" } else { "dotnet build failed" })
+        -Message $(if ($LASTEXITCODE -eq 0) { "Release production build ok" } else { "dotnet build failed" })
+
+    $prodDll = "bin/Release/net48/Dread.dll"
+    if ((Test-Path $prodDll) -and ($LASTEXITCODE -eq 0)) {
+        $debugTypeHits = @()
+        foreach ($typeName in @("DebugServerSystem", "DebugOverlaySystem", "TestCrashSystem")) {
+            & grep -aq $typeName $prodDll 2>$null
+            if ($LASTEXITCODE -eq 0) { $debugTypeHits += $typeName }
+        }
+        Add-Check -Tier "tier0" -Id "production_dll_no_debug" -Ok ($debugTypeHits.Count -eq 0) `
+            -Message $(if ($debugTypeHits.Count -eq 0) {
+                "Production DLL has no development-only system types"
+            } else {
+                "Development-only types in production DLL: $($debugTypeHits -join ', ')"
+            })
+    }
 } else {
     Add-Check -Tier "tier0" -Id "dotnet_build" -Ok $true -Message "skipped"
 }
@@ -93,33 +110,51 @@ if ($arch3Hits.Count -gt 0) {
 
 # ARCH-3: baseline system types from extension-registry contract
 $arch3RegistryPath = "Systems/DreadSystemRegistry.cs"
-$arch3ManifestTypes = @(
+$arch3CoreTypes = @(
     "AudioDreadSystem",
     "MonsterOverhaulSystem",
     "TensionSystem",
     "ErrorReporterSystem",
     "ErrorReportingPromptSystem",
     "PsychoticBreakSystem",
+    "DreadNotificationSystem",
+    "CampLureSystem",
+    "SnitchSystem"
+)
+$arch3DebugTypes = @(
     "TestCrashSystem",
     "DebugServerSystem",
     "DebugOverlaySystem"
 )
 $arch3Missing = @()
+$checkDebugTypes = $false
 if (-not (Test-Path $arch3RegistryPath)) {
-    $arch3Missing = $arch3ManifestTypes
+    $arch3Missing = $arch3CoreTypes + $arch3DebugTypes
 } else {
-  foreach ($typeName in $arch3ManifestTypes) {
-    $hit = & grep -q $typeName $arch3RegistryPath 2>$null
-    if ($LASTEXITCODE -ne 0) { $arch3Missing += $typeName }
-  }
+    foreach ($typeName in $arch3CoreTypes) {
+        $hit = & grep -q $typeName $arch3RegistryPath 2>$null
+        if ($LASTEXITCODE -ne 0) { $arch3Missing += $typeName }
+    }
+    $registryText = Get-Content $arch3RegistryPath -Raw
+    $checkDebugTypes = $RequireDebugRegistry -or ($registryText -match '#if DREAD_DEBUG')
+    if ($checkDebugTypes) {
+        foreach ($typeName in $arch3DebugTypes) {
+            $hit = & grep -q $typeName $arch3RegistryPath 2>$null
+            if ($LASTEXITCODE -ne 0) { $arch3Missing += $typeName }
+        }
+    }
 }
 if ($arch3Missing.Count -gt 0) {
     $missingList = $arch3Missing -join ", "
     Add-Check -Tier "tier0" -Id "arch3_registry_manifest" -Ok $false `
         -Message "DreadSystemRegistry missing baseline types: $missingList"
 } else {
-    Add-Check -Tier "tier0" -Id "arch3_registry_manifest" -Ok $true `
-        -Message "Registry manifest: nine baseline system types present"
+    $manifestMsg = if ($checkDebugTypes) {
+        "Registry manifest: core + debug system types present"
+    } else {
+        "Registry manifest: core system types present"
+    }
+    Add-Check -Tier "tier0" -Id "arch3_registry_manifest" -Ok $true -Message $manifestMsg
 }
 
 # MCP npm build

@@ -223,18 +223,10 @@ CompatibilityMode = false
 ErrorReportingEnabled = true     # anonymous crash telemetry (see cfg description; first-run prompt on first level)
 ErrorReportingPromptShown = false   # internal: set by first-run prompt
 
-[8. Debug Overlay]
-DebugOverlayEnabled = false
+[8. Logging]
+LogLevel = Error                     # production default; Debug in development builds
 
-[9. Debug Server]
-DebugServerEnabled = false           # TCP debug server for AI agents (default off)
-DebugServerPort = 15432              # port, falls back to +1 if unavailable
-
-[10. Logging]
-LogLevel = Debug                     # None | Error | Debug | Verbose
-
-[11. Testing]
-Crash Game = false                   # turn ON in REPOConfig or cfg to test crash reporting (resets to off)
+*(Development builds also include sections 8-9 Debug Overlay/Server, 10. Logging, and 11. Testing / Crash Game.)*
 ```
 
 </details>
