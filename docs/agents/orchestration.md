@@ -9,21 +9,23 @@ Use for scoped bugs, docs, or single-file changes.
 ```
 ROADMAP / GitHub issue (ready-for-agent)
     -> CONTEXT.md + domain.md + relevant ADRs
-    -> feature branch (cursor/<name>-3dd3 for Cloud Agents)
+    -> feature branch off master (AGENTS.md: Spec Kit NNN-kebab, or fix/... / feat/...)
     -> implement (minimal diff, repo conventions)
-    -> Tier 0 verify (scripts/verify-dread.ps1)
+    -> meaningful git commits on the branch (not one giant commit at the end)
+    -> Debug build + Tier 0 verify (scripts/verify-dread.ps1)
     -> dotnet format (if C# touched)
-    -> commit + push + PR to master
+    -> push only when opening/updating PR or user asks; PR to master when complete
     -> CHANGELOG [Unreleased] if user-facing
 ```
 
-### Branch naming (Cloud Agents)
+### Branch naming
 
-Cloud Agent tasks use:
+| Situation | Branch |
+|-----------|--------|
+| Active Spec Kit plan (`.specify/feature.json`) | `NNN-kebab-name` matching `specs/NNN-.../` |
+| Other features / fixes | `feat/short-description` or `fix/short-description` (kebab-case) |
 
-`cursor/<short-description>-3dd3`
-
-Example: `cursor/improve-agent-orchestration-3dd3`
+Cloud Agents may still use `cursor/<short-description>-3dd3` when that is how the task was spawned; prefer Spec Kit naming when a plan is active.
 
 ### PR checklist
 

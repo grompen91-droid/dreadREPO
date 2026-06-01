@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Dread.Systems.AudioAssets;
 
 namespace Dread.Systems
 {
@@ -40,6 +41,11 @@ namespace Dread.Systems
     {
         public static IReadOnlyList<SystemRegistration> Registrations { get; } =
         [
+            new SystemRegistration(
+                "audio-assets",
+                typeof(AudioAssetSystem),
+                "DreadAudioAssetsHost",
+                SystemOrderGroup.Core),
             new SystemRegistration(
                 "audio-dread",
                 typeof(AudioDreadSystem),

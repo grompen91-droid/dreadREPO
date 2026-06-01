@@ -10,7 +10,7 @@ Entry point for coding agents (Cursor, Claude Code, Cloud Agents, and similar). 
 | 2 | [domain.md](domain.md) | How to read ADRs, roadmap, and repo layout |
 | 3 | [docs/ROADMAP.md](../ROADMAP.md) | Backlog IDs, execution order, linked GitHub issues |
 | 4 | [orchestration.md](orchestration.md) | End-to-end workflows (pick work, implement, verify, ship) |
-| 5 | [AGENTS.md](../../AGENTS.md) | Build, release tags, changelog, Thunderstore rules |
+| 5 | [AGENTS.md](../../AGENTS.md) | Build, version control (commit per change, PR from branch), release tags, changelog |
 
 ## File index
 

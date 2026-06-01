@@ -644,7 +644,7 @@ namespace Dread.Systems
                 Check("debug_server_listening", _running && _listener != null, $"port={_boundPort}"),
                 Check("systems_count", CountActiveSystems() >= 7, $"count={CountActiveSystems()}"),
                 Check("audio_clips", DreadRuntimeState.AudioClipCount > 0,
-                    $"loaded={DreadRuntimeState.AudioClipCount}/4"),
+                    $"loaded={DreadRuntimeState.AudioClipCount}/5"),
                 Check("psychotic_break_clips", DreadRuntimeState.PsychoticBreakClipsLoaded,
                     DreadRuntimeState.PsychoticBreakClipsLoaded ? "all loaded" : "missing clips"),
                 Check("overlay_present", FindObjectOfType<DebugOverlaySystem>() != null, "DebugOverlaySystem host"),

@@ -41,9 +41,14 @@ $binDir = if ($DebugBuild) { "bin\Debug\net48" } else { "bin\Release\net48" }
 Copy-PluginBinaries -SourceDir $binDir -DestDir $pluginOut
 Test-PluginBinariesPresent -Dir $pluginOut
 
-if (Test-Path "audio") {
-    Copy-Item -Recurse "audio" "$outDir\BepInEx\plugins\$name\"
+if ($DebugBuild) {
+    New-Item -ItemType Directory -Force "$pluginOut\audio" | Out-Null
+    Copy-Item -Path "audio\*" -Destination "$pluginOut\audio" -Recurse -Force
+    Write-Host "Debug package: copied audio/ beside plugin (offline testing)."
 }
+
+pwsh -NoProfile "$PSScriptRoot/.github/scripts/validate-audio-manifest.ps1"
+if ($LASTEXITCODE -ne 0) { Write-Error "audio-manifest validation failed"; exit 1 }
 
 Copy-Item "manifest.json" $outDir
 if (Test-Path "THUNDERSTORE_README.md") {

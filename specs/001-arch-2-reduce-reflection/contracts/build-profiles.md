@@ -70,7 +70,7 @@ dotnet build Dread.csproj -c Release \
 **Guarantees**
 
 - Stronger compile-time binding to real game assemblies.
-- Deploy target copies `Dread.dll`, plugin deps, and `audio/`.
+- Deploy target copies `Dread.dll` and plugin deps (no bundled `audio/`; use seeded `audio-cache` or future `BundleAudio=true`).
 
 ## Verification contract
 
