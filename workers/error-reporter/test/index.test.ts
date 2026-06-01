@@ -303,7 +303,11 @@ describe("Issue creation (happy path)", () => {
 			expect(searchCall.url).not.toContain("label%3Aauto-reported");
 
 			const createCall = gh.calls.find(
-				(c) => c.url.includes("/issues") && c.method === "POST" && !c.url.includes("/comments"),
+				(c) =>
+					c.url.includes("/issues") &&
+					c.method === "POST" &&
+					!c.url.includes("/comments") &&
+					!c.url.includes("/labels"),
 			);
 			expect(createCall).toBeDefined();
 			expect(createCall.body.title).toBe("[auto] InvalidOperationException in Warehouse");
@@ -328,7 +332,11 @@ describe("Issue creation (happy path)", () => {
 			await postReport(makePayload());
 
 			const createCall = gh.calls.find(
-				(c) => c.url.includes("/issues") && c.method === "POST" && !c.url.includes("/comments"),
+				(c) =>
+					c.url.includes("/issues") &&
+					c.method === "POST" &&
+					!c.url.includes("/comments") &&
+					!c.url.includes("/labels"),
 			);
 			createdBody = createCall.body.body;
 
@@ -393,7 +401,11 @@ describe("Deduplication", () => {
 
 			// Should NOT have created a new issue.
 			const createCall = gh.calls.find(
-				(c) => c.url.includes("/issues") && c.method === "POST" && !c.url.includes("/comments"),
+				(c) =>
+					c.url.includes("/issues") &&
+					c.method === "POST" &&
+					!c.url.includes("/comments") &&
+					!c.url.includes("/labels"),
 			);
 			expect(createCall).toBeUndefined();
 
@@ -508,7 +520,11 @@ describe("Markdown escaping", () => {
 			await postReport(payload);
 
 			const createCall = gh.calls.find(
-				(c) => c.url.includes("/issues") && c.method === "POST" && !c.url.includes("/comments"),
+				(c) =>
+					c.url.includes("/issues") &&
+					c.method === "POST" &&
+					!c.url.includes("/comments") &&
+					!c.url.includes("/labels"),
 			);
 			const body = createCall.body.body;
 
