@@ -2,7 +2,7 @@
 
 Canonical list of reflection, Harmony `AccessTools` resolution, and Harmony `Traverse` usage in `Systems/`. Maintained for issue [#168](https://github.com/grompen91-droid/dreadREPO/issues/168).
 
-**Last reviewed**: 2026-05-30
+**Last reviewed**: 2026-06-01
 
 ### Harmony `Traverse` policy
 
@@ -38,6 +38,8 @@ Canonical list of reflection, Harmony `AccessTools` resolution, and Harmony `Tra
 | `error-payload-exception-name` | `Systems/ErrorReporting/ErrorReportPayloadCapture.cs` | `ex.GetType().Name` | log batch | error reporting on | required | required | **keep** | Standard exception metadata, not game API reflection |
 | `plugin-dependency-resolve` | `Systems/PluginDependencyResolver.cs` | `AssemblyResolve` | startup | none | required | required | **keep** | Load NVorbis etc. from plugin folder |
 | `psychotic-break-find-players` | `Systems/PsychoticBreak/PsychoticBreakTrigger.cs` | `FindObjectsOfType<PlayerController>` | 0.25s / 2s | none | optional | required | **keep** | Compile-time generic; gameplay scan interval |
+| `snitch-level-gen-done` | `Systems/Patches/SnitchLevelGenDonePatch.cs` | `Apply` / `Postfix` | event (`OnLevelGenDone`) | snitch enabled + !compat | required | required | **keep** | `SemiFunc.OnLevelGenDone` stubbed; notifies `SnitchSystem` |
+| `item-roster-compat` | `Systems/Core/ItemRosterCompat.cs` | `ResolveTypeByName` / `GetItemGameObjects` | on arm | none | required | required | **keep** | `TypeByName` + `Assembly-CSharp` scan; inactive `FindObjectsOfType` |
 
 ## Hot-path summary
 
@@ -57,7 +59,7 @@ Types defined in `.github/scripts/Assembly-CSharp_stubs.cs` and safe for `typeof
 
 Types **not** in stubs (keep `TypeByName` or assembly scan):
 
-- `DebugConsoleUI`, `PlayerAvatar`, MenuLib / REPOConfig types, full Unity UI graph
+- `DebugConsoleUI`, `PlayerAvatar`, `ValuableObject`, `PhysGrabObject`, MenuLib / REPOConfig types, full Unity UI graph
 
 ## Related
 

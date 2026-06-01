@@ -48,6 +48,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 - **Error reporting:** Game-state capture for crash reports no longer calls compile-time `EnemyHealth.CurrentHealth` (fixes `get_CurrentHealth` MissingMethodException when third-party mods log errors, e.g. DeathMinimap after death); uses `Systems/Core/EnemyHealthCompat` and `EnemyScanCache`
+- **Snitch:** arm timer no longer resets on additive scene loads during level generation; arm attempt also runs after `SemiFunc.OnLevelGenDone` ([#222](https://github.com/grompen91-droid/dreadREPO/issues/222))
+- **Snitch:** `ItemRosterCompat` validates resolved types as `Component`, scans `Assembly-CSharp` when `TypeByName` fails, and includes inactive valuables in `FindObjectsOfType`
 
 ## [1.6.1] - 2026-05-30
 
