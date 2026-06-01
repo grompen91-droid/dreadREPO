@@ -33,6 +33,8 @@ namespace Dread.Systems
         public static float LureCampTimer { get; internal set; }
         /// <summary>Escalation step of the active lure (0 = inactive).</summary>
         public static int LurePullStep { get; internal set; }
+        public static bool SnitchEnabled { get; internal set; }
+        public static string SnitchBlockReason { get; internal set; } = "";
         /// <summary>Current snitch state: "disarmed", "armed", or "triggered".</summary>
         public static string SnitchState { get; internal set; } = "disarmed";
         /// <summary>Seconds remaining on the snitch POI loop (0 = inactive).</summary>
@@ -41,6 +43,13 @@ namespace Dread.Systems
         public static float SnitchItemDistance { get; internal set; } = -1f;
         /// <summary>Seconds until next arm attempt (-1 = armed/triggered).</summary>
         public static float SnitchNextCheckIn { get; internal set; } = -1f;
+
+        /// <summary>Current gameplay phase label for overlay (menu, truck/shop, extraction).</summary>
+        public static string GameplayPhase { get; internal set; } = "";
+        /// <summary>Seconds remaining on lure cooldown for active target (0 = none).</summary>
+        public static float LureCooldownRemaining { get; internal set; }
+        /// <summary>Why camp lure is inactive (empty when running).</summary>
+        public static string LureBlockReason { get; internal set; } = "";
 
         public static int DreadPatchCount { get; internal set; }
     }

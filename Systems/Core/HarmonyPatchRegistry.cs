@@ -68,6 +68,11 @@ namespace Dread.Systems.Core
                     DebugConsoleGuardPatch.Apply,
                     DebugConsoleGuardPatch.Remove,
                     () => DreadConfig.DebugConsoleGuardEnabled.Value),
+                new(
+                    "snitch-level-gen-done",
+                    PatchGroup.Monster,
+                    SnitchLevelGenDonePatch.Apply,
+                    SnitchLevelGenDonePatch.Remove),
             };
 
         private static bool MonsterHarmonyPatchesEnabled() =>

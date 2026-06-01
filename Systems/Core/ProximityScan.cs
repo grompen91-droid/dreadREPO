@@ -19,6 +19,13 @@ namespace Dread.Systems.Core
 
         public static int Count => _enemies.Length;
 
+        /// <summary>True when at least one valid enemy is in the scan cache.</summary>
+        public static bool HasEnemies()
+        {
+            RefreshIfNeeded();
+            return _enemies.Length > 0;
+        }
+
         public static EnemyHealth[] GetEnemies()
         {
             RefreshIfNeeded();

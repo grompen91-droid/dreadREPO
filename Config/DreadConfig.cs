@@ -18,6 +18,7 @@ namespace Dread.Config
         public static ConfigEntry<float> LureSafeDistance = null!;
         public static ConfigEntry<float> LureCampSeconds = null!;
         public static ConfigEntry<float> LureEscalateSeconds = null!;
+        public static ConfigEntry<float> LureCooldownSeconds = null!;
         public static ConfigEntry<bool> SnitchEnabled = null!;
         public static ConfigEntry<float> SnitchPOIDurationSeconds = null!;
 
@@ -97,8 +98,15 @@ namespace Dread.Config
                     "Seconds of continued camping per escalation step (the pull reaches farther each "
                     + "step). Lower = the lure ramps up faster.",
                     new AcceptableValueRange<float>(5f, 120f)));
+            LureCooldownSeconds = cfg.Bind("2. Monster Overhaul", "LureCooldownSeconds", 60f,
+                new ConfigDescription(
+                    "Seconds of immunity after enemies reach you and the lure resets. Prevents instant "
+                    + "re-lure while hiding. HOST ONLY.",
+                    new AcceptableValueRange<float>(10f, 300f)));
             SnitchEnabled = cfg.Bind("2. Monster Overhaul", "SnitchEnabled", true,
-                "One random item per run is the snitch. Picking it up first triggers a loud bang and draws all enemies to that spot. HOST ONLY.");
+                new ConfigDescription(
+                    "One random item per run is the snitch. Picking it up first triggers a loud bang "
+                    + "and draws all enemies to that spot. HOST ONLY."));
             SnitchPOIDurationSeconds = cfg.Bind("2. Monster Overhaul", "SnitchPOIDurationSeconds", 180f,
                 new ConfigDescription(
                     "Seconds enemies keep returning to the snitch pickup position.",
@@ -196,7 +204,9 @@ namespace Dread.Config
             ConfigEntryBase?[] allFields =
             [
                 AudioEnabled, AudioFrequency, AudioVolume,
-                MonsterAggressionEnabled, MonsterAudioEnabled, SnitchEnabled, SnitchPOIDurationSeconds,
+                MonsterAggressionEnabled, MonsterAudioEnabled,
+                MonsterLureEnabled, LureSafeDistance, LureCampSeconds, LureEscalateSeconds, LureCooldownSeconds,
+                SnitchEnabled, SnitchPOIDurationSeconds,
                 FakeFootstepsEnabled, AdrenalineEnabled, LowStaminaSoundEnabled, PanicSprintEnabled,
                 PsychoticBreakEnabled, PsychoticBreakTriggerChance, PsychoticBreakDuration, PsychoticBreakOncePerMatch,
                 CrouchSpeedBoostEnabled,

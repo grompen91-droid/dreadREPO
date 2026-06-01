@@ -32,4 +32,19 @@ public static class SemiFunc
 {
     public static bool MenuLevel() => false;
     public static bool IsMasterClient() => false;
+    public static void OnLevelGenDone() { }
+    public static bool RunIsLobbyMenu() => false;
+    public static bool RunIsShop() => false;
+    public static bool IsMainMenu() => false;
+    public static bool IsSplashScreen() => false;
+    public static bool TruckLevel() => false;
+    public static bool RunLevel() => false;
+}
+public static class SharedSceneData
+{
+    public static bool IsInShop;
+    public static bool IsInLobby;
+    public static bool IsInTruckLobby;
+    public static bool IsInGame;
+    public static bool IsInMainMenu;
 }

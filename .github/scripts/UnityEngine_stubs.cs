@@ -65,6 +65,8 @@ namespace UnityEngine
         public static T[] FindObjectsOfType<T>() where T : Object => null;
         public static Object? FindObjectOfType(System.Type type) => null;
         public static Object[] FindObjectsOfType(System.Type type) => System.Array.Empty<Object>();
+        public static Object[] FindObjectsOfType(System.Type type, bool includeInactive) =>
+            FindObjectsOfType(type);
         public static void Destroy(Object obj, float t = 0f) { }
         public static void DontDestroyOnLoad(Object obj) { }
         public static implicit operator bool(Object exists) { return exists != null; }

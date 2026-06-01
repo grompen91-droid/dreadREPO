@@ -88,6 +88,8 @@ Players without Dread can join; host-side monster patches still apply from the h
 
 Use `SemiFunc.MenuLevel()` for menu/main UI. `MonsterOverhaulSystem` also tracks `_inLevel` from scene name (no Menu/Main). Tension and psychotic break skip work on menu levels.
 
+**Host monster features** (Camp Lure, Snitch) MUST gate on `GameplayContext.AllowsHostMonsterFeatures`, not merely `!SemiFunc.MenuLevel()`. That API resolves menu vs truck/shop vs extraction level via `GameplayPhaseCompat` (native `SemiFunc` probes when present, plus extraction latch from `OnLevelGenDone`). See `specs/006-lure-snitch-hardening/contracts/gameplay-phase-gate.md`.
+
 ## Key files
 
 | Area | Path |

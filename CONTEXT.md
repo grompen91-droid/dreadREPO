@@ -68,6 +68,16 @@ Makes enemies feel harder to read and more threatening: host-side aggression tun
 _Implements:_ `MonsterOverhaulSystem`
 _Avoid_: using the name for only **Monster aggression** or only audio tweaks
 
+**Camp Lure**:
+Host-only anti-camping: draws enemies toward a player who stays isolated too long, with escalation and a post-contact cooldown. Active only during **Extraction level** (`GameplayContext.AllowsHostMonsterFeatures`).
+_Implements:_ `CampLureSystem`
+_Avoid_: "lure mod", treating as client-local tension
+
+**Snitch**:
+Host-only: one random item per extraction level secretly triggers a 3D bang and enemy POI on first pickup. Active only during **Extraction level**.
+_Implements:_ `SnitchSystem`
+_Avoid_: calling every item dangerous; snitch is one hidden item per level
+
 **Tension System**:
 One shared **proximity scan** drives four client-local features: **Adrenaline**, **Panic sprint**, **Low stamina sound**, and **Fake footsteps**.
 _Implements:_ `TensionSystem`

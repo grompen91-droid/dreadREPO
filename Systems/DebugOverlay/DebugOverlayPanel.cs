@@ -272,6 +272,7 @@ namespace Dread.Systems
 
             // Mod state
             AddSection("Mod State");
+            AddRow("Phase", PhaseSummary(), PhaseColor());
             float nearest = DreadRuntimeState.NearestEnemyDist;
             string enemy = nearest >= float.MaxValue * 0.5f ? "none" : $"{nearest:F1} m  (range 15m)";
             AddRow("Enemy", enemy, ColValue);
@@ -358,32 +359,88 @@ namespace Dread.Systems
             return $"{DreadRuntimeState.AudioClipCount}/4  {next}";
         }
 
+        private static string PhaseSummary()
+        {
+            var phase = DreadRuntimeState.GameplayPhase;
+            return string.IsNullOrEmpty(phase) ? "unknown" : phase;
+        }
+
+        private static Color PhaseColor()
+        {
+            return DreadRuntimeState.GameplayPhase switch
+            {
+                "run" => ColGood,
+                "menu" => ColDim,
+                "truck/shop" => ColWarn,
+                _ => ColDim,
+            };
+        }
+
         private static string LureSummary()
         {
-            if (DreadRuntimeState.LureTarget.Length == 0)
-                return "idle";
+            if (!string.IsNullOrEmpty(DreadRuntimeState.LureBlockReason))
+                return $"blocked: {DreadRuntimeState.LureBlockReason}";
 
+            if (DreadRuntimeState.LureTarget.Length == 0)
+            {
+                if (DreadRuntimeState.LureCooldownRemaining > 0f)
+                    return $"cooldown {DreadRuntimeState.LureCooldownRemaining:F0}s";
+                return "idle";
+            }
+
+            var cd = DreadRuntimeState.LureCooldownRemaining > 0f
+                ? $"  cd {DreadRuntimeState.LureCooldownRemaining:F0}s"
+                : "";
             return $"{DreadRuntimeState.LureTarget}  step {DreadRuntimeState.LurePullStep}  "
-                + $"camp {DreadRuntimeState.LureCampTimer:F0}s";
+                + $"camp {DreadRuntimeState.LureCampTimer:F0}s{cd}";
         }
 
         private static Color LureColor()
-            => DreadRuntimeState.LureTarget.Length == 0 ? ColDim : ColWarn;
+        {
+            if (!string.IsNullOrEmpty(DreadRuntimeState.LureBlockReason))
+                return ColDim;
+            return DreadRuntimeState.LureTarget.Length == 0 ? ColDim : ColWarn;
+        }
 
         private static string SnitchSummary()
         {
-            var state = DreadRuntimeState.SnitchState;
-            if (state == "triggered")
+            if (!DreadRuntimeState.SnitchEnabled)
+                return "off";
+
+            if (DreadRuntimeState.SnitchState == "triggered")
                 return $"triggered  POI {DreadRuntimeState.SnitchPoiRemaining:F0}s";
-            if (state == "armed" && DreadRuntimeState.SnitchItemDistance >= 0f)
-                return $"armed  {DreadRuntimeState.SnitchItemDistance:F1}m";
-            if (state == "disarmed" && DreadRuntimeState.SnitchNextCheckIn > 0f)
-                return $"disarmed  check {DreadRuntimeState.SnitchNextCheckIn:F1}s";
-            return state;
+
+            if (DreadRuntimeState.SnitchState == "armed")
+            {
+                if (DreadRuntimeState.SnitchItemDistance >= 0f)
+                    return $"armed  {DreadRuntimeState.SnitchItemDistance:F1}m";
+                return "armed";
+            }
+
+            if (DreadRuntimeState.SnitchState == "failed")
+                return "failed (no items)";
+
+            if (!string.IsNullOrEmpty(DreadRuntimeState.SnitchBlockReason))
+                return $"blocked: {DreadRuntimeState.SnitchBlockReason}";
+
+            if (DreadRuntimeState.SnitchNextCheckIn > 0f)
+                return $"arming  {DreadRuntimeState.SnitchNextCheckIn:F1}s";
+
+            return DreadRuntimeState.SnitchState;
         }
 
         private static Color SnitchColor()
-            => DreadRuntimeState.SnitchState == "triggered" ? ColBad : ColDim;
+        {
+            if (!DreadRuntimeState.SnitchEnabled)
+                return ColDim;
+            if (DreadRuntimeState.SnitchState == "triggered")
+                return ColBad;
+            if (DreadRuntimeState.SnitchState == "armed")
+                return ColWarn;
+            if (!string.IsNullOrEmpty(DreadRuntimeState.SnitchBlockReason))
+                return ColWarn;
+            return ColGood;
+        }
 
         private static string OnOff(bool value) => value ? "ON" : "off";
 
