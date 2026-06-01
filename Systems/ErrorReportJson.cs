@@ -41,6 +41,7 @@ namespace Dread.Systems
             AppendStringField(sb, "Message", report.Message);
             AppendStringField(sb, "StackTrace", report.StackTrace);
             AppendStringField(sb, "Scene", report.Scene);
+            AppendStringField(sb, "ConsoleLog", report.ConsoleLog);
             sb.Append(",\"GameState\":");
             AppendGameState(sb, report.GameState);
             sb.Append(",\"SystemInfo\":");

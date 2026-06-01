@@ -34,8 +34,21 @@ namespace Dread.Systems
                 GameState = CreateMinimalGameState(scene),
                 SystemInfo = CaptureSystemInfoSafe(),
                 Display = CaptureDisplayInfoSafe(),
-                Config = CaptureConfigSafe()
+                Config = CaptureConfigSafe(),
+                ConsoleLog = CaptureConsoleLogSafe()
             };
+        }
+
+        internal static string CaptureConsoleLogSafe()
+        {
+            try
+            {
+                return ErrorReportConsoleLogBuffer.CaptureForReport();
+            }
+            catch
+            {
+                return string.Empty;
+            }
         }
 
         internal static SystemInfoData CaptureSystemInfoSafe()

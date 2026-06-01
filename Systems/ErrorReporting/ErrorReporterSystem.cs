@@ -54,6 +54,8 @@ namespace Dread.Systems
 
         private static void OnLogMessageReceived(string logString, string stackTrace, LogType type)
         {
+            ErrorReportConsoleLogBuffer.Record(logString, stackTrace, type);
+
             if (ShouldIgnoreUnityLog(logString, stackTrace))
                 return;
 
@@ -202,6 +204,16 @@ namespace Dread.Systems
                 config = new ConfigData();
             }
 
+            string consoleLog;
+            try
+            {
+                consoleLog = ErrorReportConsoleLogBuffer.CaptureForReport();
+            }
+            catch
+            {
+                consoleLog = string.Empty;
+            }
+
             var scheduleUrgentFlush = false;
 
             foreach (var raw in batch)
@@ -221,7 +233,8 @@ namespace Dread.Systems
                     GameState = gameState,
                     SystemInfo = systemInfo,
                     Display = display,
-                    Config = config
+                    Config = config,
+                    ConsoleLog = consoleLog
                 };
 
                 lock (_buffer)

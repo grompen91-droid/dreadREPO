@@ -50,7 +50,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **Camp Lure:** new `LureCooldownSeconds` config (default 60s) prevents instant re-lure after contact; no lure when zero enemies in scan
 - **Snitch:** explicit `failed` arm state; 2s pickup grace period; arm logs at Verbose only; removed temporary agent debug instrumentation
 
+### Added
+- **Error reporting:** Auto-reported issues now include a length-capped **Console Log** section (recent Unity console output from the session plus a tail of `BepInEx/LogOutput.log`) so triage has full context around the failure
+
 ### Fixed
+- **Error reporter Worker:** GitHub dedupe no longer requires `label:auto-reported` on existing issues (labels were not always applied, so duplicate issues like #230/#231 with the same hash could be created). Search uses `repo` + `hash` only; labels are applied via a follow-up API call; optional KV namespace `DEDUP_KV` caches hash to issue number for reliable dedupe before Search indexing catches up
 - **Error reporting:** Production exceptions and errors flush on the next frame via synchronous HTTP POST instead of waiting up to 5 minutes; pending logs and buffered reports drain with a sync POST on application quit or disable (so real errors are not lost when exiting soon after a crash)
 - **Error reporting:** Game-state capture uses `PlayerControllerCompat` for player HP/stamina (avoids direct `Health` access when dead); per-field try/catch around snapshot sections so one failed capture does not block the batch
 - **Error reporting:** Game-state capture for crash reports no longer calls compile-time `EnemyHealth.CurrentHealth` (fixes `get_CurrentHealth` MissingMethodException when third-party mods log errors, e.g. DeathMinimap after death); uses `Systems/Core/EnemyHealthCompat` and `EnemyScanCache`

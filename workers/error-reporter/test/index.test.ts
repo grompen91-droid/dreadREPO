@@ -265,6 +265,8 @@ describe("Issue creation (happy path)", () => {
 			// Verify the GitHub API calls.
 			const searchCall = gh.calls.find((c) => c.url.includes("search/issues"));
 			expect(searchCall).toBeDefined();
+			expect(searchCall.url).toContain("hash%3Aabc123def4567890");
+			expect(searchCall.url).not.toContain("label%3Aauto-reported");
 
 			const createCall = gh.calls.find(
 				(c) => c.url.includes("/issues") && c.method === "POST" && !c.url.includes("/comments"),
@@ -318,6 +320,39 @@ describe("Issue creation (happy path)", () => {
 });
 
 describe("Deduplication", () => {
+	it("uses KV mapping before GitHub search when DEDUP_KV is bound", async () => {
+		const gh = mockGitHub();
+		const kv = {
+			store: new Map(),
+			async get(key) {
+				return this.store.get(key) ?? null;
+			},
+			async put(key, value) {
+				this.store.set(key, value);
+			},
+		};
+		kv.store.set("issue:kv_hash_1234567890", "50");
+
+		const origEnv = env;
+		try {
+			(env as { DEDUP_KV?: typeof kv }).DEDUP_KV = kv;
+			const response = await postReport(
+				makePayload({}, { Hash: "kv_hash_1234567890" }),
+			);
+			expect(response.status).toBe(200);
+			const body = await response.json();
+			expect(body.results[0].status).toBe("commented");
+			expect(body.results[0].issueNumber).toBe(50);
+			expect(body.results[0].dedupe).toBe("kv");
+
+			const searchCall = gh.calls.find((c) => c.url.includes("search/issues"));
+			expect(searchCall).toBeUndefined();
+		} finally {
+			(env as { DEDUP_KV?: typeof kv }).DEDUP_KV = origEnv.DEDUP_KV;
+			gh.restore();
+		}
+	});
+
 	it("adds a comment when an open issue with the same hash exists", async () => {
 		const gh = mockGitHub();
 		gh.setSearch({

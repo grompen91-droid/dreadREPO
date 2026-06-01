@@ -110,7 +110,7 @@ Remote: `https://github.com/grompen91-droid/dreadREPO.git`, branch `master`.
 Backlog: `docs/ROADMAP.md`. Pick issues labeled `ready-for-agent` unless the task says otherwise.
 
 <!-- SPECKIT START -->
-**Active implementation plan (006):** [specs/006-lure-snitch-hardening/plan.md](specs/006-lure-snitch-hardening/plan.md) (branch `006-lure-snitch-hardening`, Camp Lure + Snitch hardening).
+**Active implementation plan (013):** error reporting urgent flush (branch `013-error-report-urgent-flush`; production exceptions POST immediately and on quit).
 <!-- SPECKIT END -->
 
 ## Cursor Cloud specific instructions
