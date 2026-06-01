@@ -60,8 +60,11 @@ namespace Dread.Systems
             var panel = new Rect(_panelX, _panelY, width, height);
             GUI.Box(panel, EmptyContent, _boxStyle!);
 
-            // Solid steel accent rail down the left edge (S2 "Slate HUD" look).
-            GUI.Box(new Rect(panel.x, panel.y, 3f * z, height), EmptyContent, _railStyle!);
+            // Thin steel accent rail down the left edge (S2 "Slate HUD" look).
+            GUI.Box(new Rect(panel.x, panel.y, 2f * z, height), EmptyContent, _railStyle!);
+
+            // Solid steel cap across the top edge so the panel reads as framed.
+            GUI.Box(new Rect(panel.x, panel.y, width, 2f * z), EmptyContent, _railStyle!);
 
             float x = panel.x + padX;
             float y = panel.y + padTop;
@@ -183,7 +186,30 @@ namespace Dread.Systems
                 DreadNotificationSystem.Bad("Test toast", "Error notification from the kit demo.");
         }
 
-        private void SetZoom(float value) => _zoom = Mathf.Clamp(value, 0.6f, 1.6f);
+        private void SetZoom(float value)
+        {
+            _zoom = Mathf.Clamp(value, 0.6f, 1.6f);
+            SaveLayout();
+        }
+
+        // Restore the panel's saved zoom and position so they survive a relaunch.
+        // Called from Awake, after DreadConfig is initialized.
+        private void LoadLayout()
+        {
+            _zoom = Mathf.Clamp(DreadConfig.DebugOverlayZoom.Value, 0.6f, 1.6f);
+            _panelX = DreadConfig.DebugOverlayPanelX.Value;
+            _panelY = DreadConfig.DebugOverlayPanelY.Value;
+        }
+
+        // Persist the current zoom and position. Called when the user changes zoom
+        // (footer buttons) or finishes a drag, not every frame, to avoid disk churn.
+        private void SaveLayout()
+        {
+            DreadConfig.DebugOverlayZoom.Value = _zoom;
+            DreadConfig.DebugOverlayPanelX.Value = _panelX;
+            DreadConfig.DebugOverlayPanelY.Value = _panelY;
+            DreadConfig.SaveToDisk();
+        }
 
         // Drag the panel by its header strip. Runs only in interactive (F9) mode.
         // Input.mousePosition has a bottom-left origin; GUI coordinates are
@@ -219,6 +245,7 @@ namespace Dread.Systems
             else
             {
                 _dragging = false;
+                SaveLayout();
             }
         }
 
