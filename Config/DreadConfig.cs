@@ -51,6 +51,7 @@ namespace Dread.Config
         public static ConfigEntry<float> DebugOverlayZoom = null!;
         public static ConfigEntry<float> DebugOverlayPanelX = null!;
         public static ConfigEntry<float> DebugOverlayPanelY = null!;
+        public static ConfigEntry<string> DebugOverlayCollapsedSections = null!;
 
         // 9. Debug Server
         public static ConfigEntry<bool> DebugServerEnabled = null!;
@@ -197,6 +198,12 @@ namespace Dread.Config
                 140f,
                 "Saved top-left Y of the debug HUD panel in pixels. Set in-game by dragging the panel "
                     + "header (F9 mouse mode); persists across launches.");
+            DebugOverlayCollapsedSections = cfg.Bind(
+                "8. Debug Overlay",
+                "CollapsedSections",
+                string.Empty,
+                "Internal: comma-separated list of debug HUD sections folded shut. Set in-game by "
+                    + "clicking a section header (F9 mouse mode); persists across launches.");
 
             DebugServerEnabled = cfg.Bind(
                 "9. Debug Server",
@@ -237,6 +244,7 @@ namespace Dread.Config
                 CompatibilityMode, CompatibilitySkipConflictingPatches, DebugConsoleGuardEnabled,
                 ErrorReportingEnabled, ErrorReportingPromptShown,
                 DebugOverlayEnabled, DebugOverlayZoom, DebugOverlayPanelX, DebugOverlayPanelY,
+                DebugOverlayCollapsedSections,
                 DebugServerEnabled, DebugServerPort,
                 LogLevelEntry, TestCrashButton,
             ];

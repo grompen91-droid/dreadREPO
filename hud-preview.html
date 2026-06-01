@@ -45,6 +45,8 @@
   .section{height:22px; display:flex; align-items:center; gap:6px; font-size:11px;
            color:var(--section); letter-spacing:.06em;}
   .section .tick{width:9px; height:1px; background:var(--rail);}
+  .section .caret{margin-left:auto; color:var(--dim); cursor:pointer;}
+  .section{cursor:pointer;}
   .k{color:var(--dim); width:82px; flex:0 0 82px;}
   .v{color:var(--value);}
   .v.good{color:var(--good);} .v.warn{color:var(--warn);} .v.bad{color:var(--bad);} .v.dim{color:var(--dim);}
@@ -75,14 +77,14 @@
       <div class="rail"></div>
       <div class="row header"><span>DREAD 1.6.1</span><span class="hint">F9 mouse</span></div>
       <div class="sep"></div>
-      <div class="section"><span class="tick"></span>PERFORMANCE</div>
+      <div class="section"><span class="tick"></span>PERFORMANCE<span class="caret">v</span></div>
       <div class="row"><span class="k">FPS</span><span class="v good">95</span></div>
       <div class="row"><span class="k">Frame</span><span class="v">10.6 ms&nbsp;&nbsp;&nbsp;min 89 fps</span></div>
       <div class="row"><span class="k">Memory</span><span class="v">88 MB</span></div>
       <div class="row"><span class="k">GC</span><span class="v dim">g0 167&nbsp;&nbsp;g1 167&nbsp;&nbsp;g2 167</span></div>
       <div class="row"><span class="k">Screen</span><span class="v dim">1920x1080</span></div>
       <div class="row"><span class="k">Frames</span><span class="v dim">10081</span></div>
-      <div class="section"><span class="tick"></span>MOD STATE</div>
+      <div class="section"><span class="tick"></span>MOD STATE<span class="caret">v</span></div>
       <div class="row"><span class="k">Phase</span><span class="v good">run</span></div>
       <div class="row"><span class="k">Enemy</span><span class="v">30.6 m&nbsp;&nbsp;(range 15m)</span></div>
       <div class="row"><span class="k">Tension</span><span class="v">adrenaline off</span></div>
@@ -92,9 +94,13 @@
       <div class="row"><span class="k">Audio</span><span class="v">4/4&nbsp;&nbsp;next 102s</span></div>
       <div class="row"><span class="k">Lure</span><span class="v dim">idle</span></div>
       <div class="row"><span class="k">Snitch</span><span class="v warn">armed&nbsp;&nbsp;7.1m</span></div>
-      <div class="section"><span class="tick"></span>SYSTEM</div>
+      <div class="section"><span class="tick"></span>SYSTEM<span class="caret">&gt;</span></div>
+      <!-- SYSTEM folded: rows hidden, panel shrinks to fit -->
+      <!--
       <div class="row"><span class="k">Config</span><span class="v dim">compat- aggr+ maud+ aud+ srv+</span></div>
       <div class="row"><span class="k">Patches</span><span class="v">5</span></div>
+      -->
+      <div class="cap" style="margin:6px 0 0 25px; font-size:10px; opacity:.6">click a header to fold / unfold</div>
       <div class="footer">
         <span class="zlabel">ZOOM</span>
         <button class="btn">-</button>

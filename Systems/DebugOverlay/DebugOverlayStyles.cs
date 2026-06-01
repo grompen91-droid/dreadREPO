@@ -34,6 +34,8 @@ namespace Dread.Systems
         private GUIStyle? _labelStyle;
         private GUIStyle? _valueStyle;
         private GUIStyle? _sectionStyle;
+        private GUIStyle? _sectionBtnStyle;
+        private GUIStyle? _caretStyle;
         private GUIStyle? _sepStyle;
         private GUIStyle? _buttonStyle;
 
@@ -73,6 +75,19 @@ namespace Dread.Systems
             _sectionStyle = new GUIStyle(GUI.skin.label)
                 { fontSize = 11, wordWrap = false, alignment = TextAnchor.MiddleLeft };
             _sectionStyle.normal.textColor = ColSection;
+
+            // Transparent button over the section label so the row folds on click.
+            // No background = invisible chrome; it reads as the section label itself.
+            _sectionBtnStyle = new GUIStyle(GUI.skin.label)
+                { fontSize = 11, wordWrap = false, alignment = TextAnchor.MiddleLeft };
+            _sectionBtnStyle.normal.textColor = ColSection;
+            _sectionBtnStyle.hover.textColor = ColAccent;
+            _sectionBtnStyle.active.textColor = ColAccent;
+
+            // Fold caret, right-aligned in the section row.
+            _caretStyle = new GUIStyle(GUI.skin.label)
+                { fontSize = 11, wordWrap = false, alignment = TextAnchor.MiddleRight };
+            _caretStyle.normal.textColor = ColDim;
 
             _sepStyle = new GUIStyle(GUI.skin.box);
             _sepStyle.normal.background = _sepTex;
