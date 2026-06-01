@@ -45,7 +45,7 @@ namespace Dread.Systems
             BuildRows();
 
             float z = _zoom;
-            float width = 320f * z;
+            float width = 280f * z;
             float padX = 10f * z;
             float padTop = 6f * z;
             float padBottom = 10f * z;
@@ -63,9 +63,6 @@ namespace Dread.Systems
             // Thin steel accent rail down the left edge (S2 "Slate HUD" look).
             GUI.Box(new Rect(panel.x, panel.y, 2f * z, height), EmptyContent, _railStyle!);
 
-            // Solid steel cap across the top edge so the panel reads as framed.
-            GUI.Box(new Rect(panel.x, panel.y, width, 2f * z), EmptyContent, _railStyle!);
-
             float x = panel.x + padX;
             float y = panel.y + padTop;
             float innerW = width - padX * 2f;
@@ -75,7 +72,10 @@ namespace Dread.Systems
                 var row = _rows[i];
                 if (row.Kind == RowSep)
                 {
-                    GUI.Box(new Rect(x, y + lineH * 0.5f - 1f, innerW, 1f), EmptyContent, _sepStyle!);
+                    // Span nearly the full panel width (rail to right edge) so the
+                    // divider reads as a full rule, not a short inset stub.
+                    GUI.Box(new Rect(panel.x + 3f * z, y + lineH * 0.5f - 1f, width - 6f * z, 1f),
+                        EmptyContent, _sepStyle!);
                 }
                 else if (row.Kind == RowSection)
                 {
@@ -217,7 +217,7 @@ namespace Dread.Systems
         private void HandleDrag()
         {
             float z = _zoom;
-            float width = 320f * z;
+            float width = 280f * z;
             float headerH = (6f + 22f) * z; // padTop + header row = the grab strip
 
             float mx = Input.mousePosition.x;
