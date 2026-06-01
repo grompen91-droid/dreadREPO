@@ -87,6 +87,7 @@ jobs:
           dotnet build Dread.csproj -c Release --nologo \
             -p:GameDir="$refsDir" \
             -p:BepInExDir="$refsDir" \
+            -p:EnableDebugFeatures=false \
             -p:DeployToProfile=false \
             -p:DeployToDist=false
           dotnet test tests/Dread.ErrorReportJson.Tests/Dread.ErrorReportJson.Tests.csproj -c Release --nologo

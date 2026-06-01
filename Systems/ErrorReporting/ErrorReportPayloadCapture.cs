@@ -19,6 +19,7 @@ namespace Dread.Systems
             return colonIdx > 0 ? logString.Substring(0, colonIdx) : "Unknown";
         }
 
+#if DREAD_DEBUG
         internal static ErrorReport BuildTestCrashReport(
             Exception ex, string message, string stack, string scene)
         {
@@ -37,6 +38,7 @@ namespace Dread.Systems
                 Config = CaptureConfigSafe()
             };
         }
+#endif
 
         internal static SystemInfoData CaptureSystemInfoSafe()
         {

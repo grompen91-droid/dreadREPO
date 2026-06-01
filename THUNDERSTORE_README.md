@@ -85,18 +85,8 @@ CompatibilityMode = false
 ErrorReportingEnabled = true     # default on for new cfg; first-run prompt on first gameplay level
 ErrorReportingPromptShown = false
 
-[8. Debug Overlay]
-DebugOverlayEnabled = false
-
-[9. Debug Server]
-DebugServerEnabled = false
-DebugServerPort = 15432
-
-[10. Logging]
-LogLevel = Debug
-
-[11. Testing]
-Crash Game = false
+[8. Logging]
+LogLevel = Error
 ```
 
 ## Compatibility

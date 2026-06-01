@@ -22,19 +22,22 @@ How agents add settings and control log verbosity. Files: `Config/DreadConfig.cs
 | `5. QOL` | `CrouchSpeedBoost` |
 | `6. Compatibility` | Compatibility mode, skip conflicting patches, debug console guard |
 | `7. Error Reporting` | `ErrorReportingEnabled` (default false) |
-| `8. Debug Overlay` | `DebugOverlayEnabled` |
-| `9. Debug Server` | enabled, port |
-| `10. Logging` | `LogLevel` enum |
-| `11. Testing` | `Crash Game` toggle (turn on to test crash; resets to off) |
+| `8. Debug Overlay` | `DebugOverlayEnabled` *(development only)* |
+| `9. Debug Server` | enabled, port *(development only)* |
+| Logging | `LogLevel` enum: **`8. Logging`** (production, default **Error**) or **`10. Logging`** (development, default **Debug**) |
+| `11. Testing` | `Crash Game` *(development only)* |
+
+Use [DreadConfigSections.cs](../../../Config/DreadConfigSections.cs) for bind section strings; never hardcode `10. Logging` in shared code. See [development-only-features.md](development-only-features.md).
 
 ### Adding a config entry
 
 1. `public static ConfigEntry<T> YourEntry = null!;`
 2. `cfg.Bind(...)` in `Initialize` with description
 3. Add to `allFields` null-check array at bottom
-4. If MCP-visible: extend `DebugServerSystem` config export and [verify-dread.md](../verify-dread.md) table
-5. If error-report snapshot: extend `ErrorReporterSystem` config block
-6. Respect **Compatibility mode** in gameplay code (do not only hide in UI)
+4. If MCP-visible (dev builds): extend `DebugServerSystem` config export and [verify-dread.md](../verify-dread.md) table
+5. If development-only: follow [development-only-features.md](development-only-features.md) before adding binds
+6. If error-report snapshot: extend `ErrorReporterSystem` config block
+7. Respect **Compatibility mode** in gameplay code (do not only hide in UI)
 
 ### SettingChanged
 

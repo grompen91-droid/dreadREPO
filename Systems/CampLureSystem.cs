@@ -274,6 +274,7 @@ namespace Dread.Systems
             DreadRuntimeState.LureCooldownRemaining = cooldown;
         }
 
+#if DREAD_DEBUG
         private static void NotifyDebug(string message)
         {
             if (!DreadConfig.DebugOverlayEnabled.Value)
@@ -282,5 +283,8 @@ namespace Dread.Systems
             LoggingService.LogInfo("[CampLure] " + message);
             DreadNotificationSystem.Warn("Camp Lure", message);
         }
+#else
+        private static void NotifyDebug(string message) { }
+#endif
     }
 }

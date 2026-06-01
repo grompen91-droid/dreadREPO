@@ -46,18 +46,14 @@ namespace Dread.Config
         public static ConfigEntry<bool> ErrorReportingEnabled = null!;
         public static ConfigEntry<bool> ErrorReportingPromptShown = null!;
 
-        // 8. Debug Overlay
+#if DREAD_DEBUG
         public static ConfigEntry<bool> DebugOverlayEnabled = null!;
-
-        // 9. Debug Server
         public static ConfigEntry<bool> DebugServerEnabled = null!;
         public static ConfigEntry<int> DebugServerPort = null!;
-
-        // 10. Logging
-        public static ConfigEntry<LogLevel> LogLevelEntry = null!;
-
-        // 11. Testing
         public static ConfigEntry<bool> TestCrashButton = null!;
+#endif
+
+        public static ConfigEntry<LogLevel> LogLevelEntry = null!;
 
         private static bool _initialized;
 
@@ -104,9 +100,7 @@ namespace Dread.Config
                     + "re-lure while hiding. HOST ONLY.",
                     new AcceptableValueRange<float>(10f, 300f)));
             SnitchEnabled = cfg.Bind("2. Monster Overhaul", "SnitchEnabled", true,
-                new ConfigDescription(
-                    "One random item per run is the snitch. Picking it up first triggers a loud bang "
-                    + "and draws all enemies to that spot. HOST ONLY."));
+                "One random item per run is the snitch. Picking it up first triggers a loud bang and draws all enemies to that spot. HOST ONLY.");
             SnitchPOIDurationSeconds = cfg.Bind("2. Monster Overhaul", "SnitchPOIDurationSeconds", 180f,
                 new ConfigDescription(
                     "Seconds enemies keep returning to the snitch pickup position.",
@@ -167,32 +161,34 @@ namespace Dread.Config
                 "Internal: set true after first-run error reporting disclosure. "
                     + "Do not edit unless resetting the prompt.");
 
+#if DREAD_DEBUG
             DebugOverlayEnabled = cfg.Bind(
-                "8. Debug Overlay",
+                DreadConfigSections.DebugOverlay,
                 "DebugOverlayEnabled",
-                false,
+                true,
                 "Show an in-game IMGUI debug HUD during runs. Press F10 to toggle visibility at runtime. "
                     + "Hidden on menu levels.");
 
             DebugServerEnabled = cfg.Bind(
-                "9. Debug Server",
+                DreadConfigSections.DebugServer,
                 "DebugServerEnabled",
-                false,
+                true,
                 "Enable the TCP debug server for AI-assisted debugging (localhost only).");
-            DebugServerPort = cfg.Bind("9. Debug Server", "DebugServerPort", 15432,
+            DebugServerPort = cfg.Bind(DreadConfigSections.DebugServer, "DebugServerPort", 15432,
                 new ConfigDescription(
                     "Port for the debug server. Falls back to +1 if unavailable.",
                     new AcceptableValueRange<int>(1024, 65535)));
 
+            // Bind ascending section numbers before later sections (REPOConfig nests lower numbers under prior headers).
             LogLevelEntry = cfg.Bind(
-                "10. Logging",
+                DreadConfigSections.Logging,
                 "LogLevel",
                 LogLevel.Debug,
                 "Logging verbosity. None = suppress all output, Error = only errors, "
                     + "Debug = info + warnings + errors, Verbose = everything including debug traces.");
 
             TestCrashButton = cfg.Bind(
-                "11. Testing",
+                DreadConfigSections.Testing,
                 "Crash Game",
                 false,
                 new ConfigDescription(
@@ -200,6 +196,16 @@ namespace Dread.Config
                         + "Use only when error reporting is enabled.",
                     null,
                     new ConfigurationManagerAttributes { ShowAsButton = true }));
+#endif
+
+#if !DREAD_DEBUG
+            LogLevelEntry = cfg.Bind(
+                DreadConfigSections.Logging,
+                "LogLevel",
+                LogLevel.Error,
+                "Logging verbosity. None = suppress all output, Error = only errors, "
+                    + "Debug = info + warnings + errors, Verbose = everything including debug traces.");
+#endif
 
             ConfigEntryBase?[] allFields =
             [
@@ -212,8 +218,13 @@ namespace Dread.Config
                 CrouchSpeedBoostEnabled,
                 CompatibilityMode, CompatibilitySkipConflictingPatches, DebugConsoleGuardEnabled,
                 ErrorReportingEnabled, ErrorReportingPromptShown,
+#if DREAD_DEBUG
                 DebugOverlayEnabled, DebugServerEnabled, DebugServerPort,
-                LogLevelEntry, TestCrashButton,
+#endif
+                LogLevelEntry,
+#if DREAD_DEBUG
+                TestCrashButton,
+#endif
             ];
             for (int i = 0; i < allFields.Length; i++)
             {
@@ -239,8 +250,10 @@ namespace Dread.Config
         }
     }
 
+#if DREAD_DEBUG
     internal class ConfigurationManagerAttributes
     {
         public bool? ShowAsButton;
     }
+#endif
 }

@@ -73,3 +73,9 @@ Add a **clickable button** in the BepInEx ConfigurationManager UI that crashes t
 
 - [ADR-0010](0010-error-telemetry.md): Production log hook, batch flush, Worker contract
 - [ADR-0015](0015-error-report-json-serialization.md): Payload serialization
+
+---
+
+## Amendment (012, 2026-06-01)
+
+**Release builds** exclude `TestCrashSystem` and section **11. Testing** at compile time (`DREAD_DEBUG` / production MSBuild profile), same as debug overlay and TCP server. Development builds retain the test-crash button. Production error reporting for real exceptions (ADR-0010) is unchanged. Production **Logging** binds under section **8** via `DreadConfigSections`.

@@ -252,11 +252,13 @@ namespace Dread.Systems
                 });
             }
 
+#if DREAD_DEBUG
             if (DreadConfig.DebugOverlayEnabled.Value)
             {
                 LoggingService.LogInfo("[Snitch] Triggered");
                 DreadNotificationSystem.Bad("Snitch", "item betrayed a player");
             }
+#endif
         }
 
         private void ResetState()
