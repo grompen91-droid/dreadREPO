@@ -17,6 +17,8 @@ namespace Dread.Systems
 
         private static readonly string[] AsciiArtLines =
         [
+            @"", // new line just for prettier graphic
+            @"", // new line just for prettier graphic
             @"         ███             ███             ███             ███  ",
             @"       ███░            ███░            ███░            ███░   ",
             @"     ███░            ███░            ███░            ███░     ",
@@ -45,6 +47,7 @@ namespace Dread.Systems
             @"           ███░            ███░            ███░            ███",
             @"         ███░            ███░            ███░            ███░ ",
             @"       ███░            ███░            ███░            ███░   ",
+            @"", // new line just for prettier graphic
         ];
 
         public static void Initialize(LogLevel level)
