@@ -1,35 +1,203 @@
 # Dread Mod - Agent Instructions
 
-## Build Output
+## Implementing work (read this first)
 
-Always build to the `dist\` folder inside the project root (same directory as `build.ps1` and `manifest.json`). `dist\` is in `.gitignore` and may not exist -- create it if missing before building:
+**Rule precedence:** Instructions in this file and linked `docs/agents/` docs override generic assistant defaults. If something conflicts or is unclear, **ask the user** before proceeding.
 
-```powershell
-if (-not (Test-Path "dist")) { New-Item -ItemType Directory -Force "dist" | Out-Null }
+### Spec Kit feature (active plan in `.specify/feature.json`)
+
+When a plan is active, use the Spec Kit flow on branch **`NNN-kebab-name`** (must match the spec folder, e.g. `014-remote-audio-assets`):
+
+1. **Specify / plan / tasks** under `specs/NNN-.../` (or update existing artifacts)
+2. **Implement** per `tasks.md`
+3. **Analyze** (consistency check across spec, plan, tasks, code)
+4. **Verify** Tier 0 (`scripts/verify-dread.ps1`); in-game/MCP when applicable
+5. **Pull request** into `master` when the feature is complete
+
+Remove the `<!-- SPECKIT START -->` block from this file when the feature is merged and `.specify/feature.json` is cleared or repointed.
+
+### Other work (no active Spec Kit plan)
+
+```
+GitHub issue or ROADMAP row (ready-for-agent)
+  -> CONTEXT.md + docs/agents/domain.md + relevant ADRs
+  -> branch: fix/short-description or feat/short-description (kebab-case)
+  -> implement (minimal diff)
+  -> meaningful git commits on the branch
+  -> Tier 0 verify; dotnet format if C# changed
+  -> push + PR to master only when opening or updating the PR (or when the user asks)
+  -> CHANGELOG [Unreleased] for user-facing changes
 ```
 
-Run from the project root (the folder containing `build.ps1`):
+Full checklist: [docs/agents/orchestration.md](docs/agents/orchestration.md) (Workflow A), [CONTRIBUTING.md](CONTRIBUTING.md).
+
+---
+
+## Version control (agents)
+
+| Rule | Detail |
+|------|--------|
+| **Commit** | After **meaningful** changes only (a coherent unit you could revert to). Not every edit; enough history to backtrack. Messages: `feat:`, `fix:`, `docs:`, `ci:`, etc. |
+| **Branch** | No direct commits to `master` for feature work. |
+| **Spec Kit branch** | `NNN-kebab-name` when `.specify/feature.json` points at `specs/NNN-.../`. |
+| **Otherwise** | `fix/...`, `feat/...`, or similar descriptive names (kebab-case). |
+| **Push** | Only when the user asks, or to **open or update a pull request**. Do not push after every commit by default. |
+| **Release tags** | Do **not** push `vpatch`, `vminor`, or `vmajor` unless the user explicitly asks. |
+| **PR** | Open from your feature branch into `master` when work is ready for review. |
+
+Remote: `https://github.com/grompen91-droid/dreadREPO.git`, default branch `master`.
+
 ```powershell
-.\build.ps1 -Version "<current version from manifest.json>"
+# After a meaningful change (project root)
+git add <files>
+git commit -m "type: short description"
+
+# When opening or updating a PR (or if the user asked to push)
+git push -u origin HEAD
+gh pr create --base master --title "..." --body "..."
 ```
 
-The build script produces inside `dist\`:
-- `elytraking-Dread-<version>\` -- unpacked package folder
-- `elytraking-Dread-<version>.zip` -- Thunderstore upload zip
+---
 
-## Thunderstore Package Requirements
+## Build (agents)
 
-Every build zip must contain these files at the root:
+**Default: always produce a Debug build** (`DREAD_DEBUG`: overlay, TCP server, test crash, debug config sections) unless the user explicitly requests a **production Release** build.
+
+### Day-to-day: `dotnet build`
+
+Use stubs when the game is not installed (Cursor Cloud, Linux CI-style dev):
+
+```bash
+pwsh -NoProfile .github/scripts/gen-stubs.ps1
+
+dotnet build Dread.csproj -c Debug \
+  -p:GameDir=.github/stubs/refs \
+  -p:BepInExDir=.github/stubs/refs \
+  -p:PluginDir="<profile>/BepInEx/plugins/elytraking-Dread" \
+  -p:DeployToDist=false
+```
+
+- **`DeployToProfile`:** runs automatically when `PluginDir` exists; copies `Dread.dll`, NVorbis deps, and **`audio/**`** beside the plugin (offline debug audio).
+- **Production Release** (only when asked): add `-c Release`, `-p:EnableDebugFeatures=false`, `-p:DeployToProfile=false`.
+
+See [debug-tooling.md](docs/agents/guides/debug-tooling.md) and [development-only-features.md](docs/agents/guides/development-only-features.md).
+
+### When to use `build.ps1`
+
+Use **`.\build.ps1 -DebugBuild`** (agents) or **`.\build.ps1 -Version "<from manifest.json>"`** (release packaging) when files that affect the **Thunderstore zip layout** changed, for example:
+
+- `manifest.json`, `icon.png`, `README.md` / `THUNDERSTORE_README.md`
+- `audio/audio-manifest.json` or `audio/**` layout
+- Packaging scripts under `.github/scripts/` that affect the zip
+
+Otherwise **`dotnet build -c Debug`** is enough for code-only changes.
+
+`-DebugBuild` also copies **`audio/**`** into the packaged plugin folder under `dist/` so local zip installs include baked audio for testing.
+
+### r2modman plugin path (canonical layout)
+
+Thunderstore and `build.ps1` use a **flat** plugin folder:
+
+```text
+BepInEx/plugins/elytraking-Dread/
+  Dread.dll
+  audio/          # Debug deploy / local testing (category subfolders)
+  audio-cache/    # Runtime download cache (production)
+```
+
+Do **not** deploy to a nested `elytraking-Dread/elytraking-Dread/` folder unless your profile truly uses that layout. Set `-p:PluginDir` to the directory that already contains (or should contain) `Dread.dll`.
+
+Example (Linux, `dread` profile):
+
+```bash
+PLUGIN="$HOME/.config/r2modmanPlus-local/REPO/profiles/dread/BepInEx/plugins/elytraking-Dread"
+```
+
+More detail: [specs/014-remote-audio-assets/quickstart.md](specs/014-remote-audio-assets/quickstart.md) (when present for active audio work).
+
+### Debug audio
+
+Debug builds must ship **local OGG** next to the plugin (or in a Debug `build.ps1` package): repo `audio/**` is copied on Debug deploy. At runtime, `#if DREAD_DEBUG` can import those files into `audio-cache/` before HTTP. Production Thunderstore zips stay **DLL-only**; players fetch OGG from GitHub Releases (AUDIO-5).
+
+---
+
+## Agent skills
+
+**Start at [docs/agents/README.md](docs/agents/README.md)** for orchestration, verify tiers, and MCP.
+
+| Topic | Doc |
+|-------|-----|
+| Implementation guides | [docs/agents/guides/README.md](docs/agents/guides/README.md) |
+| Workflows | [docs/agents/orchestration.md](docs/agents/orchestration.md) |
+| Issue tracker (`gh`) | [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md) |
+| Triage labels | [docs/agents/triage-labels.md](docs/agents/triage-labels.md) |
+| Domain + ADRs | [docs/agents/domain.md](docs/agents/domain.md) + [CONTEXT.md](CONTEXT.md) |
+| Autonomous verify | [docs/agents/verify-dread.md](docs/agents/verify-dread.md) |
+| Remote / audio assets | [docs/agents/guides/remote-assets.md](docs/agents/guides/remote-assets.md) |
+| Subagent prompts | `.claude/implementer-prompt.md`, `.claude/spec-reviewer-prompt.md`, `.claude/code-quality-reviewer-prompt.md` |
+
+Backlog: [docs/ROADMAP.md](docs/ROADMAP.md). Prefer issues labeled `ready-for-agent`.
+
+<!-- SPECKIT START -->
+**Active plan:** [specs/014-remote-audio-assets/plan.md](specs/014-remote-audio-assets/plan.md) on branch **`014-remote-audio-assets`**. Quickstart: [specs/014-remote-audio-assets/quickstart.md](specs/014-remote-audio-assets/quickstart.md).
+<!-- SPECKIT END -->
+
+---
+
+## Cursor Cloud
+
+### Dependencies
+
+**.NET SDK 8.0.x** and **PowerShell 7+** (`pwsh`). Stubs: `.github/stubs/refs/` (regenerate when stub sources change).
+
+### Build and verify
+
+Always **Debug** + stubs (see [Build (agents)](#build-agents)). Tier 0: `pwsh -NoProfile ./scripts/verify-dread.ps1`.
+
+### MCP
+
+```bash
+cd dread-mcp-server && npm install && npm run build
+```
+
+### Lint and format
+
+- CI analyze job: null-forgiving, Windows paths, whitespace, line length (see `.github/workflows/ci.yml`)
+- `dotnet format --verify-no-changes --no-restore`
+
+### Stub maintenance
+
+| Script | When |
+|--------|------|
+| `pwsh -NoProfile .github/scripts/gen-stubs.ps1` | After `UnityEngine_stubs.cs` or game API surface changes |
+| `pwsh -NoProfile .github/scripts/clean-stubs.ps1` | Full stub regen |
+
+---
+
+## Thunderstore package (release / packaging)
+
+Every upload zip root must include:
 
 | File | Requirement |
 |------|-------------|
-| `icon.png` | 256x256 PNG, square |
+| `icon.png` | 256x256 PNG |
 | `manifest.json` | name, version_number, website_url, description, dependencies |
-| `README.md` | mod description in markdown |
-| `BepInEx/plugins/elytraking-Dread/Dread.dll` | compiled mod DLL |
-| `BepInEx/plugins/elytraking-Dread/audio/` | all .ogg audio files |
+| `README.md` | mod description |
+| `BepInEx/plugins/elytraking-Dread/Dread.dll` | + embedded `audio-manifest.json` |
 
-manifest.json format:
+**No OGG** in the Thunderstore zip. Audio ships on the matching [GitHub Release](https://github.com/grompen91-droid/dreadREPO/releases) and downloads to `audio-cache/v{version}/`. Source OGG in repo `audio/` is for CD upload and **Debug** local copies only.
+
+Build release zip from project root:
+
+```powershell
+if (-not (Test-Path "dist")) { New-Item -ItemType Directory -Force "dist" | Out-Null }
+.\build.ps1 -Version "<current version from manifest.json>"
+```
+
+Output: `dist/elytraking-Dread-<version>/` and `.zip`.
+
+manifest.json shape (do not change `"name"`):
+
 ```json
 {
   "name": "Dread",
@@ -42,123 +210,33 @@ manifest.json format:
 }
 ```
 
-## Versioning Rules
+---
 
-- Version format: semantic versioning `MAJOR.MINOR.PATCH`
-- **Never manually edit version strings** in `manifest.json`, `Plugin.cs`, `README.md`, or `THUNDERSTORE_README.md`. The CD pipeline handles all version bumps.
-- When working on changes for a future release, add entries under `## [Unreleased]` in `CHANGELOG.md`. The CD pipeline reads this section for release notes.
-- When ready to release, push a trigger tag to master:
-  - `vmajor` -- bumps major (1.5.0 > 2.0.0)
-  - `vminor` -- bumps minor (1.5.0 > 1.6.0)
-  - `vpatch` -- bumps patch (1.5.0 > 1.5.1)
-- The CD pipeline auto-increments `manifest.json` + `Plugin.cs` + `README.md` + `THUNDERSTORE_README.md` version badges, creates a git tag, pushes to master, builds the DLL, packages the Thunderstore zip, creates a GitHub Release, and publishes to Thunderstore.
-- Thunderstore rejects any version number already published. Use `vpatch` for successive releases -- never reuse a version number.
-- Never change `"name"` in manifest.json -- changing it creates a new listing, not an update.
+## Versioning rules
 
-## Changelog Convention
+- Semantic versioning `MAJOR.MINOR.PATCH`
+- **Never manually edit** version strings in `manifest.json`, `Plugin.cs`, `README.md`, or `THUNDERSTORE_README.md` (CD bumps them)
+- Add user-facing work under `## [Unreleased]` in `CHANGELOG.md`
+- **Maintainer release:** push tag `vpatch`, `vminor`, or `vmajor` to `master` (agents only if the user asks)
 
-- Maintain `[Unreleased]` section in `CHANGELOG.md` with all unreleased changes
-- CD pipeline reads `[Unreleased]` for release notes, renames it to the new version, and recreates an empty `[Unreleased]` header
-- Workflow fails if `[Unreleased]` section is missing when a release tag is pushed
-- Use detailed markdown with special formatting (badges, collapsible sections, tables, blockquotes)
-- Never use em dash (--) in any file, ever. Use a colon, comma, or rewrite the sentence instead
-- Each version entry must include: version header, release date, and categorized changes (Added, Changed, Fixed, Removed)
-- Add a `> **Highlight:**` blockquote for notable releases
-- Use collapsible `<details>` blocks for long technical notes
+---
 
-## CD Pipeline
+## Changelog convention
 
-The CD pipeline (`.github/workflows/cd.yml`) handles version bumps, builds, packaging, release, and Thunderstore publishing.
+- Keep `[Unreleased]` up to date; CD uses it for release notes
+- CD fails if `[Unreleased]` is missing when a release tag is pushed
+- Never use em dash (`--`) in any file: use a colon, comma, or rewrite
+- Version entries: date, Added / Changed / Fixed / Removed; optional `> **Highlight:**` and `<details>` for long notes
 
-Trigger a release by pushing one of these tags:
-- `vmajor` -- bumps major version (X.0.0)
-- `vminor` -- bumps minor version (X.Y.0)
-- `vpatch` -- bumps patch version (X.Y.Z)
+---
+
+## CD pipeline
+
+See `.github/workflows/cd.yml`. Trigger (maintainer or explicit user request):
 
 ```powershell
 git tag vpatch
 git push origin vpatch
 ```
 
-The pipeline produces a version-specific tag (e.g., `v1.6.1`) and creates a GitHub Release with the DLL and Thunderstore zip attached. Thunderstore publish requires the `TCLI_AUTH_TOKEN` secret.
-
-## GitHub Workflow
-
-Push to GitHub after every change. Run from the project root:
-```powershell
-git add <files>
-git commit -m "type: description"
-git push
-```
-
-Remote: `https://github.com/grompen91-droid/dreadREPO.git`, branch `master`.
-
-## Agent skills
-
-**Start at `docs/agents/README.md`** for the full orchestration map, verify tiers, and MCP setup.
-
-| Topic | Doc |
-|-------|-----|
-| Implementation guides (all systems) | `docs/agents/guides/README.md` |
-| Workflows (solo, subagent, verify, release) | `docs/agents/orchestration.md` |
-| Issue tracker (`gh` CLI) | `docs/agents/issue-tracker.md` |
-| Triage labels | `docs/agents/triage-labels.md` |
-| Domain + ADRs | `docs/agents/domain.md` + `CONTEXT.md` |
-| Autonomous verify | `docs/agents/verify-dread.md` |
-| Subagent prompts | `.claude/implementer-prompt.md`, `.claude/spec-reviewer-prompt.md`, `.claude/code-quality-reviewer-prompt.md` |
-
-Backlog: `docs/ROADMAP.md`. Pick issues labeled `ready-for-agent` unless the task says otherwise.
-
-<!-- SPECKIT START -->
-**Active implementation plan (012):** [specs/012-production-build-strip-debug/plan.md](specs/012-production-build-strip-debug/plan.md) (branch `012-production-build-strip-debug`, production CD builds exclude agent debug tooling). **Agent checklist:** [docs/agents/guides/development-only-features.md](docs/agents/guides/development-only-features.md) (`DreadConfigSections` for dynamic section numbers).
-<!-- SPECKIT END -->
-
-## Cursor Cloud specific instructions
-
-### System dependencies
-
-The VM needs **.NET SDK 8.0.x** and **PowerShell 7+** (`pwsh`) installed before any build commands work. The update script handles `dotnet restore` and stub generation; system-level installs are done once per VM snapshot.
-
-### Building without the game
-
-Since R.E.P.O. is not installed in the cloud VM, always build against generated stubs. Reflection and stub limitations: [docs/agents/guides/reflection-inventory.md](docs/agents/guides/reflection-inventory.md).
-
-```bash
-pwsh -NoProfile .github/scripts/gen-stubs.ps1
-# Production (matches CD/Thunderstore)
-dotnet build Dread.csproj -c Release \
-  -p:GameDir=.github/stubs/refs \
-  -p:BepInExDir=.github/stubs/refs \
-  -p:EnableDebugFeatures=false \
-  -p:DeployToProfile=false \
-  -p:DeployToDist=false
-```
-
-For MCP/Tier 1 agent verify, use `-c Debug` instead (overlay, TCP server, TestCrash, sections 8-11). See [docs/agents/guides/debug-tooling.md](docs/agents/guides/debug-tooling.md).
-
-**Adding agent-only features:** follow [docs/agents/guides/development-only-features.md](docs/agents/guides/development-only-features.md) (`Compile Remove`, `#if DREAD_DEBUG`, config sections 8-9, registry). CI runs [.github/scripts/verify-production-dll.sh](.github/scripts/verify-production-dll.sh) on Release builds.
-
-Stubs are cached in `.github/stubs/refs/` and only need regeneration when stub source files change.
-
-### MCP server
-
-```bash
-cd dread-mcp-server && npm install && npm run build
-```
-
-Output lands in `dread-mcp-server/dist/index.js`.
-
-### Lint and format
-
-- **Code analysis:** CI runs grep-based checks for null-forgiving operators, hardcoded Windows paths, trailing whitespace, tabs, lines >120 chars, and BOM markers. See `.github/workflows/ci.yml` `analyze` job.
-- **Format check:** `dotnet format --verify-no-changes --no-restore`
-
-### Stub maintenance
-
-| Script | When to run |
-|--------|-------------|
-| `pwsh -NoProfile .github/scripts/gen-stubs.ps1` | After changing `.github/scripts/UnityEngine_stubs.cs` or game API surface used by stubs |
-| `pwsh -NoProfile .github/scripts/clean-stubs.ps1` | Before regenerating stubs from scratch (removes cached `.github/stubs/refs/` output) |
-| `.github/scripts/verify-stubs/` | CI stub verification; agents rarely need this locally unless editing stub generation |
-
-Regenerate stubs only when stub sources change; cached output lives under `.github/stubs/refs/`.
+Produces version tag (e.g. `v1.6.1`), GitHub Release (DLL + zip), Thunderstore publish (`TCLI_AUTH_TOKEN`).

@@ -30,7 +30,7 @@ See [docs/agents/verify-dread.md](docs/agents/verify-dread.md). Tier 1+ needs a 
 ### Prerequisites
 
 - .NET 8+ SDK (for build tooling; the project targets `net48`)
-- .NET 10 SDK (for `tests/Dread.ErrorReportJson.Tests`, run in CI after the mod build)
+- .NET 10 SDK (for `tests/Dread.ErrorReportJson.Tests` and `tests/Dread.AudioManifestJson.Tests`, run in CI after the mod build)
 - Node.js 20+ (for `workers/error-reporter` Vitest suite: `npm ci && npm test`)
 - PowerShell 7+ (`pwsh`)
 
@@ -168,6 +168,7 @@ dotnet build Dread.csproj -c Release \
 
 ## Pull Requests
 
+- **Coding agents:** meaningful commits on a feature branch; push only for PRs or when asked; default **Debug** builds. See [AGENTS.md](AGENTS.md) and [docs/agents/orchestration.md](docs/agents/orchestration.md).
 - Open PRs against `master`.
 - Ensure all CI checks pass (build + analyze).
 - Update `CHANGELOG.md` under `[Unreleased]` with your changes.

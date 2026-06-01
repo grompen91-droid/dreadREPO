@@ -1,106 +1,32 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using Dread.Systems.Core;
 using NVorbis;
 using UnityEngine;
-using UnityEngine.Networking;
 
 namespace Dread.Systems
 {
+    /// <summary>
+    /// NVorbis decode from disk for <see cref="AudioAssets.AudioAssetSystem"/>.
+    /// Feature systems must load clips via <see cref="AudioAssets.AudioAssetApi"/>.
+    /// </summary>
     public static class AudioClipLoader
     {
-        public static string AudioDirectory { get; }
-
-        private static readonly Dictionary<string, AudioClip> Cache = new();
-
-        static AudioClipLoader()
+        /// <summary>Decode an OGG file from disk into an AudioClip (used by AudioAssetSystem).</summary>
+        public static bool TryDecodeFromDisk(string diskPath, string clipName, out AudioClip? clip)
         {
-            AudioDirectory = Path.Combine(
-                Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
-                "audio");
-        }
+            clip = null;
+            if (!File.Exists(diskPath))
+                return false;
 
-        public static IEnumerator LoadClip(string fileName, Action<AudioClip?> onLoaded)
-        {
-            if (Cache.TryGetValue(fileName, out var cached))
+            if (TryLoadWithNvorbis(diskPath, clipName, out var nvClip))
             {
-                onLoaded(cached);
-                yield break;
+                clip = nvClip;
+                return true;
             }
 
-            var path = Path.GetFullPath(Path.Combine(AudioDirectory, fileName));
-            if (!File.Exists(path))
-            {
-                LoggingService.LogWarning($"[AudioClipLoader] Missing audio file: {fileName}");
-                onLoaded(null);
-                yield break;
-            }
-
-            if (TryLoadWithNvorbis(path, fileName, out var nvClip))
-            {
-                Cache[fileName] = nvClip;
-                onLoaded(nvClip);
-                yield break;
-            }
-
-            if (!UnityWebRequestCompat.IsUsable)
-            {
-                LoggingService.LogWarning(
-                    $"[AudioClipLoader] NVorbis failed and UnityWebRequest is unavailable for {fileName}");
-                onLoaded(null);
-                yield break;
-            }
-
-            var fileUri = ToFileUri(path);
-            using var req = UnityWebRequestMultimedia.GetAudioClip(fileUri, AudioType.OGGVORBIS);
-            yield return req.SendWebRequest();
-
-            if (req.result == UnityWebRequest.Result.Success)
-            {
-                var clip = DownloadHandlerAudioClip.GetContent(req);
-                clip.name = fileName;
-                Cache[fileName] = clip;
-                onLoaded(clip);
-            }
-            else
-            {
-                var handlerError = GetRequestHandlerError(req);
-                var errorMsg = !string.IsNullOrEmpty(req.error)
-                    ? req.error
-                    : !string.IsNullOrEmpty(handlerError)
-                        ? handlerError
-                        : "no error details";
-                LoggingService.LogWarning($"[AudioClipLoader] Failed to load {fileName}: {errorMsg}");
-                onLoaded(null);
-            }
-        }
-
-        public static IEnumerator LoadClips(IEnumerable<string> fileNames, Action<string, AudioClip?> onLoaded)
-        {
-            foreach (var name in fileNames)
-            {
-                AudioClip? clip = null;
-                yield return LoadClip(name, c => clip = c);
-                onLoaded(name, clip);
-            }
-        }
-
-        public static void ClearCache()
-        {
-            Cache.Clear();
-        }
-
-        public static string ToFileUri(string path)
-        {
-            path = Path.GetFullPath(path);
-
-            if (path.Length > 0 && path[0] == '/')
-                path = "Z:" + path.Replace('/', Path.DirectorySeparatorChar);
-
-            return "file:///" + path.Replace('\\', '/');
+            return false;
         }
 
         internal static bool TryLoadWithNvorbis(string path, string clipName, out AudioClip clip)
@@ -168,26 +94,6 @@ namespace Dread.Systems
             {
                 LoggingService.LogVerbose($"[AudioClipLoader] NVorbis failed for {clipName}: {ex.Message}");
                 return false;
-            }
-        }
-
-        internal static string? GetDownloadHandlerError(object? handler)
-        {
-            if (handler == null) return null;
-            var errorProp = handler.GetType().GetProperty("error");
-            return errorProp?.GetValue(handler) as string;
-        }
-
-        internal static string? GetRequestHandlerError(UnityWebRequest req)
-        {
-            try
-            {
-                var prop = typeof(UnityWebRequest).GetProperty("downloadHandler");
-                return GetDownloadHandlerError(prop?.GetValue(req));
-            }
-            catch
-            {
-                return null;
             }
         }
     }

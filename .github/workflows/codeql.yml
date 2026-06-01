@@ -91,6 +91,7 @@ jobs:
             -p:DeployToProfile=false \
             -p:DeployToDist=false
           dotnet test tests/Dread.ErrorReportJson.Tests/Dread.ErrorReportJson.Tests.csproj -c Release --nologo
+          dotnet test tests/Dread.AudioManifestJson.Tests/Dread.AudioManifestJson.Tests.csproj -c Release --nologo
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4

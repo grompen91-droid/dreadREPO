@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Dread.Config;
+using Dread.Systems.AudioAssets;
 using Dread.Systems.Core;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -9,6 +10,8 @@ namespace Dread.Systems
 {
     public class TensionSystem : MonoBehaviour
     {
+        private const string Category = "tension";
+
         private AudioSource? _breathSource;
         private readonly List<AudioClip> _breathClips = new();
         private AudioClip? _footstepClip;
@@ -59,7 +62,6 @@ namespace Dread.Systems
         {
             RestoreDrain();
             RestoreSprintMultiplier();
-            AudioClipLoader.ClearCache();
             _mainCam = Camera.main;
             _originalDrain = -1f;
             _panicTimer = 0f;
@@ -235,19 +237,34 @@ namespace Dread.Systems
 
         private IEnumerator LoadBreathClips()
         {
-            yield return AudioClipLoader.LoadClips(BreathCandidates, (name, clip) =>
+            var remaining = BreathCandidates.Length;
+            foreach (var name in BreathCandidates)
             {
-                if (clip != null) _breathClips.Add(clip);
-            });
+                AudioAssetApi.RequestClip(Category, name, clip =>
+                {
+                    if (clip != null)
+                        _breathClips.Add(clip);
+                    remaining--;
+                });
+            }
+
+            while (remaining > 0)
+                yield return null;
         }
 
         // ── Fake Footsteps ────────────────────────────────────────────────────
 
         private IEnumerator LoadFootstepClip()
         {
-            AudioClip? clip = null;
-            yield return AudioClipLoader.LoadClip("footsteps.ogg", c => clip = c);
-            if (clip != null) _footstepClip = clip;
+            var done = false;
+            AudioAssetApi.RequestClip(Category, "footsteps.ogg", clip =>
+            {
+                if (clip != null)
+                    _footstepClip = clip;
+                done = true;
+            });
+            while (!done)
+                yield return null;
         }
 
         private IEnumerator FakeFootstepLoop()

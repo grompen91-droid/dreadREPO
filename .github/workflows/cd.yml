@@ -275,10 +275,6 @@ jobs:
           Copy-PluginBinaries -SourceDir "${{ runner.temp }}/dll" -DestDir $pluginDir
           Test-PluginBinariesPresent -Dir $pluginDir
 
-          if (Test-Path "audio") {
-            Copy-Item -Recurse "audio" "$outDir/BepInEx/plugins/$name/"
-          }
-
           Copy-Item "${{ runner.temp }}/modified/manifest.json" $outDir
 
           if (Test-Path "THUNDERSTORE_README.md") {
@@ -407,10 +403,14 @@ jobs:
 
           $dllAssets = Get-ChildItem "${{ runner.temp }}/dll/*.dll" | ForEach-Object { $_.FullName }
           gh release create "$releaseTag" `
+            --draft `
             --title "v$newVersion" `
             --notes-file "${{ runner.temp }}/release-body/release-body.md" `
             @dllAssets `
             "$($zipFile.FullName)"
+
+          pwsh -NoProfile ./.github/scripts/upload-audio-release-assets.ps1 -ReleaseTag $releaseTag
+          gh release edit "$releaseTag" --draft=false
 
       - name: Create post-release issue
         if: success()

@@ -15,8 +15,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **UI:** `DreadNotificationSystem` transient corner toasts; thread-safe `Info` / `Warn` / `Bad` API; severity carried by rail color (no icons); slide in, hold, self-dismiss with a life bar
 - **UI:** `DreadWidgets` reusable monochrome widgets (determinate loading bar, indeterminate marquee, value slider); overlay "Kit" button reveals an in-game demo of the loading bar, slider, and toasts
 - **Stubs:** `GUI.HorizontalSlider` (plain and styled) and `GUIStyle.fixedWidth` / `fixedHeight` added to the IMGUIModule stub
+- **AUDIO-5:** Remote audio asset system (`AudioAssetSystem`): embedded `audio-manifest.json`, GitHub Release downloads, versioned `audio-cache/`, cross-version import, automatic prune of old caches, adaptive parallel downloads (speed + CPU), `AudioAssetApi` for features
+- Config section `1b. Audio Assets` (`MaxConcurrentDownloads`, `ShowFirstRunNotice`, `KeepOtherCaches`)
+- CD: per-file audio upload to GitHub Releases (`upload-audio-release-assets.ps1`); Thunderstore zip no longer includes OGG files
 
 ### Changed
+- Audio reorganized under `audio/{ambient_dread,tension,psychotic_break,shared,monster}/` with release asset names `category__file.ogg`
+- `AudioDreadSystem`, `TensionSystem`, `PsychoticBreakSystem`, and `SnitchSystem` use `AudioAssetApi` (progressive load) instead of bundled `audio/` folder; `door_creak.ogg` added to ambient manifest
+- `AudioClipLoader` is decode-only (NVorbis from `audio-cache/`); bundled `LoadClip` removed so features cannot bypass remote assets
+- `AudioManifestJson` parses embedded manifest (`files[]`); Unity `JsonUtility` is not used for manifest load
+- Audio cache paths reject `..` and rooted manifest segments; first-run download notice marker is written only after the version cache is complete
+- CI runs `tests/Dread.AudioManifestJson.Tests`; Debug `DeployToProfile` / `DeployToLol` copy `audio/` only when `DREAD_DEBUG` is defined
 - **Docs:** agent documentation sync: nine core registry systems in CONTEXT, mod-architecture, extension-registry, and ADR-0016; removed stale ErrorReporter build note from AGENTS.md; CONTRIBUTING verify command; CHANGELOG section order; superpowers archive banners; `dread-mcp-server/README.md`; [ui-notifications.md](docs/agents/guides/ui-notifications.md)
 - **Build:** CD and Thunderstore releases compile a production `Dread.dll` that excludes debug overlay, TCP debug server, and test-crash tooling (`DREAD_DEBUG` profile). Production config renumbers **Logging** to section **8** (sections 8-9 and 11 exist only in development builds). Use `dotnet build -c Debug` or `build.ps1 -DebugBuild` for MCP/agent workflows. CI/CD runs `.github/scripts/verify-production-dll.sh` on Release artifacts.
 - **Docs:** [development-only-features.md](docs/agents/guides/development-only-features.md) agent checklist for `#if DREAD_DEBUG`, `Compile Remove`, config, and registry when adding MCP/overlay tooling.

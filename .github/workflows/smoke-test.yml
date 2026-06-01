@@ -45,12 +45,19 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force "$env:PLUGIN_DIR" | Out-Null
-          New-Item -ItemType Directory -Force "$env:PLUGIN_DIR\audio" | Out-Null
           . ./.github/scripts/plugin-deps.ps1
           Copy-PluginBinaries -SourceDir "bin\Release\net48" -DestDir "$env:PLUGIN_DIR"
           Test-PluginBinariesPresent -Dir "$env:PLUGIN_DIR"
-          Copy-Item "audio\*" -Destination "$env:PLUGIN_DIR\audio" -Force
-          Write-Host "Installed to $env:PLUGIN_DIR"
+          $manifest = Get-Content "audio/audio-manifest.json" -Raw | ConvertFrom-Json
+          $cacheRoot = "$env:PLUGIN_DIR/audio-cache/v$($manifest.modVersion)"
+          foreach ($entry in $manifest.files) {
+            $rel = $entry.path -replace '/', '\'
+            $src = Join-Path "audio" $rel
+            $dest = Join-Path $cacheRoot $rel
+            New-Item -ItemType Directory -Force (Split-Path $dest) | Out-Null
+            Copy-Item $src $dest -Force
+          }
+          Write-Host "Installed to $env:PLUGIN_DIR (audio-cache seeded)"
 
       - name: Clear previous log
         shell: pwsh

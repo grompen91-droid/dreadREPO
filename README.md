@@ -63,7 +63,7 @@ Plugin.Start() / deferred retry
                  +-- DebugServerSystem        # TCP debug server for MCP/agents
 ```
 
-Runtime systems are registered in `DreadSystemRegistry` and spawned with per-system fail-safe isolation (ARCH-3). Thunderstore releases include the nine core rows only; debug hosts are compiled out of production `Dread.dll`. Audio loads from DLL-adjacent `audio/*.ogg` via **NVorbis** (primary) with optional `UnityWebRequest` when the Unity module is usable (`UnityWebRequestCompat`, `AudioClipLoader`). A failure in one system does not prevent others from starting.
+Runtime systems are registered in `DreadSystemRegistry` and spawned with per-system fail-safe isolation (ARCH-3). Thunderstore releases include the nine core rows only; debug hosts are compiled out of production `Dread.dll`. **Audio** downloads version-pinned OGG files from the matching [GitHub Release](https://github.com/grompen91-droid/dreadREPO/releases) on first run (into `audio-cache/v{version}/`), then decodes via **NVorbis** (`AudioAssetSystem`, `AudioClipLoader`). The Thunderstore package is DLL-only; features start progressively as each clip arrives. Debug builds can copy local `audio/` beside the plugin for offline testing. A failure in one system does not prevent others from starting.
 
 ---
 
@@ -274,7 +274,9 @@ See **[docs/mod-compatibility.md](docs/mod-compatibility.md)** for the full matr
 - **Broken profiles**: set `CompatibilityMode = true` or `ErrorReportingEnabled = false` without uninstalling Dread.
 - **REPOLib**: not required (removed in v1.4.0).
 
-The `audio/` folder includes `door_creak.ogg` which is shipped but not currently loaded by any system. It is available for future ambient variants or custom sound replacement.
+All gameplay OGG files live under `audio/{category}/` and are listed in `audio/audio-manifest.json` for GitHub Release download (not shipped in the Thunderstore zip).
+
+**Offline / slow network:** ambient and tension features work with whatever clips are already cached; missing files stay queued until download succeeds. Pin parallel downloads in config (`1b. Audio Assets` > `MaxConcurrentDownloads`, 0 = auto).
 
 ---
 

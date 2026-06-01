@@ -445,7 +445,7 @@ namespace Dread.Systems
             string next = DreadRuntimeState.AudioNextPlayIn >= 0f
                 ? $"next {DreadRuntimeState.AudioNextPlayIn:F0}s"
                 : "next n/a";
-            return $"{DreadRuntimeState.AudioClipCount}/4  {next}";
+            return $"{DreadRuntimeState.AudioClipCount}/5  {next}";
         }
 
         private static string PhaseSummary()

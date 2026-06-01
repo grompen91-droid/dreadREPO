@@ -1,66 +1,62 @@
-# Audio Dread and clip loading
+# Audio Dread and remote asset loading
 
-**Audio Dread** plays rare weighted 3D ambient sounds during a **Run**. **AudioClipLoader** loads OGG files from the plugin `audio/` folder. ADRs: 0003 (weighted random), 0006/0007 (loading).
+**Audio Dread** plays rare weighted 3D ambient sounds during a **Run**. **`AudioAssetSystem`** downloads version-pinned OGG files from GitHub Releases into `audio-cache/v{VERSION}/` and decodes them on demand. ADRs: 0003 (weighted random), 0017 (remote delivery), 0007 (NVorbis decode).
+
+## Audio assets (`AudioAssetSystem` + `AudioAssetApi`)
+
+| Aspect | Behavior |
+|--------|----------|
+| Manifest | Embedded `audio-manifest.json`; repo source at `audio/audio-manifest.json` |
+| Cache | `{pluginDir}/audio-cache/v{Plugin.VERSION}/{category}/file.ogg` |
+| API | `AudioAssetApi.RequestClip(category, fileName, onReady)` |
+| Progressive | Callback fires per clip; features start when first clip is ready |
+| Downloads | 1-3 parallel HTTP (auto from speed + CPU); always starts at 1 until probed |
+| Prune | After reconcile, deletes other `audio-cache/v*` folders |
+
+Config: `1b. Audio Assets` in `DreadConfig.cs` (`MaxConcurrentDownloads`, `ShowFirstRunNotice`, `KeepOtherCaches`).
+
+Runtime state: `AudioAssetsConcurrentDownloads`, `AudioAssetsMeasuredBytesPerSec`, `AudioAssetsQueueRemaining`.
+
+See [remote-assets.md](remote-assets.md) for cache reconcile, downgrade import, and CD upload.
 
 ## Audio Dread (`AudioDreadSystem.cs`)
 
 | Aspect | Behavior |
 |--------|----------|
-| Clips | `scraping.ogg`, `footsteps.ogg`, `breathing.ogg`, `whisper.ogg` |
-| Weights | Lower weight = rarer (`whisper.ogg` = 0.1) |
-| Timing | 30s warmup after load, then random **60 to 180s** interval divided by `AudioFrequency` |
-| Position | Random offset around camera (3D spatial, not entity-attached) |
-| Gating | `AudioEnabled`, not menu level, clips must load |
-| Playback lifetime | `AudioPlayUtil.PlayLifetimeSeconds(clip, pitch)` for one-shot hosts: `clip.length / pitch + padding` (pitch below 1.0 needs longer destroy delay) |
-
-Runtime state for overlay/MCP:
-
-- `DreadRuntimeState.AudioClipCount`
-- `DreadRuntimeState.AudioNextPlayIn`
-
-Config section: `1. Audio Dread` in `DreadConfig.cs`.
-
-**Compatibility mode:** ambient audio still runs (core safe path).
+| Category | `ambient_dread` |
+| Clips | `scraping.ogg`, `footsteps.ogg`, `breathing.ogg`, `whisper.ogg`, `door_creak.ogg` (footsteps/breathing via `shared/`) |
+| Weights | Lower weight = rarer (`whisper.ogg` = 0.1, `door_creak.ogg` = 0.25) |
+| Timing | 30s warmup, then **60 to 180s** / `AudioFrequency` |
+| Gating | `AudioEnabled`, not menu level, at least one clip loaded |
 
 ## AudioClipLoader (`AudioClipLoader.cs`)
 
-| Step | Detail |
-|------|--------|
-| Path | `{pluginDir}/audio/{fileName}` |
-| Cache | Static dictionary per file name; cleared on scene load via `ClearCache()` from `TensionSystem` |
-| Primary load | NVorbis decode to `AudioClip` (read until EOF, Linux-friendly) |
-| Fallback | `UnityWebRequestMultimedia` with `file://` URI only when `UnityWebRequestCompat.IsUsable` |
-| Stub builds | If NVorbis fails and UWR is unusable (zero-RVA stub compile), warning + `onLoaded(null)` |
-| Missing file | Warning log, `onLoaded(null)` |
-
-Agents adding sounds:
-
-1. Place `.ogg` in repo `audio/` (packaged by `build.ps1`)
-2. Reference name in system clip list
-3. Load via `AudioClipLoader.LoadClip` or `LoadClips` coroutine
-4. Tier 0 verify checks manifest audio layout
+Internal disk decode only (`TryDecodeFromDisk`). Feature systems must not call `LoadClip` directly.
 
 ## Related systems
 
-| System | Clips |
-|--------|-------|
-| `TensionSystem` | `breathing.ogg`, `breath2.ogg`, `breath3.ogg`, `footsteps.ogg` (fake steps) |
-| `PsychoticBreakSystem` | `scream_peak.ogg`, `scream_distant.ogg`, `scream_threat.ogg`, footstep clip |
-
-Use glossary names from [CONTEXT.md](../../../CONTEXT.md) (e.g. **Low stamina sound**).
+| System | Category | Clips |
+|--------|----------|-------|
+| `AudioAssetSystem` | (all) | manifest-driven download + cache |
+| `AudioDreadSystem` | `ambient_dread` | scraping, whisper, door_creak, breathing, footsteps |
+| `TensionSystem` | `tension` | breathing, breath2, breath3, footsteps |
+| `PsychoticBreakSystem` | `psychotic_break` | scream_peak, scream_distant, scream_threat, footsteps |
+| `SnitchSystem` | `monster` | snitch_bang |
+| `MonsterOverhaulSystem` | n/a | tweaks enemy `AudioSource` (vanilla clips, not manifest) |
+| `CampLureSystem` | n/a | no custom OGG |
 
 ## Common tasks
 
 | Task | Where |
 |------|-------|
-| Add ambient clip | `AudioDreadSystem.ClipNames` + `ClipWeights` + file in `audio/` |
-| Tune frequency | `DreadConfig.AudioFrequency` |
-| Fix Linux load | Ensure full plugin folder deployed (NVorbis + dependencies); see [compatibility.md](compatibility.md) |
-| Truncated ambient sound | Check pitch vs `Destroy` timing; use `AudioPlayUtil` for new one-shots |
-| `BadImageFormatException` spam | Stub build + UWR: use game `Managed` refs for release DLLs; see `UnityWebRequestCompat` and error reporter HTTP path |
+| Add sound | OGG under `audio/{category}/`, entry in `audio-manifest.json`, `AudioAssetPathResolver` if aliased |
+| Validate manifest | `pwsh .github/scripts/validate-audio-manifest.ps1` |
+| Release assets | `.github/scripts/upload-audio-release-assets.ps1` (CD) |
+| Tune download parallelism | `DreadConfig.AudioAssetsMaxConcurrentDownloads` (0 = auto) |
+| Local offline test | Seed `audio-cache/v{VERSION}/` (see smoke-test workflow) |
 
 ## ADRs
 
 - `docs/adr/0003-weighted-random-audio-selection.md`
-- `docs/adr/0006-unitywebrequest-for-audio-loading.md`
-- `docs/adr/0007-audio-clip-loader.md`
+- `docs/adr/0017-remote-audio-asset-delivery.md`
+- `docs/adr/0007-audio-clip-loader.md` (decode path)

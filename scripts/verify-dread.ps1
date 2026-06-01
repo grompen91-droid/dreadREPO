@@ -82,6 +82,23 @@ Invoke-GrepCheck -Id "trailing_whitespace" -Pattern '[[:blank:]]$' `
 Invoke-GrepCheck -Id "tabs" -Pattern "`t" `
     -Paths @("*.cs", "Systems/*.cs", "Config/*.cs") -FailMsg "tab characters"
 
+# Feature systems must use AudioAssetApi, not bundled AudioClipLoader.LoadClip
+$legacyLoadHits = @()
+foreach ($path in @("Systems", "Systems/PsychoticBreak", "Systems/Patches")) {
+    if (-not (Test-Path $path)) { continue }
+    $grepOut = & grep -rn "AudioClipLoader\.LoadClip" $path 2>$null
+    if ($LASTEXITCODE -ne 0) { continue }
+    $legacyLoadHits += $grepOut
+}
+if ($legacyLoadHits.Count -gt 0) {
+    $sample = ($legacyLoadHits | Select-Object -First 3) -join "; "
+    Add-Check -Tier "tier0" -Id "audio_asset_api_only" -Ok $false `
+        -Message "Use AudioAssetApi.RequestClip instead of AudioClipLoader.LoadClip: $sample"
+} else {
+    Add-Check -Tier "tier0" -Id "audio_asset_api_only" -Ok $true `
+        -Message "No bundled AudioClipLoader.LoadClip in feature systems"
+}
+
 # ARCH-3: spawn only via DreadSystemRegistry + DreadSystemInitializer (no stray TryAddSystem< elsewhere)
 $arch3Allowed = @(
     "Systems/DreadSystemInitializer.cs",
@@ -111,6 +128,7 @@ if ($arch3Hits.Count -gt 0) {
 # ARCH-3: baseline system types from extension-registry contract
 $arch3RegistryPath = "Systems/DreadSystemRegistry.cs"
 $arch3CoreTypes = @(
+    "AudioAssetSystem",
     "AudioDreadSystem",
     "MonsterOverhaulSystem",
     "TensionSystem",
@@ -174,10 +192,17 @@ if (-not $SkipMcpBuild) {
 # Package layout (manifest + icon + audio)
 $manifestOk = Test-Path "manifest.json"
 $iconOk = Test-Path "icon.png"
-$audioOk = (Test-Path "audio") -and ((Get-ChildItem audio -Filter *.ogg -ErrorAction SilentlyContinue).Count -ge 4)
+$audioManifestOk = Test-Path "audio/audio-manifest.json"
+$audioOggCount = (Get-ChildItem audio -Recurse -Filter *.ogg -ErrorAction SilentlyContinue).Count
+$audioOk = $audioManifestOk -and ($audioOggCount -ge 4)
+$audioManifestValid = $false
+if ($audioManifestOk) {
+    pwsh -NoProfile ./.github/scripts/validate-audio-manifest.ps1 2>&1 | Out-Null
+    $audioManifestValid = $LASTEXITCODE -eq 0
+}
 Add-Check -Tier "tier0" -Id "manifest" -Ok $manifestOk -Message $(if ($manifestOk) { "manifest.json present" } else { "missing manifest.json" })
 Add-Check -Tier "tier0" -Id "icon" -Ok $iconOk -Message $(if ($iconOk) { "icon.png present" } else { "missing icon.png" })
-Add-Check -Tier "tier0" -Id "audio" -Ok $audioOk -Message $(if ($audioOk) { "audio/*.ogg present" } else { "missing audio clips" })
+Add-Check -Tier "tier0" -Id "audio" -Ok ($audioOk -and $audioManifestValid) -Message $(if ($audioOk -and $audioManifestValid) { "audio-manifest + OGG tree OK ($audioOggCount files)" } else { "audio-manifest or OGG layout invalid" })
 
 # Tier 1: TCP ping + verify when host provided
 if ($TargetHost) {
