@@ -19,7 +19,9 @@ From repo root:
 ./scripts/verify-dread.ps1
 ```
 
-Checks: stub DLLs, Release build, CI-style grep analysis, MCP npm build, manifest/icon/audio layout. Emits JSON; exit code 1 on failure.
+Checks: stub DLLs, Release production build (`EnableDebugFeatures=false`), production DLL profile (no `DebugServerSystem`/`DebugOverlaySystem`/`TestCrashSystem`; [.github/scripts/verify-production-dll.sh](../../.github/scripts/verify-production-dll.sh)), CI-style grep analysis, MCP npm build, manifest/icon/audio layout. Emits JSON; exit code 1 on failure.
+
+Adding agent-only features: [guides/development-only-features.md](guides/development-only-features.md).
 
 ## Tier 1: Live TCP (game running)
 

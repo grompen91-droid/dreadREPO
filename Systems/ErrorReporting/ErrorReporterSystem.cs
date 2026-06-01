@@ -88,6 +88,7 @@ namespace Dread.Systems
             }
         }
 
+#if DREAD_DEBUG
         /// <summary>TestCrash: synchronous POST so report completes before Process.Kill().</summary>
         internal IEnumerator ReportTestCrashAndWait(Exception ex)
         {
@@ -139,6 +140,7 @@ namespace Dread.Systems
 
             yield break;
         }
+#endif
 
         private void ProcessPendingLogs()
         {

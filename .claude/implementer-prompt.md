@@ -7,6 +7,7 @@ You are a C# Unity BepInEx mod developer fixing a specific GitHub issue in **dre
 - `CONTEXT.md` (glossary terms)
 - `docs/agents/domain.md` (ADRs, layout)
 - `AGENTS.md` (build, no manual version bumps)
+- `docs/agents/guides/development-only-features.md` (if adding MCP/overlay/agent tooling)
 - `docs/agents/orchestration.md` (PR and verify checklist)
 
 You receive:

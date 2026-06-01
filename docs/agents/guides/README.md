@@ -20,6 +20,7 @@ Current-state reference for working in the Dread codebase. These replace the old
 | [harmony-and-patches.md](harmony-and-patches.md) | Apply/Remove, compat skip, host-only |
 | [error-reporting.md](error-reporting.md) | Worker pipeline, opt-in telemetry, tests |
 | [debug-tooling.md](debug-tooling.md) | TCP debug server, MCP, overlay, TestCrash |
+| [development-only-features.md](development-only-features.md) | **Checklist:** `#if DREAD_DEBUG`, Compile Remove, config/registry for agent-only work |
 | [config-and-logging.md](config-and-logging.md) | DreadConfig sections, LoggingService |
 | [compatibility.md](compatibility.md) | Compatibility mode, REPOConfig, optional mods |
 
@@ -38,6 +39,7 @@ Current-state reference for working in the Dread codebase. These replace the old
 | Psychotic break behavior | [psychotic-break.md](psychotic-break.md) |
 | Crashes / GitHub auto-issues | [error-reporting.md](error-reporting.md) |
 | Agent verify / MCP | [debug-tooling.md](debug-tooling.md) + [verify-dread.md](../verify-dread.md) |
+| Agent-only feature (not in Thunderstore) | [development-only-features.md](development-only-features.md) |
 | New config knob | [config-and-logging.md](config-and-logging.md) |
 | Mod conflicts | [compatibility.md](compatibility.md) + [mod-compatibility.md](../../mod-compatibility.md) |
 | Reduce reflection / stub CI | [reflection-inventory.md](reflection-inventory.md), [mod-architecture.md](mod-architecture.md) build profiles |

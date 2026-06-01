@@ -85,7 +85,7 @@ namespace Dread.Systems
                 typeof(SnitchSystem),
                 "DreadSnitchHost",
                 SystemOrderGroup.Core),
-            // Debug hosts omit IsEnabled per ADR-0016: hosts always spawn; cfg gates behavior inside systems.
+#if DREAD_DEBUG
             new SystemRegistration(
                 "test-crash",
                 typeof(TestCrashSystem),
@@ -101,6 +101,7 @@ namespace Dread.Systems
                 typeof(DebugOverlaySystem),
                 "DreadDebugOverlayHost",
                 SystemOrderGroup.Debug),
+#endif
         ];
     }
 }

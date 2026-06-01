@@ -222,6 +222,7 @@ namespace Dread.Systems
                 && _threatScreamClip != null && _footstepClip != null;
         }
 
+#if DREAD_DEBUG
         /// <summary>
         /// Debug server / MCP only (loopback, <c>DebugServerEnabled</c>).
         /// Skips trigger guards; does not consume once-per-match.
@@ -238,5 +239,6 @@ namespace Dread.Systems
 
             StartEpisode(countAsMatchTrigger: false);
         }
+#endif
     }
 }

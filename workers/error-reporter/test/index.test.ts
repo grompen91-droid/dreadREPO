@@ -103,6 +103,35 @@ async function postReport(payload, ip) {
 	return callWorker(request);
 }
 
+/** In-memory KV for tests (wrangler.toml binds DEDUP_KV; isolate without reset leaks dedupe state). */
+function makeInMemoryDedupeKv() {
+	const store = new Map<string, string>();
+	return {
+		store,
+		async get(key: string) {
+			return store.get(key) ?? null;
+		},
+		async put(key: string, value: string) {
+			store.set(key, value);
+		},
+		async delete(key: string) {
+			store.delete(key);
+		},
+		async list() {
+			return { keys: [...store.keys()].map((name) => ({ name })) };
+		},
+	};
+}
+
+/** GitHub search item with hash marker in body (required by findExistingIssue body verification). */
+function searchIssue(number: number, state: string, hash: string) {
+	return {
+		number,
+		state,
+		body: `<!-- hash:${hash} -->`,
+	};
+}
+
 // ---------------------------------------------------------------------------
 // Because tests run inside the Worker isolate with real `env` bindings, but
 // `fetch` calls to the GitHub API go out to the real internet, we intercept
@@ -168,6 +197,11 @@ function mockGitHub() {
 // ===========================================================================
 // Tests
 // ===========================================================================
+
+beforeEach(() => {
+	(env as { DEDUP_KV?: ReturnType<typeof makeInMemoryDedupeKv> }).DEDUP_KV =
+		makeInMemoryDedupeKv();
+});
 
 describe("Health endpoint", () => {
 	it("GET /health returns 200 OK", async () => {
@@ -322,20 +356,10 @@ describe("Issue creation (happy path)", () => {
 describe("Deduplication", () => {
 	it("uses KV mapping before GitHub search when DEDUP_KV is bound", async () => {
 		const gh = mockGitHub();
-		const kv = {
-			store: new Map(),
-			async get(key) {
-				return this.store.get(key) ?? null;
-			},
-			async put(key, value) {
-				this.store.set(key, value);
-			},
-		};
+		const kv = makeInMemoryDedupeKv();
 		kv.store.set("issue:kv_hash_1234567890", "50");
-
-		const origEnv = env;
+		(env as { DEDUP_KV?: typeof kv }).DEDUP_KV = kv;
 		try {
-			(env as { DEDUP_KV?: typeof kv }).DEDUP_KV = kv;
 			const response = await postReport(
 				makePayload({}, { Hash: "kv_hash_1234567890" }),
 			);
@@ -348,16 +372,16 @@ describe("Deduplication", () => {
 			const searchCall = gh.calls.find((c) => c.url.includes("search/issues"));
 			expect(searchCall).toBeUndefined();
 		} finally {
-			(env as { DEDUP_KV?: typeof kv }).DEDUP_KV = origEnv.DEDUP_KV;
 			gh.restore();
 		}
 	});
 
 	it("adds a comment when an open issue with the same hash exists", async () => {
 		const gh = mockGitHub();
+		const hash = "abc123def4567890";
 		gh.setSearch({
 			total_count: 1,
-			items: [{ number: 50, state: "open" }],
+			items: [searchIssue(50, "open", hash)],
 		});
 		try {
 			const response = await postReport(makePayload());
@@ -384,9 +408,10 @@ describe("Deduplication", () => {
 
 	it("reopens a closed issue and adds a comment", async () => {
 		const gh = mockGitHub();
+		const hash = "abc123def4567890";
 		gh.setSearch({
 			total_count: 1,
-			items: [{ number: 77, state: "closed" }],
+			items: [searchIssue(77, "closed", hash)],
 		});
 		try {
 			const response = await postReport(makePayload());
@@ -408,14 +433,15 @@ describe("Deduplication", () => {
 	it("throttles comments on the same issue after 5 comments in the hour", async () => {
 		const gh = mockGitHub();
 		const issueNumber = 88;
+		const hash = "comment_throttle_same_hash";
 		gh.setSearch({
 			total_count: 1,
-			items: [{ number: issueNumber, state: "open" }],
+			items: [searchIssue(issueNumber, "open", hash)],
 		});
 		try {
-			// Send 5 reports, which should all successfully post comments
+			// Send 5 reports with the same hash (dedupe to one issue), all post comments
 			for (let i = 0; i < 5; i++) {
-				const response = await postReport(makePayload({}, { Hash: `comment_throttle_${i}` }));
+				const response = await postReport(makePayload({}, { Hash: hash }));
 				expect(response.status).toBe(200);
 				const body = await response.json();
 				expect(body.results[0].status).toBe("commented");
@@ -425,8 +451,8 @@ describe("Deduplication", () => {
 			// Clear captured calls to make it easy to verify new calls
 			gh.calls.length = 0;
 
-			// Send 6th report, comment should be throttled
-			const response6 = await postReport(makePayload({}, { Hash: "comment_throttle_6" }));
+			// 6th report with same hash: still deduped but comment API throttled
+			const response6 = await postReport(makePayload({}, { Hash: hash }));
 			expect(response6.status).toBe(200);
 
 			const body6 = await response6.json();

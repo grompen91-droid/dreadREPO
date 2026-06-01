@@ -110,7 +110,7 @@ Remote: `https://github.com/grompen91-droid/dreadREPO.git`, branch `master`.
 Backlog: `docs/ROADMAP.md`. Pick issues labeled `ready-for-agent` unless the task says otherwise.
 
 <!-- SPECKIT START -->
-**Active implementation plan (013):** error reporting urgent flush (branch `013-error-report-urgent-flush`; production exceptions POST immediately and on quit).
+**Active implementation plan (012):** [specs/012-production-build-strip-debug/plan.md](specs/012-production-build-strip-debug/plan.md) (branch `012-production-build-strip-debug`, production CD builds exclude agent debug tooling). **Agent checklist:** [docs/agents/guides/development-only-features.md](docs/agents/guides/development-only-features.md) (`DreadConfigSections` for dynamic section numbers).
 <!-- SPECKIT END -->
 
 ## Cursor Cloud specific instructions
@@ -125,12 +125,18 @@ Since R.E.P.O. is not installed in the cloud VM, always build against generated 
 
 ```bash
 pwsh -NoProfile .github/scripts/gen-stubs.ps1
+# Production (matches CD/Thunderstore)
 dotnet build Dread.csproj -c Release \
   -p:GameDir=.github/stubs/refs \
   -p:BepInExDir=.github/stubs/refs \
+  -p:EnableDebugFeatures=false \
   -p:DeployToProfile=false \
   -p:DeployToDist=false
 ```
+
+For MCP/Tier 1 agent verify, use `-c Debug` instead (overlay, TCP server, TestCrash, sections 8-11). See [docs/agents/guides/debug-tooling.md](docs/agents/guides/debug-tooling.md).
+
+**Adding agent-only features:** follow [docs/agents/guides/development-only-features.md](docs/agents/guides/development-only-features.md) (`Compile Remove`, `#if DREAD_DEBUG`, config sections 8-9, registry). CI runs [.github/scripts/verify-production-dll.sh](.github/scripts/verify-production-dll.sh) on Release builds.
 
 Stubs are cached in `.github/stubs/refs/` and only need regeneration when stub source files change.
 

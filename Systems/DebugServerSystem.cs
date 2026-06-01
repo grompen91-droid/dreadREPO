@@ -517,18 +517,19 @@ namespace Dread.Systems
                         DreadConfig.DebugConsoleGuardEnabled)),
                 Section("7. Error Reporting",
                     Entry("ErrorReportingEnabled", "errorReporting", DreadConfig.ErrorReportingEnabled)),
-                Section("8. Debug Overlay",
+                Section(DreadConfigSections.DebugOverlay,
                     Entry("DebugOverlayEnabled", "overlay.enabled", DreadConfig.DebugOverlayEnabled)),
-                Section("9. Debug Server",
+                Section(DreadConfigSections.DebugServer,
                     Entry(
                         "DebugServerEnabled",
                         "debugServer.enabled",
                         DreadConfig.DebugServerEnabled,
                         restartRequired: true),
                     Entry("DebugServerPort", "debugServer.port", DreadConfig.DebugServerPort, restartRequired: true)),
-                Section("10. Logging",
+                Section(DreadConfigSections.Logging,
                     Entry("LogLevel", "logging.level", DreadConfig.LogLevelEntry)),
-                Section("11. Testing",
+                Section(
+                    DreadConfigSections.Testing,
                     Entry("Crash Game", "testing.crash", DreadConfig.TestCrashButton)),
             };
         }
