@@ -133,7 +133,7 @@ namespace Dread.Systems
             cx += bw + gap;
 
             int pct = (int)(_zoom * 100f + 0.5f);
-            GUI.Label(new Rect(cx, y, 38f * z, btnH), pct + "%", _labelStyle!);
+            GUI.Label(new Rect(cx, y, 38f * z, btnH), pct + "%", _midStyle!);
 
             float resetW = 50f * z;
             if (GUI.Button(new Rect(x + innerW - resetW, y, resetW, btnH), "Reset", _buttonStyle!))
@@ -184,7 +184,7 @@ namespace Dread.Systems
             _kitSlider = DreadWidgets.Slider(
                 new Rect(ix + labelW, y, innerW - labelW - valW, lineH), _kitSlider, 0f, 1f);
             int sp = (int)(_kitSlider * 100f + 0.5f);
-            GUI.Label(new Rect(ix + innerW - valW, y, valW, lineH), sp + "%", _valueStyle!);
+            GUI.Label(new Rect(ix + innerW - valW, y, valW, lineH), sp + "%", _midStyle!);
             y += lineH + gap;
 
             // Toast triggers, one per severity.
@@ -330,6 +330,7 @@ namespace Dread.Systems
             _sectionStyle!.fontSize = Scaled(11);
             _sectionBtnStyle!.fontSize = Scaled(11);
             _caretStyle!.fontSize = Scaled(11);
+            _midStyle!.fontSize = Scaled(11);
             _buttonStyle!.fontSize = Scaled(11);
         }
 

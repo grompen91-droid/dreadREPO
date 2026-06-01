@@ -16,12 +16,15 @@ namespace Dread.Systems.UI
 
         private static readonly GUIContent EmptyContent = new();
 
+        private const float TrackH = 4f;
+        private const float ThumbSize = 11f;
+
         private static Texture2D? _trackTex;
         private static Texture2D? _steelTex;
         private static GUIStyle? _trackStyle;
         private static GUIStyle? _fillStyle;
-        private static GUIStyle? _sliderStyle;
-        private static GUIStyle? _thumbStyle;
+        private static GUIStyle? _ghostStyle;
+        private static GUIStyle? _ghostThumb;
 
         /// <summary>Determinate progress bar. <paramref name="progress"/> is clamped to [0, 1].</summary>
         public static void LoadingBar(Rect rect, float progress)
@@ -52,11 +55,28 @@ namespace Dread.Systems.UI
                 GUI.Box(new Rect(clampedLeft, rect.y, w, rect.height), EmptyContent, _fillStyle!);
         }
 
-        /// <summary>Value slider. Returns the new value after any drag.</summary>
+        /// <summary>
+        /// Value slider. Draws a track, fill, and square thumb all vertically
+        /// centered in <paramref name="rect"/>, then overlays an invisible native
+        /// slider for drag handling. Returns the new value after any drag.
+        /// </summary>
         public static float Slider(Rect rect, float value, float min, float max)
         {
             Ensure();
-            return GUI.HorizontalSlider(rect, value, min, max, _sliderStyle!, _thumbStyle!);
+            float span = max - min;
+            float t = span > 0f ? Mathf.Clamp01((value - min) / span) : 0f;
+            float mid = rect.y + rect.height * 0.5f;
+
+            var track = new Rect(rect.x, mid - TrackH * 0.5f, rect.width, TrackH);
+            GUI.Box(track, EmptyContent, _trackStyle!);
+            if (t > 0f)
+                GUI.Box(new Rect(track.x, track.y, track.width * t, TrackH), EmptyContent, _fillStyle!);
+
+            float tx = rect.x + (rect.width - ThumbSize) * t;
+            GUI.Box(new Rect(tx, mid - ThumbSize * 0.5f, ThumbSize, ThumbSize), EmptyContent, _fillStyle!);
+
+            // Invisible native slider on top owns the drag; our boxes are the visuals.
+            return GUI.HorizontalSlider(rect, value, min, max, _ghostStyle!, _ghostThumb!);
         }
 
         private static void Ensure()
@@ -73,11 +93,10 @@ namespace Dread.Systems.UI
             _fillStyle = new GUIStyle(GUI.skin.box);
             _fillStyle.normal.background = _steelTex;
 
-            _sliderStyle = new GUIStyle(GUI.skin.box) { fixedHeight = 5f };
-            _sliderStyle.normal.background = _trackTex;
-
-            _thumbStyle = new GUIStyle(GUI.skin.box) { fixedWidth = 11f, fixedHeight = 11f };
-            _thumbStyle.normal.background = _steelTex;
+            // Transparent styles: the native slider stays invisible (no background)
+            // while still handling clicks and drags over the full rect.
+            _ghostStyle = new GUIStyle();
+            _ghostThumb = new GUIStyle { fixedWidth = ThumbSize };
         }
 
         private static Texture2D MakeTexture(Color color)

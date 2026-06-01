@@ -38,6 +38,7 @@ namespace Dread.Systems
         private GUIStyle? _caretStyle;
         private GUIStyle? _sepStyle;
         private GUIStyle? _buttonStyle;
+        private GUIStyle? _midStyle;
 
         private void EnsureStyles()
         {
@@ -88,6 +89,12 @@ namespace Dread.Systems
             _caretStyle = new GUIStyle(GUI.skin.label)
                 { fontSize = 11, wordWrap = false, alignment = TextAnchor.MiddleRight };
             _caretStyle.normal.textColor = ColDim;
+
+            // Centered numeric readout (zoom %, slider %) so the value sits under
+            // its control instead of hugging the left edge.
+            _midStyle = new GUIStyle(GUI.skin.label)
+                { fontSize = 11, wordWrap = false, alignment = TextAnchor.MiddleCenter };
+            _midStyle.normal.textColor = ColValue;
 
             _sepStyle = new GUIStyle(GUI.skin.box);
             _sepStyle.normal.background = _sepTex;
