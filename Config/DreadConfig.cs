@@ -104,7 +104,9 @@ namespace Dread.Config
                     + "re-lure while hiding. HOST ONLY.",
                     new AcceptableValueRange<float>(10f, 300f)));
             SnitchEnabled = cfg.Bind("2. Monster Overhaul", "SnitchEnabled", true,
-                "One random item per run is the snitch. Picking it up first triggers a loud bang and draws all enemies to that spot. HOST ONLY.");
+                new ConfigDescription(
+                    "One random item per run is the snitch. Picking it up first triggers a loud bang "
+                    + "and draws all enemies to that spot. HOST ONLY."));
             SnitchPOIDurationSeconds = cfg.Bind("2. Monster Overhaul", "SnitchPOIDurationSeconds", 180f,
                 new ConfigDescription(
                     "Seconds enemies keep returning to the snitch pickup position.",
