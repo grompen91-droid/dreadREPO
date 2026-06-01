@@ -8,6 +8,7 @@ on:
   push:
     paths:
       - "workers/error-reporter/**"
+      - ".github/workflows/deploy-worker.yml"
   workflow_dispatch:
 
 jobs:
