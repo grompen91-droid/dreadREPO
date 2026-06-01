@@ -12,6 +12,13 @@
       "sha256": "0caa69575611f177857f07be877677c9a6e8da84a2a7e46aae5ebbb8e01ba3fb"
     },
     {
+      "path": "monster/snitch_bang.ogg",
+      "assetName": "monster__snitch_bang.ogg",
+      "sizeBytes": 67413,
+      "priority": 8,
+      "sha256": "6f676d19064c087aebe12b346976a1441a881478bbf062479b7985dbbfbfbb69"
+    },
+    {
       "path": "ambient_dread/scraping.ogg",
       "assetName": "ambient_dread__scraping.ogg",
       "sizeBytes": 41909,

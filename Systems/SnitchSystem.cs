@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using Dread.Config;
+using Dread.Systems.AudioAssets;
 using Dread.Systems.Core;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -55,12 +56,12 @@ namespace Dread.Systems
             DreadConfig.SnitchEnabled.SettingChanged += OnConfigChanged;
             DreadConfig.CompatibilityMode.SettingChanged += OnConfigChanged;
 
-            StartCoroutine(AudioClipLoader.LoadClip("snitch_bang.ogg", clip =>
+            AudioAssetApi.RequestClip("monster", "snitch_bang.ogg", clip =>
             {
                 _bangClip = clip;
                 if (clip == null)
-                    LoggingService.LogWarning("[Snitch] snitch_bang.ogg not found — bang audio will be silent");
-            }));
+                    LoggingService.LogWarning("[Snitch] snitch_bang.ogg not loaded — bang audio will be silent");
+            });
         }
 
         private void OnDestroy()

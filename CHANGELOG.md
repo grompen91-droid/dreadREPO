@@ -42,7 +42,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 - Audio reorganized under `audio/{ambient_dread,tension,psychotic_break,shared}/` with release asset names `category__file.ogg`
-- `AudioDreadSystem`, `TensionSystem`, `PsychoticBreakSystem` use `AudioAssetApi` (progressive load) instead of bundled `audio/` folder
+- `AudioDreadSystem`, `TensionSystem`, `PsychoticBreakSystem`, and `SnitchSystem` use `AudioAssetApi` (progressive load) instead of bundled `audio/` folder
 - **Core:** `ProximityScan` in `Systems/Core/` replaces `EnemyScanCache`; tension, monster audio, debug server, psychotic break, and error reporting share one scan seam (ADR-0008 proximity pattern consolidated)
 - **Core:** `HarmonyPatchRegistry` + `PatchLifecycle` centralize patch apply/remove; `Plugin.cs` delegates patch wiring (ADR-0009 preserved)
 - **Core:** `PlayerInputLockCompat` shared by psychotic break and error-reporting prompt

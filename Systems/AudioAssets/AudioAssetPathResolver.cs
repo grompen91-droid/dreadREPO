@@ -24,6 +24,7 @@ namespace Dread.Systems.AudioAssets
                 { ("psychotic_break", "scream_distant.ogg"), "psychotic_break/scream_distant.ogg" },
                 { ("psychotic_break", "scream_threat.ogg"), "psychotic_break/scream_threat.ogg" },
                 { ("psychotic_break", "footsteps.ogg"), "shared/footsteps.ogg" },
+                { ("monster", "snitch_bang.ogg"), "monster/snitch_bang.ogg" },
             };
 
         public static IEnumerable<string> CategoriesForManifestPath(string manifestPath)
