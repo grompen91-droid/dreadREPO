@@ -5,7 +5,26 @@ compatibility_date = "2026-05-22"
 [vars]
 GITHUB_OWNER = "grompen91-droid"
 GITHUB_REPO = "dreadREPO"
-# TOKEN is set via `wrangler secret put TOKEN` in production.
-# For local dev/test, override with --var TOKEN:test-token or set below.
-TOKEN = "test-token-local"
+# TOKEN: production only via `wrangler secret put TOKEN` (do not put real PAT in this file).
+# Local dev: `wrangler dev` and pass a test token, or use .dev.vars (gitignored).
 
+# Dedupe cache: hash -> GitHub issue number (avoids Search API lag and missing labels).
+[[kv_namespaces]]
+binding = "DEDUP_KV"
+id = "af39320126964bbb8a9984d3f42070ae"
+preview_id = "3b91dac15a624287a2ff7a60d34c534c"
+
+[observability]
+enabled = false
+head_sampling_rate = 1
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+persist = true
+invocation_logs = true
+
+[observability.traces]
+enabled = false
+persist = true
+head_sampling_rate = 1

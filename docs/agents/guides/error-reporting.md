@@ -14,7 +14,7 @@ Anonymous crash telemetry from game to Cloudflare Worker to GitHub issues. Defau
 Unity Application.logMessageReceived (Exception/Error)
   -> ErrorReportingConsent.IsReportingAllowed() (enabled + prompt shown)
   -> enqueue + dedupe (60s per hash)
-  -> batch flush (5 min or buffer full)
+  -> batch flush (urgent: sync POST same/next frame on Exception/Error; periodic: 5 min or buffer full; shutdown: sync drain + POST)
   -> POST JSON via `HttpWebRequest` (`TryPostPayloadSync`; main thread, see roadmap ERR-4)
   -> Worker
   -> Worker creates/updates GitHub issue (label auto-reported)
@@ -38,13 +38,14 @@ Ignored in pipeline:
 - `[Dread TestCrash]` / `TestCrashSystem` (sync test still sends via dedicated path when consent allows)
 - `DebugConsoleUI` noise (MenuLib/REPOConfig broken hooks)
 
-Dedupe: SHA-based hash prefix, 60s cooldown per hash. Buffer caps: pending logs, batch size, stack/message length trims.
+Dedupe: SHA-based hash prefix, 60s cooldown per hash in the mod (stops rapid re-enqueue). Worker dedupes GitHub issues by hash in the issue body (search does **not** require `auto-reported` label; optional Cloudflare **KV** `DEDUP_KV` maps hash to issue number for instant dedupe). Buffer caps: pending logs, batch size, stack/message length trims.
 
 ## Payload
 
 Serialized by `ErrorReportJson.SerializePayload()` (ADR-0015). Includes:
 
 - Exception message/stack
+- Console log (recent Unity console session buffer + BepInEx `LogOutput.log` tail, length-capped)
 - System/display info
 - Game state tables
 - Config snapshot (eleven named `DreadConfig` fields: toggles plus `AudioFrequency` and `AudioVolume`; see `ErrorReportingPrivacyCopy`)

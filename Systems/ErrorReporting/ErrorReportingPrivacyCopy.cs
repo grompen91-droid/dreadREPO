@@ -26,6 +26,7 @@ namespace Dread.Systems
         public static readonly string[] DataBullets =
         {
             "Exception type, message (length-capped), stack trace (length-capped), and a dedupe hash",
+            "Recent Unity console output and a tail of BepInEx LogOutput.log (length-capped; may include other mods' log lines)",
             "Active scene name and session play time",
             "Enemy counts (alive, total, nearby)",
             "Player HP, stamina, and world position when available",
@@ -47,7 +48,7 @@ namespace Dread.Systems
             sb.Append("instant and offline play may delay or drop batches. Does not intentionally include ");
             sb.Append("your account name, Steam ID, voice or chat, or files outside the game. When ");
             sb.Append("enabled, reports may include: ");
-            for (var i = 0; i <= 6; i++)
+            for (var i = 0; i <= 7; i++)
             {
                 if (i > 0)
                     sb.Append("; ");
@@ -55,9 +56,9 @@ namespace Dread.Systems
             }
 
             sb.Append(". ");
-            sb.Append(DataBullets[7]);
-            sb.Append(". ");
             sb.Append(DataBullets[8]);
+            sb.Append(". ");
+            sb.Append(DataBullets[9]);
             sb.Append(". Some fields may be omitted if capture fails. ");
             sb.Append(DisableInstructions);
             FullDescription = sb.ToString();

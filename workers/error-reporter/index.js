@@ -87,6 +87,17 @@ function buildIssueBody(report, payload) {
   }
   lines.push('');
 
+  if (report.ConsoleLog) {
+    lines.push('## Console Log');
+    lines.push('');
+    lines.push('Recent Unity console output and BepInEx log tail from the reporting session.');
+    lines.push('');
+    lines.push('```');
+    lines.push(truncateForGitHub(report.ConsoleLog, 52000));
+    lines.push('```');
+    lines.push('');
+  }
+
   const systemInfo = report.SystemInfo;
   if (systemInfo && Object.keys(systemInfo).length > 0) {
     lines.push('## System Information');
@@ -159,6 +170,103 @@ function escapeTableCell(str) {
   return String(str).replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\n/g, ' ');
 }
 
+function truncateForGitHub(text, maxChars) {
+  const s = String(text);
+  if (s.length <= maxChars) return s;
+  const notice = `...[truncated for GitHub issue size; showing last ${maxChars} characters]\n`;
+  const keep = Math.max(0, maxChars - notice.length);
+  return notice + s.slice(s.length - keep);
+}
+
+/** GitHub issue search for dedupe. Do not require labels: auto-reported is applied after create and may be missing on older issues. */
+function buildDedupeSearchQuery(owner, repo, hash) {
+  return `repo:${owner}/${repo} hash:${hash} type:issue`;
+}
+
+function dedupeKvKey(hash) {
+  return `issue:${hash}`;
+}
+
+async function readDedupeKv(env, hash) {
+  if (!env.DEDUP_KV) return null;
+  try {
+    const raw = await env.DEDUP_KV.get(dedupeKvKey(hash));
+    if (!raw) return null;
+    const n = Number.parseInt(raw, 10);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+async function writeDedupeKv(env, hash, issueNumber) {
+  if (!env.DEDUP_KV) return;
+  try {
+    await env.DEDUP_KV.put(dedupeKvKey(hash), String(issueNumber), {
+      expirationTtl: 60 * 60 * 24 * 90,
+    });
+  } catch {
+    // KV optional; GitHub search remains fallback
+  }
+}
+
+async function ensureIssueLabels(env, issueNumber) {
+  try {
+    await gh(
+      `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/issues/${issueNumber}/labels`,
+      env.TOKEN,
+      'POST',
+      { labels: ['auto-reported', 'bug'] }
+    );
+  } catch {
+    // Labels may already exist or token may lack permission; issue body still has hash marker
+  }
+}
+
+async function resolveKvIssue(env, issueNumber) {
+  try {
+    const issue = await gh(
+      `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/issues/${issueNumber}`,
+      env.TOKEN
+    );
+    if (!issue?.number) return null;
+    return { number: issue.number, state: issue.state || 'open', source: 'kv' };
+  } catch {
+    return null;
+  }
+}
+
+async function findExistingIssue(env, hash) {
+  const kvIssue = await readDedupeKv(env, hash);
+  if (kvIssue != null) {
+    const resolved = await resolveKvIssue(env, kvIssue);
+    if (resolved) return resolved;
+  }
+
+  const q = encodeURIComponent(
+    buildDedupeSearchQuery(env.GITHUB_OWNER, env.GITHUB_REPO, hash)
+  );
+  const searchResult = await gh(
+    `https://api.github.com/search/issues?q=${q}&per_page=5&sort=created&order=asc`,
+    env.TOKEN
+  );
+
+  if (!searchResult.total_count || !searchResult.items?.length) {
+    return null;
+  }
+
+  const match = searchResult.items.find((item) => {
+    const body = item.body || '';
+    return body.includes(`hash:${hash}`) || body.includes(`<!-- hash:${hash} -->`);
+  });
+
+  if (!match) {
+    return null;
+  }
+
+  return { number: match.number, state: match.state, source: 'search' };
+}
+
 async function handleReport(request, env) {
   const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
   if (checkLimit(ipBuckets, ip, MAX_REQUESTS_PER_IP)) {
@@ -185,23 +293,13 @@ async function handleReport(request, env) {
     }
 
     try {
-      const searchTerms = [
-        `hash:${report.Hash}`,
-        `repo:${env.GITHUB_OWNER}/${env.GITHUB_REPO}`,
-        `label:auto-reported`,
-        `type:issue`
-      ];
-      const searchQuery = searchTerms.map(t => encodeURIComponent(t)).join('+');
-      const searchResult = await gh(
-        `https://api.github.com/search/issues?q=${searchQuery}&per_page=1`,
-        env.TOKEN
-      );
+      const existing = await findExistingIssue(env, report.Hash);
 
-      if (searchResult.total_count > 0 && searchResult.items.length > 0) {
-        const issue = searchResult.items[0];
-        const issueNumber = issue.number;
+      if (existing) {
+        const issueNumber = existing.number;
+        let wasClosed = existing.state === 'closed';
 
-        if (issue.state === 'closed') {
+        if (wasClosed) {
           await gh(
             `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/issues/${issueNumber}`,
             env.TOKEN,
@@ -209,6 +307,9 @@ async function handleReport(request, env) {
             { state: 'open' }
           );
         }
+
+        await ensureIssueLabels(env, issueNumber);
+        await writeDedupeKv(env, report.Hash, issueNumber);
 
         const commentKey = `comment:${issueNumber}`;
         if (!checkLimit(commentBuckets, commentKey, MAX_COMMENTS_PER_ISSUE)) {
@@ -233,7 +334,12 @@ async function handleReport(request, env) {
           );
         }
 
-        results.push({ hash: report.Hash, issueNumber, status: issue.state === 'closed' ? 'reopened' : 'commented' });
+        results.push({
+          hash: report.Hash,
+          issueNumber,
+          status: wasClosed ? 'reopened' : 'commented',
+          dedupe: existing.source,
+        });
       } else {
         const title = `[auto] ${report.ExceptionType || 'Unknown'} in ${report.Scene || 'Unknown'}`;
         const body = buildIssueBody(report, payload);
@@ -243,6 +349,8 @@ async function handleReport(request, env) {
           'POST',
           { title, body, labels: ['auto-reported', 'bug'] }
         );
+        await ensureIssueLabels(env, created.number);
+        await writeDedupeKv(env, report.Hash, created.number);
         results.push({ hash: report.Hash, issueNumber: created.number, status: 'created' });
       }
     } catch (err) {

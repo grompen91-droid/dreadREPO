@@ -93,7 +93,7 @@ The JSON payload sent to the Worker includes:
 ### Worker Design
 
 - **Edge location:** In-memory rate limiting is per-isolate (not global). Adequate for current scale; would need KV or Durable Objects for global limits at scale.
-- **No database:** Deduplication uses GitHub's Search API to find existing issues by hash comment. The Search API is fast enough for low-volume error reporting.
+- **Dedupe:** Primary match is `repo:<owner>/<repo> hash:<hash> type:issue` in GitHub Search (do **not** require `label:auto-reported`; labels are applied after create and may be missing). Optional Cloudflare KV `DEDUP_KV` stores `issue:<hash>` → issue number for instant dedupe before Search indexing. Mod-side 60s enqueue cooldown reduces spam only; Worker owns GitHub dedupe.
 - **Secrets:** GitHub PAT is stored as a Cloudflare Worker secret (`TOKEN`), set during deploy via `wrangler secret put`.
 
 ---

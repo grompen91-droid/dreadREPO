@@ -8,6 +8,7 @@ on:
   push:
     paths:
       - "workers/error-reporter/**"
+      - ".github/workflows/deploy-worker.yml"
   workflow_dispatch:
 
 jobs:
@@ -22,7 +23,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: workers/error-reporter/package-lock.json
 

@@ -52,6 +52,25 @@ namespace Dread.Tests.ErrorReportJson
         }
 
         [Fact]
+        public void SerializePayload_includes_console_log_field()
+        {
+            var json = Systems.ErrorReportJson.SerializePayload(new ErrorPayload
+            {
+                ModVersion = "1.0.0",
+                Reports = new[]
+                {
+                    new ErrorReport
+                    {
+                        Hash = "abc",
+                        ConsoleLog = "[12.0s] [Error] boom\nat Foo()"
+                    }
+                }
+            });
+
+            Assert.Contains("\"ConsoleLog\":\"[12.0s] [Error] boom\\nat Foo()\"", json);
+        }
+
+        [Fact]
         public void SerializePayload_empty_reports_emits_empty_array()
         {
             var json = Systems.ErrorReportJson.SerializePayload(new ErrorPayload

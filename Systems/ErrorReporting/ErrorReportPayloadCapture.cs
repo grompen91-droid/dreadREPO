@@ -35,10 +35,23 @@ namespace Dread.Systems
                 GameState = CreateMinimalGameState(scene),
                 SystemInfo = CaptureSystemInfoSafe(),
                 Display = CaptureDisplayInfoSafe(),
-                Config = CaptureConfigSafe()
+                Config = CaptureConfigSafe(),
+                ConsoleLog = CaptureConsoleLogSafe()
             };
         }
 #endif
+
+        internal static string CaptureConsoleLogSafe()
+        {
+            try
+            {
+                return ErrorReportConsoleLogBuffer.CaptureForReport();
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
 
         internal static SystemInfoData CaptureSystemInfoSafe()
         {
@@ -132,14 +145,29 @@ namespace Dread.Systems
                 {
                     try
                     {
-                        state.PlayerHp = (int)(player.Health * 100f);
-                        state.PlayerMaxHp = PlayerMaxHp;
-                        state.PlayerStamina = (int)(player.stamina * 100f);
                         state.PlayerPosition = player.transform.position;
                     }
                     catch
                     {
-                        // ignore player field failures
+                        // ignore transform failures
+                    }
+
+                    try
+                    {
+                        var health = PlayerControllerCompat.GetHealth(player);
+                        if (health >= 0f)
+                        {
+                            state.PlayerHp = (int)(health * 100f);
+                            state.PlayerMaxHp = PlayerMaxHp;
+                        }
+
+                        var stamina = PlayerControllerCompat.GetStamina(player);
+                        if (stamina >= 0f)
+                            state.PlayerStamina = (int)(stamina * 100f);
+                    }
+                    catch
+                    {
+                        // ignore player stat failures (e.g. dead / destroyed controller)
                     }
                 }
             }
