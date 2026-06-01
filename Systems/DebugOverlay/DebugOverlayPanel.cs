@@ -79,7 +79,7 @@ namespace Dread.Systems
                 {
                     // Span nearly the full panel width (rail to right edge) so the
                     // divider reads as a full rule, not a short inset stub.
-                    GUI.Box(new Rect(panel.x + 3f * z, y + lineH * 0.5f - 1f, width - 6f * z, 1f),
+                    GUI.Box(new Rect(panel.x + 2f * z, y + lineH * 0.5f - 1f, width - 4f * z, 1f),
                         EmptyContent, _sepStyle!);
                 }
                 else if (row.Kind == RowSection)

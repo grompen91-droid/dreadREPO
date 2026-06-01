@@ -58,42 +58,42 @@ namespace Dread.Systems
             // MiddleLeft vertically centers each label in its row box so glyphs
             // line up with the steel ticks and separators drawn at mid-line.
             _headerStyle = new GUIStyle(GUI.skin.label)
-                { fontSize = 15, wordWrap = false, alignment = TextAnchor.MiddleLeft };
+            { fontSize = 15, wordWrap = false, alignment = TextAnchor.MiddleLeft };
             _headerStyle.normal.textColor = ColAccent;
 
             _hintStyle = new GUIStyle(GUI.skin.label)
-                { fontSize = 11, wordWrap = false, alignment = TextAnchor.MiddleRight };
+            { fontSize = 11, wordWrap = false, alignment = TextAnchor.MiddleRight };
             _hintStyle.normal.textColor = ColDim;
 
             _labelStyle = new GUIStyle(GUI.skin.label)
-                { fontSize = 13, wordWrap = false, alignment = TextAnchor.MiddleLeft };
+            { fontSize = 13, wordWrap = false, alignment = TextAnchor.MiddleLeft };
             _labelStyle.normal.textColor = ColDim;
 
             _valueStyle = new GUIStyle(GUI.skin.label)
-                { fontSize = 13, wordWrap = false, alignment = TextAnchor.MiddleLeft };
+            { fontSize = 13, wordWrap = false, alignment = TextAnchor.MiddleLeft };
             _valueStyle.normal.textColor = ColValue;
 
             _sectionStyle = new GUIStyle(GUI.skin.label)
-                { fontSize = 11, wordWrap = false, alignment = TextAnchor.MiddleLeft };
+            { fontSize = 11, wordWrap = false, alignment = TextAnchor.MiddleLeft };
             _sectionStyle.normal.textColor = ColSection;
 
             // Transparent button over the section label so the row folds on click.
             // No background = invisible chrome; it reads as the section label itself.
             _sectionBtnStyle = new GUIStyle(GUI.skin.label)
-                { fontSize = 11, wordWrap = false, alignment = TextAnchor.MiddleLeft };
+            { fontSize = 11, wordWrap = false, alignment = TextAnchor.MiddleLeft };
             _sectionBtnStyle.normal.textColor = ColSection;
             _sectionBtnStyle.hover.textColor = ColAccent;
             _sectionBtnStyle.active.textColor = ColAccent;
 
             // Fold caret, right-aligned in the section row.
             _caretStyle = new GUIStyle(GUI.skin.label)
-                { fontSize = 11, wordWrap = false, alignment = TextAnchor.MiddleRight };
+            { fontSize = 11, wordWrap = false, alignment = TextAnchor.MiddleRight };
             _caretStyle.normal.textColor = ColDim;
 
             // Centered numeric readout (zoom %, slider %) so the value sits under
             // its control instead of hugging the left edge.
             _midStyle = new GUIStyle(GUI.skin.label)
-                { fontSize = 11, wordWrap = false, alignment = TextAnchor.MiddleCenter };
+            { fontSize = 11, wordWrap = false, alignment = TextAnchor.MiddleCenter };
             _midStyle.normal.textColor = ColValue;
 
             _sepStyle = new GUIStyle(GUI.skin.box);
