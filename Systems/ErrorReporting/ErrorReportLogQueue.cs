@@ -55,7 +55,20 @@ namespace Dread.Systems
             }
         }
 
+        internal static bool HasPending()
+        {
+            lock (LogsLock)
+            {
+                return PendingLogs.Count > 0;
+            }
+        }
+
         internal static bool TryDequeueBatch(out RawLogEntry[] batch)
+        {
+            return TryDequeueBatch(out batch, MaxProcessPerFrame);
+        }
+
+        internal static bool TryDequeueBatch(out RawLogEntry[] batch, int maxCount)
         {
             lock (LogsLock)
             {
@@ -65,7 +78,7 @@ namespace Dread.Systems
                     return false;
                 }
 
-                var count = Math.Min(MaxProcessPerFrame, PendingLogs.Count);
+                var count = Math.Min(maxCount, PendingLogs.Count);
                 batch = new RawLogEntry[count];
                 for (var i = 0; i < count; i++)
                     batch[i] = PendingLogs.Dequeue();

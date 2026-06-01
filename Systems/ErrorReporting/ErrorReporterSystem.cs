@@ -12,6 +12,7 @@ namespace Dread.Systems
         private readonly List<ErrorReport> _buffer = new List<ErrorReport>();
         private float _lastFlushTime;
         private volatile bool _shouldFlush;
+        private volatile bool _urgentFlush;
         private bool _sendInProgress;
         private const float FlushInterval = 300f;
 
@@ -19,6 +20,7 @@ namespace Dread.Systems
         {
             LoggingService.LogVerbose("[ErrorReporter] Awake starting...");
             Application.logMessageReceived += OnLogMessageReceived;
+            Application.quitting += OnApplicationQuitting;
             SceneManager.sceneLoaded += OnSceneLoaded;
             DreadConfig.ErrorReportingEnabled.SettingChanged += OnErrorReportingSettingChanged;
             _lastFlushTime = Time.realtimeSinceStartup;
@@ -27,9 +29,15 @@ namespace Dread.Systems
         private void OnDisable()
         {
             Application.logMessageReceived -= OnLogMessageReceived;
+            Application.quitting -= OnApplicationQuitting;
             SceneManager.sceneLoaded -= OnSceneLoaded;
             DreadConfig.ErrorReportingEnabled.SettingChanged -= OnErrorReportingSettingChanged;
-            FlushNow();
+            FlushNowSync();
+        }
+
+        private void OnApplicationQuitting()
+        {
+            FlushNowSync();
         }
 
         private static void OnErrorReportingSettingChanged(object sender, EventArgs e)
@@ -71,7 +79,11 @@ namespace Dread.Systems
             ProcessPendingLogs();
 
             if (_shouldFlush || Time.realtimeSinceStartup - _lastFlushTime >= FlushInterval)
-                FlushNow();
+            {
+                var sync = _urgentFlush;
+                _urgentFlush = false;
+                FlushNow(sync);
+            }
         }
 
         /// <summary>TestCrash: synchronous POST so report completes before Process.Kill().</summary>
@@ -146,14 +158,57 @@ namespace Dread.Systems
             if (!ErrorReportLogQueue.TryDequeueBatch(out var batch))
                 return;
 
-            var gameState = ErrorReportPayloadCapture.CaptureGameState();
-            var systemInfo = ErrorReportPayloadCapture.CaptureSystemInfoSafe();
-            var display = ErrorReportPayloadCapture.CaptureDisplayInfoSafe();
-            var config = ErrorReportPayloadCapture.CaptureConfig();
+            GameStateData gameState;
+            SystemInfoData systemInfo;
+            DisplayInfoData display;
+            ConfigData config;
             var scene = SceneManager.GetActiveScene().name ?? "unknown";
+
+            try
+            {
+                gameState = ErrorReportPayloadCapture.CaptureGameState();
+            }
+            catch (Exception e)
+            {
+                LoggingService.LogWarning(
+                    $"[ErrorReporter] Game state capture failed: {e.Message}");
+                gameState = ErrorReportPayloadCapture.CreateMinimalGameState(scene);
+            }
+
+            try
+            {
+                systemInfo = ErrorReportPayloadCapture.CaptureSystemInfoSafe();
+            }
+            catch
+            {
+                systemInfo = new SystemInfoData();
+            }
+
+            try
+            {
+                display = ErrorReportPayloadCapture.CaptureDisplayInfoSafe();
+            }
+            catch
+            {
+                display = new DisplayInfoData();
+            }
+
+            try
+            {
+                config = ErrorReportPayloadCapture.CaptureConfig();
+            }
+            catch
+            {
+                config = new ConfigData();
+            }
+
+            var scheduleUrgentFlush = false;
 
             foreach (var raw in batch)
             {
+                if (raw.Type == LogType.Exception || raw.Type == LogType.Error)
+                    scheduleUrgentFlush = true;
+
                 var report = new ErrorReport
                 {
                     Hash = ErrorReportLogQueue.ComputeHash(raw.StackTrace, raw.Message),
@@ -176,6 +231,12 @@ namespace Dread.Systems
                         _shouldFlush = true;
                 }
             }
+
+            if (scheduleUrgentFlush)
+            {
+                _shouldFlush = true;
+                _urgentFlush = true;
+            }
         }
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -183,9 +244,9 @@ namespace Dread.Systems
             FlushNow();
         }
 
-        private void FlushNow()
+        private void FlushNow(bool sync = false)
         {
-            if (_sendInProgress)
+            if (_sendInProgress && !sync)
                 return;
 
             if (!ErrorReportingConsent.IsReportingAllowed())
@@ -202,7 +263,30 @@ namespace Dread.Systems
 
             _shouldFlush = false;
             _lastFlushTime = Time.realtimeSinceStartup;
-            StartCoroutine(SendBatch(batch));
+
+            if (sync)
+                SendBatchSync(batch);
+            else
+                StartCoroutine(SendBatch(batch));
+        }
+
+        private void FlushNowSync()
+        {
+            if (!ErrorReportingConsent.IsReportingAllowed())
+                return;
+
+            try
+            {
+                while (ErrorReportLogQueue.HasPending())
+                    ProcessPendingLogsCore();
+            }
+            catch (Exception e)
+            {
+                LoggingService.LogWarning(
+                    $"[ErrorReporter] Failed to drain pending logs on shutdown: {e.Message}");
+            }
+
+            FlushNow(sync: true);
         }
 
         private void RequeueFailedBatch(List<ErrorReport> batch)
@@ -241,21 +325,29 @@ namespace Dread.Systems
             LoggingService.LogInfo($"Sent {batch.Count} error report(s). Response: {body}");
         }
 
+        private void SendBatchSync(List<ErrorReport> batch)
+        {
+            if (batch.Count == 0)
+                return;
+
+            _sendInProgress = true;
+            try
+            {
+                SendBatchCore(batch);
+            }
+            finally
+            {
+                _sendInProgress = false;
+            }
+        }
+
         private IEnumerator SendBatch(List<ErrorReport> batch)
         {
             _sendInProgress = true;
             try
             {
                 LoggingService.LogVerbose("[ErrorReporter] Sending report...");
-                var payload = new ErrorPayload
-                {
-                    ModVersion = Plugin.VERSION,
-                    GameVersion = Application.version,
-                    UnityVersion = Application.unityVersion,
-                    Reports = batch.ToArray()
-                };
-
-                ErrorReportUploader.EncodePayload(payload, out var json);
+                ErrorReportUploader.EncodePayload(BuildPayload(batch), out var json);
                 var validationError = ErrorReportUploader.ValidateBatchJson(json);
                 if (validationError != null)
                 {
@@ -265,20 +357,45 @@ namespace Dread.Systems
                 }
 
                 yield return null;
-
-                if (!ErrorReportUploader.TryPostPayloadSync(payload, out var body, out var postError))
-                {
-                    LoggingService.LogWarning($"Error report HTTP failed: {postError}");
-                    RequeueFailedBatch(batch);
-                }
-                else
-                {
-                    HandleWorkerResponse(body, batch);
-                }
+                SendBatchCore(batch);
             }
             finally
             {
                 _sendInProgress = false;
+            }
+        }
+
+        private static ErrorPayload BuildPayload(List<ErrorReport> batch)
+        {
+            return new ErrorPayload
+            {
+                ModVersion = Plugin.VERSION,
+                GameVersion = Application.version,
+                UnityVersion = Application.unityVersion,
+                Reports = batch.ToArray()
+            };
+        }
+
+        private void SendBatchCore(List<ErrorReport> batch)
+        {
+            var payload = BuildPayload(batch);
+            ErrorReportUploader.EncodePayload(payload, out var json);
+            var validationError = ErrorReportUploader.ValidateBatchJson(json);
+            if (validationError != null)
+            {
+                LoggingService.LogWarning($"[ErrorReporter] {validationError}");
+                RequeueFailedBatch(batch);
+                return;
+            }
+
+            if (!ErrorReportUploader.TryPostPayloadSync(payload, out var body, out var postError))
+            {
+                LoggingService.LogWarning($"Error report HTTP failed: {postError}");
+                RequeueFailedBatch(batch);
+            }
+            else
+            {
+                HandleWorkerResponse(body, batch);
             }
         }
     }

@@ -51,6 +51,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **Snitch:** explicit `failed` arm state; 2s pickup grace period; arm logs at Verbose only; removed temporary agent debug instrumentation
 
 ### Fixed
+- **Error reporting:** Production exceptions and errors flush on the next frame via synchronous HTTP POST instead of waiting up to 5 minutes; pending logs and buffered reports drain with a sync POST on application quit or disable (so real errors are not lost when exiting soon after a crash)
+- **Error reporting:** Game-state capture uses `PlayerControllerCompat` for player HP/stamina (avoids direct `Health` access when dead); per-field try/catch around snapshot sections so one failed capture does not block the batch
 - **Error reporting:** Game-state capture for crash reports no longer calls compile-time `EnemyHealth.CurrentHealth` (fixes `get_CurrentHealth` MissingMethodException when third-party mods log errors, e.g. DeathMinimap after death); uses `Systems/Core/EnemyHealthCompat` and `EnemyScanCache`
 - **Snitch:** arm timer no longer resets on additive scene loads during level generation; arm attempt also runs after `SemiFunc.OnLevelGenDone` ([#222](https://github.com/grompen91-droid/dreadREPO/issues/222))
 - **Snitch:** `ItemRosterCompat` validates resolved types as `Component`, scans `Assembly-CSharp` when `TypeByName` fails, and includes inactive valuables in `FindObjectsOfType`

@@ -14,7 +14,7 @@ Anonymous crash telemetry from game to Cloudflare Worker to GitHub issues. Defau
 Unity Application.logMessageReceived (Exception/Error)
   -> ErrorReportingConsent.IsReportingAllowed() (enabled + prompt shown)
   -> enqueue + dedupe (60s per hash)
-  -> batch flush (5 min or buffer full)
+  -> batch flush (urgent: sync POST same/next frame on Exception/Error; periodic: 5 min or buffer full; shutdown: sync drain + POST)
   -> POST JSON via `HttpWebRequest` (`TryPostPayloadSync`; main thread, see roadmap ERR-4)
   -> Worker
   -> Worker creates/updates GitHub issue (label auto-reported)
